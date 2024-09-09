@@ -37,39 +37,40 @@ app.post("/get-module", async (req, res) => {
     await git.clone(repoUrl, repoDir);
 
     // Install dependencies
-    execFile("npm", ["install"], { cwd: repoDir }, async (err, stdout, stderr) => {
+    execFile("npm", ["install"], { cwd: repoDir }, (err, stdout, stderr) => {
       if (err) {
         return res.status(500).send(`Error installing dependencies: ${stderr}`);
       }
 
-      // Fork the child process and listen for messages
+      // Fork the child process and handle messages
       const child = fork(path.join(repoDir, "index.js"));  // Fork the child module
 
       let childMessage = "no message received";
 
-      // Listen for messages from the child process
-      await child.on('message', (message) => {
-        console.log('Message from child:', message);
-        childMessage = message;
-        console.log('childMessage:', childMessage);
-      });
-      // child.stdout.on("data", (data) => {
-      //   console.log(`stdout: ${data}`);
-      // });
-      // child.stderr.on("data", (data) => {
-      //   console.error(`stderr: ${data}`);
-      // });
-      // child.on("close", (code) => {
-      //   console.log(`Child process exited with code ${code}`);
-      // });
+      const messagePromise = new Promise((resolve, reject) => {
+        child.on('message', (message) => {
+          console.log('Message from child:', message);
+          childMessage = message;
+          resolve();
+        });
 
-      // Send a response to the client
-      res.send(
-        `
-          <p>Repository downloaded, dependencies installed, and project started.</p>
-          <p>Message from child: ${childMessage}</p>
-        `
-      );
+        child.on('error', (err) => {
+          reject(err);
+        });
+      });
+
+      messagePromise.then(() => {
+        // Send a response to the client after receiving the message
+        res.send(
+          `
+            <p>Repository downloaded, dependencies installed, and project started.</p>
+            <p>Message from child: ${childMessage}</p>
+          `
+        );
+      }).catch((err) => {
+        console.error('Error receiving message from child:', err);
+        res.status(500).send('An error occurred while receiving message from child.');
+      });
     });
   } catch (error) {
     console.error(error);
