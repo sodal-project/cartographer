@@ -1,4 +1,4 @@
-Notes.md
-*/node_modules/
+modules
+node_modules
 .DS_Store
-*/uploads/
+Notes.md

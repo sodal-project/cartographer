@@ -1,35 +1,79 @@
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const simpleGit = require("simple-git");
 
+// Standard Node.js modules
+const { fork, execFile } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+// Setup
 const app = express();
-const upload = multer({ dest: "uploads/" });
+const git = simpleGit();
 
 app.get("/", (req, res) => {
   res.send(`
     <html>
       <body>
-        <h1>Upload a JavaScript Plugin</h1>
-        <form action="/upload" method="post" enctype="multipart/form-data">
-          <input type="file" name="plugin" accept=".js" required />
-          <button type="submit">Upload Plugin</button>
+        <h1>Cartographer OS Alpha</h1>
+        <form action="/get-module" method="POST">
+          <button type="submit">Install Module</button>
         </form>
       </body>
     </html>
   `);
 });
 
-app.post("/upload", upload.single("plugin"), (req, res) => {
-  const pluginPath = path.join(__dirname, "uploads", req.file.filename);
-  const pluginCode = fs.readFileSync(pluginPath, "utf8");
+app.post("/get-module", async (req, res) => {
+  const repoUrl = "https://github.com/sodal-project/cartographer-test-module.git";
+  const repoDir = path.join(__dirname, "modules");
+
   try {
-    const plugin = new Function(pluginCode);
-    plugin(); // execute the uploaded JS file as a function
-    res.send("Plugin executed successfully!");
-  } catch (err) {
-    console.error("Error executing plugin:", err);
-    res.status(500).send("Error executing plugin");
+    // If directory exists, remove it
+    if (fs.existsSync(repoDir)) {
+      fs.rmSync(repoDir, { recursive: true, force: true });
+    }
+    
+    // Clone the repository
+    await git.clone(repoUrl, repoDir);
+
+    // Install dependencies
+    execFile("npm", ["install"], { cwd: repoDir }, async (err, stdout, stderr) => {
+      if (err) {
+        return res.status(500).send(`Error installing dependencies: ${stderr}`);
+      }
+
+      // Fork the child process and listen for messages
+      const child = fork(path.join(repoDir, "index.js"));  // Fork the child module
+
+      let childMessage = "no message received";
+
+      // Listen for messages from the child process
+      await child.on('message', (message) => {
+        console.log('Message from child:', message);
+        childMessage = message;
+        console.log('childMessage:', childMessage);
+      });
+      // child.stdout.on("data", (data) => {
+      //   console.log(`stdout: ${data}`);
+      // });
+      // child.stderr.on("data", (data) => {
+      //   console.error(`stderr: ${data}`);
+      // });
+      // child.on("close", (code) => {
+      //   console.log(`Child process exited with code ${code}`);
+      // });
+
+      // Send a response to the client
+      res.send(
+        `
+          <p>Repository downloaded, dependencies installed, and project started.</p>
+          <p>Message from child: ${childMessage}</p>
+        `
+      );
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while processing the request.");
   }
 });
 
