@@ -10,6 +10,7 @@ const path = require("path");
 const app = express();
 const git = simpleGit();
 
+// The root route
 app.get("/", (req, res) => {
   res.send(`
     <html>
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
   `);
 });
 
+// The route to download and install the module
 app.post("/get-module", async (req, res) => {
   const repoUrl = "https://github.com/sodal-project/cartographer-test-module.git";
   const repoDir = path.join(__dirname, "modules");
@@ -42,11 +44,13 @@ app.post("/get-module", async (req, res) => {
         return res.status(500).send(`Error installing dependencies: ${stderr}`);
       }
 
-      // Fork the child process and handle messages
+      // Run the child module
       const child = fork(path.join(repoDir, "index.js"));  // Fork the child module
 
+      // Store the message received from the child module
       let childMessage = "no message received";
 
+      // Listen for messages from the child module
       const messagePromise = new Promise((resolve, reject) => {
         child.on('message', (message) => {
           console.log('Message from child:', message);
@@ -59,8 +63,8 @@ app.post("/get-module", async (req, res) => {
         });
       });
 
+      // Send a response to the client after receiving the message
       messagePromise.then(() => {
-        // Send a response to the client after receiving the message
         res.send(
           `
             <p>Repository downloaded, dependencies installed, and project started.</p>
@@ -71,6 +75,7 @@ app.post("/get-module", async (req, res) => {
         console.error('Error receiving message from child:', err);
         res.status(500).send('An error occurred while receiving message from child.');
       });
+
     });
   } catch (error) {
     console.error(error);
