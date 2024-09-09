@@ -1,0 +1,20 @@
+{
+  "name": "cartograper-server",
+  "version": "1.0.0",
+  "description": "Cartographer Core Server facilitates communication between modules and provides data and interface strings to the client.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "test"
+  },
+  "author": "Sodal",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
