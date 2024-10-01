@@ -1,4 +1,4 @@
-node_modules
 .DS_Store
-Notes.md
 .env
+node_modules
+Notes.md
