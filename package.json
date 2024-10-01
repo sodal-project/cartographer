@@ -4,12 +4,14 @@
   "description": "Cartographer Core Server facilitates communication between modules and provides data and interface strings to the client.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "if [ \"$ENV\" = \"DEV\" ]; then nodemon index.js; else node index.js; fi",
     "test": "test"
   },
   "author": "Sodal",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.19.2"
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.7"
   }
 }

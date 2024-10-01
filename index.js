@@ -6,10 +6,7 @@ app.get("/", (req, res) => {
   res.send(`
     <html>
       <body>
-        <h1>Cartographer</h1>
-        <form action="/get-module" method="POST">
-          <button type="submit">Install Module</button>
-        </form>
+        <h1>Cartographer Docker</h1>
       </body>
     </html>
   `);
