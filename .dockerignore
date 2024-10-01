@@ -1,0 +1,6 @@
+.env
+.env.development
+.env.production
+.env.example
+docker-compose.yml
+node_modules
