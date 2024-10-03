@@ -1,4 +1,4 @@
-const core = require('../../core.js');
+const core = require('../../core/core.js');
 
 function runIntegration() {
   const data = core.savePersona();

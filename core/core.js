@@ -7,6 +7,7 @@ const path = require('path');
  * ------------------------------------------------
  */
 function addPersonaToDatabase() {
+  log('persona added to database', 'INFO');
   return { value: 'persona added to database' };
 }
 
@@ -57,10 +58,10 @@ function log(message, type='UNKNOWN_TYPE') {
   const timestamp = getFormattedDate();
   const moduleName = utilGetCallingFolder(new Error().stack);
   const authLevel = `AUTH_0`;
-  const logMessage = `${timestamp}, ${moduleName}, ${message}, ${type}, ${authLevel}\n`;
+  const logMessage = `${timestamp}, ${moduleName}, ${message}, ${type}, ${authLevel}`;
 
   // Define log file path
-  const logsDir = path.join(__dirname, 'logs');
+  const logsDir = path.join(process.cwd(), 'logs');
   const logFilePath = path.join(logsDir, 'log.csv');
 
   // Ensure the logs directory exists
@@ -78,7 +79,10 @@ function log(message, type='UNKNOWN_TYPE') {
   }
 
   // Append the log message to log.csv
-  fs.appendFileSync(logFilePath, logMessage, 'utf8');
+  fs.appendFileSync(logFilePath, `${logMessage}\n`, 'utf8');
+
+  // Log the message to the console
+  console.log(logMessage);
 }
 
 function savePersona() {
