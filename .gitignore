@@ -1,4 +1,5 @@
 .DS_Store
 .env
+logs/*
 node_modules
 Notes.md

@@ -1,7 +1,8 @@
-const core = require('../../core.js');
+const core = require('../../core/core.js');
 
 function runIntegration() {
   const data = core.savePersona();
+  core.log('module 1 ran an integration');
   return {
     messages: 'module 1 ran an integration',
     data: data
