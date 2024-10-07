@@ -6,14 +6,18 @@ Cartographer is the open-source reference implementation of Sodal's Persona Grap
 
 Cartographer is a self-contained application that can run locally or on docker-compatible cloud infrastructure. Cartographer uses a Node/Express server. The server stores graph data in a Neo4j database and object data in a MongoDB database.
 
-### Setup
+## Contents
+
+- [Modules](docs/modules.md) - developing and working with modules
+
+## Setup
 
 1. Install [Docker](https://docker.com) for your platform.
 2. Copy the .env.example file to .env
 
 The default configuration uses ports **3000**, **7474**, **7687**, **28000**
 
-### Start
+## Start
 
 This terminal command will start the app and database. The first time it runs it will need to download files which may take several minutes.
 
@@ -23,6 +27,6 @@ docker-compose up
 
 The processes will run in a single terminal window (they are color coded). You can view the front end by visiting <http://localhost:3000> in your browser window.
 
-### Architecture
+## Architecture
 
 The open-source "Core" system offers fundamental tools for working with a graph database and includes MongoDB for handling additional data. It supports creating modules that ingest, format, store, and display graph data.
