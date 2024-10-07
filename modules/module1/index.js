@@ -1,19 +1,22 @@
 const core = require('../../core/core.js');
 
-function runIntegration() {
-  const data = core.savePersona();
+function runIntegration(data) {
+  const coreData = core.savePersona();
   core.log('module 1 ran an integration');
   return {
     messages: 'module 1 ran an integration',
-    data: data
+    passedData: data,
+    coreData: coreData
   }
 }
 
-function returnData() {
-  const data = core.getData();
+function returnData(data) {
+  const coreData = core.getData();
+  core.log('module 1 returned data');
   return {
     messages: 'module 1 is returning data',
-    data: data
+    passedData: data,
+    coreData: coreData
   }
 }
 
