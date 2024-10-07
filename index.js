@@ -22,6 +22,7 @@ app.get("/", (req, res) => {
             <option value="runIntegration">runIntegration</option>
             <option value="returnData">returnData</option>
           </select>
+          <input type="text" name="data" style="width: 240px;" />
           <button type="submit">Submit</button>
         </form>
       </body>
@@ -35,14 +36,25 @@ app.get("/", (req, res) => {
  */ 
 app.post("/trigger-module", (req, res) => {
   // Get the name of the module and command (function) to call
-  const { name, command } = req.body;
+  const { name, command, data } = req.body;
   
+  // Parse Data
+  // Data comes in as a string from the form, but we need it as an object
+  let parsedData;
+  try {
+    parsedData = JSON.parse(data); // Parse the data if it's a string
+  } catch (e) {
+    console.error('Error parsing data:', e);
+    return res.status(400).send('Invalid data format');
+  }
+  console.log('parsedData', parsedData);
+
   // Load the module
   const modulePath = path.resolve('modules', name, 'index.js');
   const module = require(modulePath);
 
   // Call the module function and save the response
-  const moduleResponse =  module[command]();
+  const moduleResponse = module[command](parsedData);
 
   // Send the response back to the client
   res.send(moduleResponse);

@@ -20,6 +20,7 @@ function getDataFromDatabase() {
  * Check the stack trace to determine the calling folder.
  * 
  * @param {string} stack - The stack trace from an Error object
+ * @returns {string} The name of the calling folder
  */ 
 function utilGetCallingFolder(stack) {
   const callerFile = stack.split('\n')[2].trim().match(/\((.*):\d+:\d+\)/)[1];
@@ -27,6 +28,12 @@ function utilGetCallingFolder(stack) {
   return folderName;
 }
 
+/**
+ * Get Formatted data
+ * Return the current date and time in the format MM-DD-YYYY_HH:MM:SS
+ * 
+ * @returns {string} The current data in the format MM-DD-YYYY_HH:MM:SS
+ */ 
 function getFormattedDate() {
   const date = new Date();
   
