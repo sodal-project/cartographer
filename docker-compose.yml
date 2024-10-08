@@ -16,7 +16,7 @@ services:
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - INSTANCE_NAME_APP=${INSTANCE_NAME_APP}
       - INSTANCE_NAME_DB=${INSTANCE_NAME_DB}
-      - MONGO_URL=mongodb://mongo-db:27017/cartographer
+      - MONGO_URL=${MONGO_URI}
     ports:
       - 3000:3000
     depends_on:
@@ -39,6 +39,9 @@ services:
     image: mongo
     hostname: mongo-db
     command: mongod --port 28000 # Change internal port to 28000
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME} # Set MongoDB username
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD} # Set MongoDB password
     volumes:
       - mongo-data:/data/db
     ports:

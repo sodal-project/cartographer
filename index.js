@@ -14,15 +14,27 @@ app.get("/", (req, res) => {
       <body>
         <h1>Cartographer</h1>
         <form action="/trigger-module" method="POST">
-          <select name="name">
-            <option value="module1">Module 1</option>
-            <option value="module2">Module 2</option>
-          </select>
-          <select name="command">
-            <option value="runIntegration">runIntegration</option>
-            <option value="returnData">returnData</option>
-          </select>
-          <input type="text" name="data" style="width: 240px;" />
+          <div style="margin-bottom: 20px;">
+            <select name="name" style="width: 200px;">
+              <option value="module1">Module 1</option>
+              <option value="module2">Module 2</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 30px;">
+            <select name="command" style="width: 200px;">
+              <option value="readConfig">readConfig</option>
+              <option value="writeConfig">writeConfig</option>
+              <option value="deleteConfig">deleteConfig</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 10px;">Key:</label>
+            <input type="text" name="key" style="width: 200px;" />
+          </div>
+          <div style="margin-bottom: 30px;">
+            <label style="display: block; margin-bottom: 10px;">Value:</label>
+            <input type="text" name="value" style="width: 200px;" />
+          </div>
           <button type="submit">Submit</button>
         </form>
       </body>
@@ -34,30 +46,34 @@ app.get("/", (req, res) => {
  * Trigger a module
  * Accept a POST request from the client and call the appropriate module function
  */ 
-app.post("/trigger-module", (req, res) => {
+app.post("/trigger-module", async (req, res) => {
   // Get the name of the module and command (function) to call
-  const { name, command, data } = req.body;
+  const { name, command, key, value } = req.body;
   
-  // Parse Data
-  // Data comes in as a string from the form, but we need it as an object
-  let parsedData;
-  try {
-    parsedData = JSON.parse(data); // Parse the data if it's a string
-  } catch (e) {
-    console.error('Error parsing data:', e);
-    return res.status(400).send('Invalid data format');
+  // Set Data
+  //
+  // TODO: We need a more flexible way to pass data module functions
+  // for now we are just passing a single key-value. This should be updated
+  // to allow for multiple key-value pairs.
+  const data = {};
+  if (key) {
+    data[key.toLowerCase()] = value || "";
   }
-  console.log('parsedData', parsedData);
 
   // Load the module
   const modulePath = path.resolve('modules', name, 'index.js');
   const module = require(modulePath);
 
-  // Call the module function and save the response
-  const moduleResponse = module[command](parsedData);
+  try {
+    // Call the module function and wait for the response
+    const moduleResponse = await module[command](data);
 
-  // Send the response back to the client
-  res.send(moduleResponse);
+    // Send the response back to the client
+    res.send(moduleResponse);
+  } catch (err) {
+    console.error('Error calling module command:', err);
+    res.status(500).send('Error executing module command');
+  }
 });
 
 app.listen(3000, () => {
