@@ -83,6 +83,9 @@ async function writeToMongo(namespace, data) {
     );
 
     console.log(`Updated document with _id: ${result.upsertedId || 'namespace-config'}`);
+    
+    // Return the result of the update operation (true if successful)
+    return result.acknowledged;
   } catch (err) {
     console.error(`Failed to update document: ${err}`);
   } finally {
@@ -123,9 +126,11 @@ async function deleteFromMongo(namespace, property) {
 
     if (result.modifiedCount > 0) {
       console.log(`Deleted property '${property}' from namespace '${namespace}'`);
+      return true;
     } else {
       console.log(`No changes made. Either property '${property}' not found or document doesn't exist.`);
     }
+    return false;
   } catch (err) {
     console.error(`Failed to delete property from namespace: ${err}`);
   } finally {

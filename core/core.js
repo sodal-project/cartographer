@@ -107,7 +107,8 @@ async function writeConfig(data) {
   const moduleName = utilGetCallingFolder(new Error().stack);
   
   try {
-    await writeToMongo(moduleName, data);
+    const response = await writeToMongo(moduleName, data);
+    return response;
   } catch (err) {
     console.error(`Error in writeConfig: ${err}`);
   }
@@ -122,7 +123,8 @@ async function deleteConfig(property) {
   const moduleName = utilGetCallingFolder(new Error().stack);
   
   try {
-    await deleteFromMongo(moduleName, property);
+    const response = await deleteFromMongo(moduleName, property);
+    return response;
   } catch (err) {
     console.error(`Error in deleteConfig: ${err}`);
   }

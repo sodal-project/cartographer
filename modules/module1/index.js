@@ -1,9 +1,10 @@
 const core = require('../../core/core.js');
 
-function writeConfig(data) {
-  core.writeConfig(data);
+async function writeConfig(data) {
+  const response = await core.writeConfig(data);
+  const message = response ? 'module 1 wrote config data' : 'module 1 failed to write config data';
   return {
-    messages: 'module 1 wrote config data',
+    messages: message,
     data: data,
   }
 }
@@ -17,9 +18,11 @@ async function readConfig() {
 }
 
 async function deleteConfig(data) {
-  core.deleteConfig(data.delete);
+  const response = await core.deleteConfig(data.delete);
+  console.log('response', response);
+  const message = response ? `module 1 deleted the property ${data.delete}` : `module 1 failed to delete the property ${data.delete}`;
   return {
-    messages: 'module 1 delete config data',
+    messages: message,
     data: data
   }
 }
