@@ -34,7 +34,7 @@ app.get("/", (req, res) => {
  * Trigger a module
  * Accept a POST request from the client and call the appropriate module function
  */ 
-app.post("/trigger-module", (req, res) => {
+app.post("/trigger-module", async (req, res) => {
   // Get the name of the module and command (function) to call
   const { name, command, data } = req.body;
   
@@ -45,19 +45,23 @@ app.post("/trigger-module", (req, res) => {
     parsedData = JSON.parse(data); // Parse the data if it's a string
   } catch (e) {
     console.error('Error parsing data:', e);
-    return res.status(400).send('Invalid data format');
+    parsedData = {};
   }
-  console.log('parsedData', parsedData);
 
   // Load the module
   const modulePath = path.resolve('modules', name, 'index.js');
   const module = require(modulePath);
 
-  // Call the module function and save the response
-  const moduleResponse = module[command](parsedData);
+  try {
+    // Call the module function and wait for the response
+    const moduleResponse = await module[command](parsedData);
 
-  // Send the response back to the client
-  res.send(moduleResponse);
+    // Send the response back to the client
+    res.send(moduleResponse);
+  } catch (err) {
+    console.error('Error calling module command:', err);
+    res.status(500).send('Error executing module command');
+  }
 });
 
 app.listen(3000, () => {
