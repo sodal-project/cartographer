@@ -1,17 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
-const { MongoClient } = require('mongodb');
+
+// Core Imports
+const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
 
 /**
  * ------------------------------------------------
  * Private Functions
  * ------------------------------------------------
  */
-function addPersonaToDatabase() {
-  log('persona added to database', 'INFO');
-  return { value: 'persona added to database' };
-}
 
 /**
  * Get Calling Folder
@@ -45,77 +43,6 @@ function getFormattedDate() {
   
   return `${month}-${day}-${year}_${hours}:${minutes}:${seconds}`;
 }
-
-/**
- * Read from MongoDB
- * Function to read an object from MongoDB
- */
-async function getDataFromDatabase(namespace) {
-  const uri = process.env.MONGO_URI;
-  const dbName = process.env.MONGO_DB_NAME;
-  const collectionName = process.env.MONGO_COLLECTION_NAME;
-  const client = new MongoClient(uri);
-
-  try {
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-
-    // Query for the document and retrieve the namespace data
-    const document = await collection.findOne({ _id: "namespace-config" });
-
-    if (document && document[namespace]) {
-      // Return the data from the specified namespace
-      return document[namespace];
-    } else {
-      console.log(`No data found for namespace: ${namespace}`);
-      return null;
-    }
-  } catch (err) {
-    console.error(`Failed to retrieve data from database: ${err}`);
-    return null;
-  } finally {
-    await client.close();
-  }
-}
-
-/**
- * Write to MongoDB
- * Function to write an object to MongoDB
- */
-async function writeToMongoDB(namespace, data) {
-  const uri = process.env.MONGO_URI;
-  const dbName = process.env.MONGO_DB_NAME;
-  const collectionName = process.env.MONGO_COLLECTION_NAME;
-  const client = new MongoClient(uri); // Remove deprecated options
-
-  try {
-    await client.connect();
-    const db = client.db(dbName);
-    const collection = db.collection(collectionName);
-
-    // Prepare the document structure
-    const updateDoc = { 
-      $set: {
-        [namespace]: data // Use dynamic object key for the namespace
-      }
-    };
-
-    // Update the document, inserting the namespace object if it doesn't exist
-    const result = await collection.updateOne(
-      { _id: "namespace-config" },  // Document to update (you can adjust this _id)
-      updateDoc,
-      { upsert: true }               // Create the document if it doesn't exist
-    );
-
-    console.log(`Updated document with _id: ${result.upsertedId || 'namespace-config'}`);
-  } catch (err) {
-    console.error(`Failed to update document: ${err}`);
-  } finally {
-    await client.close();
-  }
-}
-
 
 /**
  * ------------------------------------------------
@@ -161,39 +88,49 @@ function log(message, type='UNKNOWN_TYPE') {
 }
 
 /**
+ * Read Config
+ * 
+ * @param {object} data - The data to write to the config file
+ */
+async function readConfig() {
+  const moduleName = utilGetCallingFolder(new Error().stack);
+  const data = await readFromMongo(moduleName);
+  return data;
+}
+
+/**
  * Write Config
  * 
  * @param {object} data - The data to write to the config file
  */
-async function writeConfig() {
+async function writeConfig(data) {
   const moduleName = utilGetCallingFolder(new Error().stack);
-  const data = {
-    name: 'Example3',
-    age: 30,
-    profession: 'Developer',
-    location: 'San Francisco'
-  };
-
+  
   try {
-    await writeToMongoDB(moduleName, data);
+    await writeToMongo(moduleName, data);
   } catch (err) {
     console.error(`Error in writeConfig: ${err}`);
   }
 }
 
-function savePersona() {
-  return addPersonaToDatabase();
-}
-
-async function getData() {
+/**
+ * Delete Config
+ * 
+ * @param {string} property - The property to delete from the namespace
+ */
+async function deleteConfig(property) {
   const moduleName = utilGetCallingFolder(new Error().stack);
-  const data = await getDataFromDatabase(moduleName);
-  return data;
+  
+  try {
+    await deleteFromMongo(moduleName, property);
+  } catch (err) {
+    console.error(`Error in deleteConfig: ${err}`);
+  }
 }
 
 module.exports = {
   log,
-  savePersona,
-  getData,
-  writeConfig
+  readConfig,
+  writeConfig,
+  deleteConfig,
 };

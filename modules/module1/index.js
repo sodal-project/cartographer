@@ -1,27 +1,31 @@
 const core = require('../../core/core.js');
 
-function runIntegration(data) {
-  const coreData = core.savePersona();
-  core.writeConfig();
-  core.log('module 1 ran an integration');
+function writeConfig(data) {
+  core.writeConfig(data);
   return {
-    messages: 'module 1 ran an integration',
-    passedData: data,
-    coreData: coreData
+    messages: 'module 1 wrote config data',
+    data: data,
   }
 }
 
-async function returnData(data) {
-  const coreData = await core.getData();
-  core.log('module 1 returned data');
+async function readConfig() {
+  const data = await core.readConfig();
   return {
-    messages: 'module 1 is returning data',
-    passedData: data,
-    coreData: coreData
+    messages: 'module 1 read config data',
+    data: data
+  }
+}
+
+async function deleteConfig(data) {
+  core.deleteConfig(data.delete);
+  return {
+    messages: 'module 1 delete config data',
+    data: data
   }
 }
 
 module.exports = {
-  runIntegration,
-  returnData
+  writeConfig,
+  readConfig,
+  deleteConfig,
 };
