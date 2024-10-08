@@ -1,25 +1,52 @@
 const core = require('../../core/core.js');
 
-function writeConfig(data) {
-  core.writeConfig(data);
+/**
+ * writeConfig
+ * Write data to the module namespace of MongoDb. Multiple
+ * properties can be passed in the data object.
+ * 
+ * @param {object} data - The data to write to the config file
+ * @returns {object} - A message string and data object with all properties written
+ */
+async function writeConfig(data) {
+  const response = await core.writeConfig(data);
+  const message = response ? 'module 2 wrote config data' : 'module 1 failed to write config data';
+  
   return {
-    messages: 'module 2 wrote config data',
+    messages: message,
     data: data,
   }
 }
 
+/**
+ * readConfig
+ * Read the entire module namespace from MongoDb.
+ * 
+ * @returns {object} - A message string and an object with all properties in the module namespace
+ */
 async function readConfig() {
   const data = await core.readConfig();
+  
   return {
     messages: 'module 2 read config data',
     data: data
   }
 }
 
+/**
+ * deleteConfig
+ * Delete a property from the module namespace in MongoDb.
+ * 
+ * @param {object} data - An object with a delete property whose value is the property to delete
+ * @returns {object} - A message string and the data object with the property to delete
+ */
 async function deleteConfig(data) {
-  core.deleteConfig(data);
+  const propertyToDelete = data.delete;
+  const response = await core.deleteConfig(propertyToDelete);
+  const message = response ? `module 2 deleted the property ${propertyToDelete}` : `module 1 failed to delete the property ${data.delete}`;
+  
   return {
-    messages: 'module 2 delete config data',
+    messages: message,
     data: data
   }
 }
