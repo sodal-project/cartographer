@@ -51,7 +51,10 @@ app.post("/trigger-module", async (req, res) => {
   const { name, command, key, value } = req.body;
   
   // Set Data
+  //
   // TODO: We need a more flexible way to pass data module functions
+  // for now we are just passing a single key-value. This should be updated
+  // to allow for multiple key-value pairs.
   const data = {};
   if (key) {
     data[key.toLowerCase()] = value || "";
