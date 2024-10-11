@@ -53,8 +53,43 @@ async function deleteConfig(data) {
   }
 }
 
+/**
+ * longProcess
+ * Start a long running process or report on the status of a long running process.
+ * 
+ * @param {object} data - An object with a delete property whose value is the property to delete
+ * @returns {object} - A message string and the data object with the property to delete
+ */
+async function longProcess() {
+  const configData = await core.readConfig();
+
+  // Default to none if no processStatus is set
+  const processStatus = configData.processStatus || 'none'
+
+  let message;
+  if (processStatus === 'none') {
+    await core.writeConfig({ processStatus: 'running' });
+    
+    // Simulate a long running process
+    setTimeout(async () => {
+      await core.writeConfig({ processStatus: 'complete' });
+    }, 15000);
+    message = `A long running process has started`;
+  } else if (processStatus === 'running') {
+    message = `A long running process is running`;
+  } else if (processStatus === 'complete') {
+    await core.writeConfig({ processStatus: 'none' });
+    message = `A long running process is complete`;
+  }
+
+  return {
+    message,
+  }
+}
+
 module.exports = {
   writeConfig,
   readConfig,
   deleteConfig,
+  longProcess,
 };

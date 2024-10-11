@@ -25,6 +25,7 @@ app.get("/", (req, res) => {
               <option value="readConfig">readConfig</option>
               <option value="writeConfig">writeConfig</option>
               <option value="deleteConfig">deleteConfig</option>
+              <option value="longProcess">longProcess</option>
             </select>
           </div>
           <div style="margin-bottom: 15px;">
