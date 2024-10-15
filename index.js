@@ -8,10 +8,13 @@ const app = express();
 // Set up Handlebars
 app.engine("hbs", engine({ defaultLayout: false }));
 app.set('view engine', 'hbs');
-app.set("views", path.join(__dirname, "core"));
+app.set("views", __dirname);
 
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
+
+// Middleware to serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, "public")));
 
 /**
  * Root
@@ -42,7 +45,7 @@ app.get("/", (req, res) => {
     ]
   }
 
-  res.render("index", data); 
+  res.render("core/index", data); 
 });
 
 /**
