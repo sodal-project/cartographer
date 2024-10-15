@@ -1,15 +1,48 @@
 const express = require("express");
 const path = require('path');
+const { engine } = require('express-handlebars');
 
 // Create an Express application
 const app = express();
 
+// Set up Handlebars
+app.engine("hbs", engine({ defaultLayout: false }));
+app.set('view engine', 'hbs');
+app.set("views", path.join(__dirname, "core"));
+
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
 
-// The root route
+/**
+ * Root
+ * Serve the index.html file from the core directory
+ */ 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "core", "index.html"));
+  const data ={
+    user: {
+      name: "Dade Murphy",
+    },
+    modules: [
+      {
+        folder: "module1",
+        label: "Module 1",
+      },
+      {
+        folder: "module2",
+        label: "Module 2",
+      },
+      {
+        folder: "long-process",
+        label: "Long Process",
+      },
+      {
+        folder: "another-module",
+        label: "Another Module",
+      },
+    ]
+  }
+
+  res.render("index", data); 
 });
 
 /**
