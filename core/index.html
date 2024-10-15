@@ -29,9 +29,11 @@
       }
     </style>
   </head>
-  <body class="bg-black poppins-regular">
+  <body class="poppins-regular" style="background: #080c15">
     <!-- Sidebar -->
-    <div class="fixed inset-y-0 z-50 flex w-72 flex-col">
+    <div
+      class="fixed inset-y-0 z-50 flex w-72 flex-col border-r border-gray-800"
+    >
       <div
         class="flex grow flex-col gap-y-5 overflow-y-auto h-full bg-gray-900 px-4 pb-4"
       >
@@ -189,13 +191,13 @@
       <div class="p-8">
         <h1 class="text-sans text-3xl text-white mb-10">Cartographer</h1>
         <form action="/trigger-module" method="POST">
-          <div style="margin-bottom: 20px">
+          <div class="mb-5">
             <select name="name" class="w-48 rounded p-1 text-sm">
               <option value="module1">Module 1</option>
               <option value="module2">Module 2</option>
             </select>
           </div>
-          <div style="margin-bottom: 30px">
+          <div class="mb-8">
             <select name="command" class="w-48 rounded p-1 text-sm">
               <option value="readConfig">readConfig</option>
               <option value="writeConfig">writeConfig</option>
@@ -203,11 +205,11 @@
               <option value="longProcess">longProcess</option>
             </select>
           </div>
-          <div style="margin-bottom: 15px">
+          <div class="mb-3">
             <label class="block text-white mb-1">Key:</label>
             <input class="w-48 rounded p-1 text-sm" type="text" name="key" />
           </div>
-          <div class="mb-10">
+          <div class="mb-12">
             <label class="block text-white mb-1 text-sm">Value:</label>
             <input class="w-48 rounded p-1 text-sm" type="text" name="value" />
           </div>
