@@ -1,46 +1,51 @@
 const express = require("express");
 const path = require('path');
+const { engine } = require('express-handlebars');
 
 // Create an Express application
 const app = express();
 
+// Set up Handlebars
+app.engine("hbs", engine({ defaultLayout: false }));
+app.set('view engine', 'hbs');
+app.set("views", __dirname);
+
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
 
-// The root route
+// Middleware to serve static files from the "public" directory
+app.use(express.static(path.join(__dirname, "public")));
+
+/**
+ * Root
+ * Serve the index.html file from the core directory
+ */ 
 app.get("/", (req, res) => {
-  res.send(`
-    <html>
-      <body>
-        <h1>Cartographer</h1>
-        <form action="/trigger-module" method="POST">
-          <div style="margin-bottom: 20px;">
-            <select name="name" style="width: 200px;">
-              <option value="module1">Module 1</option>
-              <option value="module2">Module 2</option>
-            </select>
-          </div>
-          <div style="margin-bottom: 30px;">
-            <select name="command" style="width: 200px;">
-              <option value="readConfig">readConfig</option>
-              <option value="writeConfig">writeConfig</option>
-              <option value="deleteConfig">deleteConfig</option>
-              <option value="longProcess">longProcess</option>
-            </select>
-          </div>
-          <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 10px;">Key:</label>
-            <input type="text" name="key" style="width: 200px;" />
-          </div>
-          <div style="margin-bottom: 30px;">
-            <label style="display: block; margin-bottom: 10px;">Value:</label>
-            <input type="text" name="value" style="width: 200px;" />
-          </div>
-          <button type="submit">Submit</button>
-        </form>
-      </body>
-    </html>
-  `);
+  const data ={
+    user: {
+      name: "Dade Murphy",
+    },
+    modules: [
+      {
+        folder: "module1",
+        label: "Module 1",
+      },
+      {
+        folder: "module2",
+        label: "Module 2",
+      },
+      {
+        folder: "long-process",
+        label: "Long Process",
+      },
+      {
+        folder: "another-module",
+        label: "Another Module",
+      },
+    ]
+  }
+
+  res.render("core/index", data); 
 });
 
 /**
