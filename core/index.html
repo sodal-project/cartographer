@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cartographer</title>
+
+    <!-- Tailwind CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Alpine JS -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .poppins-regular {
+        font-family: "Poppins", sans-serif;
+        font-weight: 400;
+        font-style: normal;
+      }
+    </style>
+  </head>
+  <body class="bg-black poppins-regular">
+    <!-- Sidebar -->
+    <div class="fixed inset-y-0 z-50 flex w-72 flex-col">
+      <div
+        class="flex grow flex-col gap-y-5 overflow-y-auto h-full bg-gray-900 px-4 pb-4"
+      >
+        <!-- Logo -->
+        <div class="flex h-6 my-5 mx-2 shrink-0 items-center">
+          <svg
+            class="h-6"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 576 512"
+            fill="#6366f1"
+          >
+            <path
+              d="M384 476.1L192 421.2l0-385.3L384 90.8l0 385.3zm32-1.2l0-386.5L543.1 37.5c15.8-6.3 32.9 5.3 32.9 22.3l0 334.8c0 9.8-6 18.6-15.1 22.3L416 474.8zM15.1 95.1L160 37.2l0 386.5L32.9 474.5C17.1 480.8 0 469.2 0 452.2L0 117.4c0-9.8 6-18.6 15.1-22.3z"
+            />
+          </svg>
+          <h1 class="text-white text-xl ml-3 nunito-font-400">cartographer</h1>
+        </div>
+
+        <!-- Tabs -->
+        <div
+          x-data="{ mode: 'operator', admin: 'admin', operator: 'operator' }"
+          class="flex bg-black bg-opacity-30 border border-gray-800 p-1 rounded text-white"
+        >
+          <button
+            class="w-1/2 text-sm p-1 rounded"
+            x-bind:class="mode === 'operator' ? 'bg-indigo-600' : ''"
+            @click="mode = 'operator'"
+          >
+            Operator
+          </button>
+          <button
+            class="w-1/2 text-sm p-1 rounded"
+            x-bind:class="mode === 'admin' ? 'bg-indigo-600' : ''"
+            @click="mode = 'admin'"
+          >
+            Admin
+          </button>
+        </div>
+
+        <nav class="flex flex-1 flex-col">
+          <ul role="list" class="flex flex-1 flex-col gap-y-7">
+            <!-- Module List -->
+            <li>
+              <ul role="list" class="mx-2 space-y-1">
+                <li>
+                  <a
+                    href="#"
+                    class="group flex gap-x-3 rounded-md bg-gray-800 p-2 pl-3 text-sm font-semibold leading-6 text-white"
+                  >
+                    Module 1
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    class="group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-gray-400 hover:text-white hover:bg-gray-800"
+                  >
+                    Module 2
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    class="group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-gray-400 hover:text-white hover:bg-gray-800"
+                  >
+                    Long Process
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <!-- Account Nav -->
+            <li
+              class="mt-auto"
+              x-data="{ open: false }"
+              @click.away="open = false"
+            >
+              <div class="relative w-full text-white">
+                <!-- Account Button -->
+                <div class="rounded px-2 hover:bg-black hover:bg-opacity-40">
+                  <button
+                    type="button"
+                    class="flex items-center p-1 py-3 w-full"
+                    id="user-menu-button"
+                    @click="open = !open"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <img
+                      class="h-8 w-8 rounded-full"
+                      src="https://i.pravatar.cc/60"
+                      alt="anonymous avatar"
+                    />
+                    <div class="flex items-center w-full">
+                      <span
+                        class="ml-3 text-sm text-left font-semibold leading-6"
+                        aria-hidden="true"
+                        >Dade Murphy</span
+                      >
+                      <div class="flex-shrink-0">
+                        <svg
+                          class="ml-2 h-5 w-5 text-gray-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          aria-hidden="true"
+                          data-slot="icon"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                <!-- Account Menu -->
+                <div
+                  x-show="open"
+                  class="absolute left-0 z-10 bottom-full mb-4 py-2 w-48 origin-bottom-right rounded-md bg-gray-800 border border-gray-700 bg-shadow-lg text-white"
+                  role="menu"
+                  aria-orientation="vertical"
+                  aria-labelledby="user-menu-button"
+                  tabindex="-1"
+                  @click="open = false"
+                >
+                  <a
+                    href="#"
+                    class="block px-3 py-1 text-sm leading-6 text-white hover:text-indigo-400"
+                    role="menuitem"
+                    tabindex="-1"
+                    id="user-menu-item-0"
+                    >Your profile</a
+                  >
+                  <a
+                    href="#"
+                    class="block px-3 py-1 text-sm leading-6 text-white hover:text-indigo-400"
+                    role="menuitem"
+                    tabindex="-1"
+                    id="user-menu-item-1"
+                    >Sign out</a
+                  >
+                </div>
+              </div>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Module Content -->
+    <main class="pl-72">
+      <div class="p-8">
+        <h1 class="text-sans text-3xl text-white mb-10">Cartographer</h1>
+        <form action="/trigger-module" method="POST">
+          <div style="margin-bottom: 20px">
+            <select name="name" class="w-48 rounded p-1 text-sm">
+              <option value="module1">Module 1</option>
+              <option value="module2">Module 2</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 30px">
+            <select name="command" class="w-48 rounded p-1 text-sm">
+              <option value="readConfig">readConfig</option>
+              <option value="writeConfig">writeConfig</option>
+              <option value="deleteConfig">deleteConfig</option>
+              <option value="longProcess">longProcess</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 15px">
+            <label class="block text-white mb-1">Key:</label>
+            <input class="w-48 rounded p-1 text-sm" type="text" name="key" />
+          </div>
+          <div class="mb-10">
+            <label class="block text-white mb-1 text-sm">Value:</label>
+            <input class="w-48 rounded p-1 text-sm" type="text" name="value" />
+          </div>
+          <button
+            class="bg-indigo-600 py-1 px-6 rounded text-white text-sm"
+            type="submit"
+          >
+            Submit
+          </button>
+        </form>
+      </div>
+    </main>
+  </body>
+</html>
