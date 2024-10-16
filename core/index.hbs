@@ -16,6 +16,12 @@
       defer
     ></script>
 
+    <!-- HTMX -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.12/dist/htmx.min.js"
+      defer
+    ></script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,7 +33,7 @@
     <!-- Main JS -->
     <script src="/js/main.js" defer></script>
 
-    <!-- Custom Styles -->
+    <!-- Styles -->
     <link href="/css/main.css" rel="stylesheet" />
   </head>
   <body class="poppins-regular" style="background: #080c15">
@@ -82,7 +88,9 @@
                 {{#each modules}}
                   <li>
                     <a
-                      href="{{folder}}"
+                      href="/module?name={{folder}}&command=index"
+                      hx-get="/module?name={{folder}}&command=index"
+                      hx-target="#main"
                       class="group flex gap-x-3 rounded-md bg-gray-800 p-2 pl-3 text-sm font-semibold leading-6 text-white"
                     >
                       {{label}}
@@ -171,8 +179,8 @@
     </div>
 
     <!-- Module Content -->
-    <main class="pl-72">
-      <div class="p-8">
+    <main class="pl-72" id="main">
+      {{!-- <div class="p-8">
         <h1 class="text-sans text-3xl text-white mb-10">Cartographer</h1>
         <p>{{message}}</p>
         <form action="/trigger-module" method="POST">
@@ -205,7 +213,7 @@
             Submit
           </button>
         </form>
-      </div>
+      </div> --}}
     </main>
   </body>
 </html>

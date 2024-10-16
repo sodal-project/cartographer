@@ -34,18 +34,27 @@ app.get("/", (req, res) => {
         folder: "module2",
         label: "Module 2",
       },
-      {
-        folder: "long-process",
-        label: "Long Process",
-      },
-      {
-        folder: "another-module",
-        label: "Another Module",
-      },
     ]
   }
 
   res.render("core/index", data); 
+});
+
+app.get('/module', async (req, res) => {
+  const { name, command } = req.query;
+  const modulePath = path.resolve('modules', name, 'index.js');
+  const module = require(modulePath);
+
+  try {
+    // Call the module function and wait for the response
+    const moduleResponse = await module[command]();
+
+    // Send the response back to the client
+    res.send(moduleResponse);
+  } catch (err) {
+    console.error('Error calling module command:', err);
+    res.status(500).send('Error executing module command');
+  }
 });
 
 /**

@@ -1,4 +1,36 @@
+const Handlebars = require('handlebars');
+const fs = require('fs');
+const path = require('path');
+
 const core = require('../../core/core.js');
+
+/**
+ * index
+ * The home interface for the module.
+ * 
+ * @returns {string} - Compiled HTML content
+ */
+async function index() {
+  const data = {
+    title: "Module 2",
+    content: "This is content for module 2."
+  };
+
+  // Path to your Handlebars template file
+  const templatePath = path.join(__dirname, 'index.hbs');
+  
+  // Read the template file
+  const templateSource = fs.readFileSync(templatePath, 'utf8');
+  
+  // Compile the template
+  const template = Handlebars.compile(templateSource);
+
+  // Generate the HTML by passing the data to the compiled template
+  const html = template(data);
+
+  // Return the HTML
+  return html;
+}
 
 /**
  * writeConfig
@@ -88,6 +120,7 @@ async function longProcess() {
 }
 
 module.exports = {
+  index,
   writeConfig,
   readConfig,
   deleteConfig,
