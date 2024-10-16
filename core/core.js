@@ -1,8 +1,10 @@
+const Handlebars = require('handlebars');
+const fs = require('fs');
+
 // Core Imports
 const { getCallingFolder } = require('./utilities.js');
 const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
 const { writeLog } = require('./log.js');
-
 
 /**
  * Log
@@ -61,9 +63,35 @@ async function deleteConfig(property) {
   }
 }
 
+/**
+ * Render Handlebars Template
+ * 
+ * @param {string} templateName - The name of the modules Handlebars template file
+ * @param {object} data - The data to pass to the Handlebars template
+ */
+function render(templateName, data) {
+  const moduleName = getCallingFolder(new Error().stack);
+  
+  // Path to the Handlebars template file
+  const templatePath = `/app/modules/${moduleName}/${templateName}`;
+  
+  // Read the template file
+  const templateSource = fs.readFileSync(templatePath, 'utf8');
+  
+  // Compile the template
+  const template = Handlebars.compile(templateSource);
+
+  // Generate the HTML by passing the data to the compiled template
+  const html = template(data);
+
+  // Return the HTML
+  return html;
+}
+
 module.exports = {
   log,
   readConfig,
   writeConfig,
   deleteConfig,
+  render,
 };
