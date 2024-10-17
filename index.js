@@ -15,19 +15,30 @@ app.engine("hbs", engine({
 app.set('view engine', 'hbs');
 app.set("views", __dirname);
 
-// Register Partials Manually
-// Register Partials Manually
-const partialsDir = path.join(__dirname, 'views', 'partials');
-fs.readdirSync(partialsDir).forEach(function (filename) {
-  const matches = /^([^.]+).hbs$/.exec(filename);
-  if (matches) {
-    const name = matches[1]; // File name without extension
-    const template = fs.readFileSync(path.join(partialsDir, filename), 'utf8');
-    
-    // Use Handlebars directly to register the partial
-    Handlebars.registerPartial(name, template);
-  }
+// Handlebars Helpers
+Handlebars.registerHelper('json', function(context) {
+  return JSON.stringify(context);
 });
+
+// Register Partials Manually
+const registerPartials = () => {
+  const partialsDir = path.join(__dirname, 'components');
+  
+  // Clear previously cached partials if necessary
+  Handlebars.partials = {};
+
+  fs.readdirSync(partialsDir).forEach(function (filename) {
+    const matches = /^([^.]+).hbs$/.exec(filename);
+    if (matches) {
+      const name = matches[1]; // File name without extension
+      const template = fs.readFileSync(path.join(partialsDir, filename), 'utf8');
+      
+      // Use Handlebars directly to register the partial
+      Handlebars.registerPartial(name, template);
+    }
+  });
+};
+
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
 
@@ -39,6 +50,7 @@ app.use(express.static(path.join(__dirname, "public")));
  * Serve the index.html file from the core directory
  */ 
 app.get("/", (req, res) => {
+  registerPartials();
   const data ={
     user: {
       name: "Dade Murphy",

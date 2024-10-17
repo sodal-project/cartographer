@@ -1,9 +1,7 @@
 const core = require('../../core/core.js');
 
 /**
- * index
- * The main interface for the module.
- * 
+ * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
 async function index() {
@@ -12,10 +10,7 @@ async function index() {
 }
 
 /**
- * writeConfig
- * Write data to the module namespace of MongoDb.
- * Multiple properties can be passed in the data object.
- * 
+ * @description Write merge an object to the module namespace of MongoDb, existing properties will be overwritten.
  * @param {object} formData - The data to write to the config file
  * @returns {string} - Compiled HTML content
  */
@@ -26,9 +21,7 @@ async function writeConfig(formData) {
 }
 
 /**
- * deleteConfig
- * Delete a property from the module namespace in MongoDb.
- * 
+ * @description Delete a property from the module namespace in MongoDb.
  * @param {object} formData - An object with a delete property whose value is the property to delete
  * @returns {string} - Compiled HTML content
  */
