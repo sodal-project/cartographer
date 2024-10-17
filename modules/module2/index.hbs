@@ -1,10 +1,67 @@
-<div class="p-8 text-white">
-  <h1 class="text-white text-xl mb-4">Module 2</h1>
+<div class="p-8">
+  <h1 class="text-white text-xl mb-3">Module 2</h1>
 
   <!-- List all of the passed data object's properties -->
-  <ul class="">
-    {{#each this}}
-      <li><strong>{{@key}}:</strong> {{this}}</li>
-    {{/each}}
-  </ul>
+  <div class="p-8 mb-6" style="max-width: 640px">
+    <ul class="text-white border-t border-gray-700">
+      {{#each this}}
+        <li
+          class="group relative border-b border-gray-800 py-2 flex items-center"
+        >
+          <span class="flex-grow">{{@key}}</span>
+          <span class="text-gray-400">{{this}}</span>
+
+          <!-- Form to delete data from config db -->
+          <div
+            class="absolute -right-8 opacity-0 group-hover:opacity-100 h-full w-8"
+          >
+            <form
+              class="absolute left-1/2 top-1/2 transform -translate-y-1/2"
+              hx-post="/trigger-module"
+              hx-target="closest #main"
+              hx-swap="innerHTML"
+              hx-vals='{"name": "module2", "command": "deleteConfig", "key": "delete", "value": "{{@key}}"}'
+            >
+              <button
+                class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
+                type="submit"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                  <path
+                    fill="currentColor"
+                    d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
+                  />
+                </svg>
+              </button>
+            </form>
+          </div>
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+
+  <!-- Form to post data to config db -->
+  <form
+    class="flex items-end gap-6 rounded-lg p-6 pt-4 border border-gray-700 bg-gray-900"
+    style="max-width: 640px"
+    hx-post="/trigger-module"
+    hx-target="closest #main"
+    hx-swap="innerHTML"
+    hx-vals='{"name": "module2", "command": "writeConfig"}'
+  >
+    <div class="flex-grow">
+      <label class="block text-white text-sm mb-1">Key:</label>
+      <input class="rounded p-1 text-sm w-full" type="text" name="key" />
+    </div>
+    <div class="flex-grow">
+      <label class="block text-white text-sm mb-1">Value:</label>
+      <input class="rounded p-1 text-sm w-full" type="text" name="value" />
+    </div>
+    <button
+      class="bg-indigo-600 p-1 px-6 mt-4 rounded text-white text-sm"
+      type="submit"
+    >
+      Submit
+    </button>
+  </form>
 </div>

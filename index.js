@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require('fs');
+const Handlebars = require('handlebars');
 const path = require('path');
 const { engine } = require('express-handlebars');
 
@@ -6,10 +8,26 @@ const { engine } = require('express-handlebars');
 const app = express();
 
 // Set up Handlebars
-app.engine("hbs", engine({ defaultLayout: false }));
+console.log(path.join(__dirname, 'partials'));
+app.engine("hbs", engine({ 
+  defaultLayout: false,
+}));
 app.set('view engine', 'hbs');
 app.set("views", __dirname);
 
+// Register Partials Manually
+// Register Partials Manually
+const partialsDir = path.join(__dirname, 'views', 'partials');
+fs.readdirSync(partialsDir).forEach(function (filename) {
+  const matches = /^([^.]+).hbs$/.exec(filename);
+  if (matches) {
+    const name = matches[1]; // File name without extension
+    const template = fs.readFileSync(path.join(partialsDir, filename), 'utf8');
+    
+    // Use Handlebars directly to register the partial
+    Handlebars.registerPartial(name, template);
+  }
+});
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
 

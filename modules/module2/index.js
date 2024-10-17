@@ -1,128 +1,45 @@
-const Handlebars = require('handlebars');
-const fs = require('fs');
-const path = require('path');
-
 const core = require('../../core/core.js');
 
 /**
  * index
- * The home interface for the module.
+ * The main interface for the module.
  * 
  * @returns {string} - Compiled HTML content
  */
 async function index() {
-  const data = {
-    title: "Module 2",
-    content: "This is content for module 2."
-  };
-
-  // Path to your Handlebars template file
-  const templatePath = path.join(__dirname, 'index.hbs');
-  
-  // Read the template file
-  const templateSource = fs.readFileSync(templatePath, 'utf8');
-  
-  // Compile the template
-  const template = Handlebars.compile(templateSource);
-
-  // Generate the HTML by passing the data to the compiled template
-  const html = template(data);
-
-  // Return the HTML
-  return html;
+  const data = await core.readConfig();
+  return core.render('index.hbs', data);
 }
 
 /**
  * writeConfig
- * Write data to the module namespace of MongoDb. Multiple
- * properties can be passed in the data object.
+ * Write data to the module namespace of MongoDb.
+ * Multiple properties can be passed in the data object.
  * 
- * @param {object} data - The data to write to the config file
- * @returns {object} - A message string and data object with all properties written
+ * @param {object} formData - The data to write to the config file
+ * @returns {string} - Compiled HTML content
  */
-async function writeConfig(data) {
-  const response = await core.writeConfig(data);
-  const message = response ? 'module 2 wrote config data' : 'module 2 failed to write config data';
-  core.log(message, 'INFO');
-
-  return {
-    messages: message,
-    data: data,
-  }
-}
-
-/**
- * readConfig
- * Read the entire module namespace from MongoDb.
- * 
- * @returns {object} - A message string and an object with all properties in the module namespace
- */
-async function readConfig() {
+async function writeConfig(formData) {
+  const response = await core.writeConfig(formData);
   const data = await core.readConfig();
-  
-  return {
-    messages: 'module 2 read config data',
-    data: data
-  }
+  return core.render('index.hbs', data);
 }
 
 /**
  * deleteConfig
  * Delete a property from the module namespace in MongoDb.
  * 
- * @param {object} data - An object with a delete property whose value is the property to delete
- * @returns {object} - A message string and the data object with the property to delete
+ * @param {object} formData - An object with a delete property whose value is the property to delete
+ * @returns {string} - Compiled HTML content
  */
-async function deleteConfig(data) {
-  const propertyToDelete = data.delete;
-  const response = await core.deleteConfig(propertyToDelete);
-  const message = response ? `module 2 deleted the property ${propertyToDelete}` : `module 2 failed to delete the property ${data.delete}`;
-  core.log(message, 'INFO');
-
-  return {
-    messages: message,
-    data: data
-  }
-}
-
-/**
- * longProcess
- * Start a long running process or report on the status of a long running process.
- * 
- * @param {object} data - An object with a delete property whose value is the property to delete
- * @returns {object} - A message string and the data object with the property to delete
- */
-async function longProcess() {
-  const configData = await core.readConfig();
-
-  // Default to none if no processStatus is set
-  const processStatus = configData.processStatus || 'none'
-
-  let message;
-  if (processStatus === 'none') {
-    await core.writeConfig({ processStatus: 'running' });
-    
-    // Simulate a long running process
-    setTimeout(async () => {
-      await core.writeConfig({ processStatus: 'complete' });
-    }, 15000);
-    message = `A long running process has started`;
-  } else if (processStatus === 'running') {
-    message = `A long running process is running`;
-  } else if (processStatus === 'complete') {
-    await core.writeConfig({ processStatus: 'none' });
-    message = `A long running process is complete`;
-  }
-
-  return {
-    message,
-  }
+async function deleteConfig(formData) {
+  const response = await core.deleteConfig(formData.delete);
+  const data = await core.readConfig();
+  return core.render('index.hbs', data);
 }
 
 module.exports = {
   index,
   writeConfig,
-  readConfig,
   deleteConfig,
-  longProcess,
 };
