@@ -64,6 +64,10 @@ app.get("/", (req, res) => {
         folder: "module2",
         label: "Module 2",
       },
+      {
+        folder: "long-process",
+        label: "Long Process",
+      },
     ]
   }
 

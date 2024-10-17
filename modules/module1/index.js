@@ -1,12 +1,22 @@
 const core = require('../../core/core.js');
 
 /**
+ * @description Fetch data from the config database namespace and render the index.hbs template
+ * @returns {string} - Compiled HTML content
+ */
+async function redraw() {
+  const data = await core.readConfig();
+  return core.render('index.hbs', data);
+}
+
+// PUBLIC
+
+/**
  * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
 async function index() {
-  const data = await core.readConfig();
-  return core.render('index.hbs', data);
+  return redraw();
 }
 
 /**
@@ -16,8 +26,7 @@ async function index() {
  */
 async function writeConfig(formData) {
   const response = await core.writeConfig(formData);
-  const data = await core.readConfig();
-  return core.render('index.hbs', data);
+  return redraw();
 }
 
 /**
@@ -27,8 +36,7 @@ async function writeConfig(formData) {
  */
 async function deleteConfig(formData) {
   const response = await core.deleteConfig(formData.delete);
-  const data = await core.readConfig();
-  return core.render('index.hbs', data);
+  return redraw();
 }
 
 module.exports = {
