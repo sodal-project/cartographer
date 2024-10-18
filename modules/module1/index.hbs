@@ -3,7 +3,7 @@
 
   <!-- List all data stored in the module namespace of the config database -->
   <div class="p-8 mb-6">
-    {{> KeyValueTable this }}
+    {{> KeyValueTable name="module1" data=this}}
   </div>
 
   <!-- Post data to the config database, redraw module on completion -->

@@ -1,5 +1,5 @@
 <ul class="text-white border-t border-gray-700">
-  {{#each this}}
+  {{#each data}}
     <li class="group relative border-b border-gray-800 py-2 flex items-center">
       <span class="flex-grow">{{@key}}</span>
       <span class="text-gray-400">{{this}}</span>
@@ -13,7 +13,7 @@
           hx-post="/trigger-module"
           hx-target="closest #main"
           hx-swap="innerHTML"
-          hx-vals='{"name": "module1", "command": "deleteConfig", "key": "delete", "value": "{{@key}}"}'
+          hx-vals='{"name": "{{../name}}", "command": "deleteConfig", "key": "delete", "value": "{{@key}}"}'
         >
           <button
             class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
