@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require('fs');
+const Handlebars = require('handlebars');
 const path = require('path');
 const { engine } = require('express-handlebars');
 
@@ -6,9 +8,36 @@ const { engine } = require('express-handlebars');
 const app = express();
 
 // Set up Handlebars
-app.engine("hbs", engine({ defaultLayout: false }));
+console.log(path.join(__dirname, 'partials'));
+app.engine("hbs", engine({ 
+  defaultLayout: false,
+}));
 app.set('view engine', 'hbs');
 app.set("views", __dirname);
+
+// Handlebars Helpers
+Handlebars.registerHelper('json', function(context) {
+  return JSON.stringify(context);
+});
+
+// Register Partials Manually
+const registerPartials = () => {
+  const partialsDir = path.join(__dirname, 'components');
+  
+  // Clear previously cached partials if necessary
+  Handlebars.partials = {};
+
+  fs.readdirSync(partialsDir).forEach(function (filename) {
+    const matches = /^([^.]+).hbs$/.exec(filename);
+    if (matches) {
+      const name = matches[1]; // File name without extension
+      const template = fs.readFileSync(path.join(partialsDir, filename), 'utf8');
+      
+      // Use Handlebars directly to register the partial
+      Handlebars.registerPartial(name, template);
+    }
+  });
+};
 
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
@@ -21,6 +50,7 @@ app.use(express.static(path.join(__dirname, "public")));
  * Serve the index.html file from the core directory
  */ 
 app.get("/", (req, res) => {
+  registerPartials();
   const data ={
     user: {
       name: "Dade Murphy",
@@ -38,14 +68,27 @@ app.get("/", (req, res) => {
         folder: "long-process",
         label: "Long Process",
       },
-      {
-        folder: "another-module",
-        label: "Another Module",
-      },
     ]
   }
 
   res.render("core/index", data); 
+});
+
+app.get('/module', async (req, res) => {
+  const { name, command } = req.query;
+  const modulePath = path.resolve('modules', name, 'index.js');
+  const module = require(modulePath);
+
+  try {
+    // Call the module function and wait for the response
+    const moduleResponse = await module[command]();
+
+    // Send the response back to the client
+    res.send(moduleResponse);
+  } catch (err) {
+    console.error('Error calling module command:', err);
+    res.status(500).send('Error executing module command');
+  }
 });
 
 /**

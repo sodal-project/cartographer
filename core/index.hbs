@@ -16,6 +16,12 @@
       defer
     ></script>
 
+    <!-- HTMX -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.12/dist/htmx.min.js"
+      defer
+    ></script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,7 +33,7 @@
     <!-- Main JS -->
     <script src="/js/main.js" defer></script>
 
-    <!-- Custom Styles -->
+    <!-- Styles -->
     <link href="/css/main.css" rel="stylesheet" />
   </head>
   <body class="poppins-regular" style="background: #080c15">
@@ -55,7 +61,7 @@
 
         <!-- Tabs -->
         <div
-          x-data="{ mode: 'operator', admin: 'admin', operator: 'operator' }"
+          x-data="{ mode: 'operator' }"
           class="flex bg-black bg-opacity-30 border border-gray-800 p-1 rounded text-white"
         >
           <button
@@ -78,15 +84,21 @@
           <ul role="list" class="flex flex-1 flex-col gap-y-7">
             <!-- Module List -->
             <li>
-              <ul role="list" class="mx-2 space-y-1">
+              <ul role="list" class="space-y-1" x-data="{ current: '' }">
                 {{#each modules}}
-                  <li>
-                    <a
-                      href="{{folder}}"
-                      class="group flex gap-x-3 rounded-md bg-gray-800 p-2 pl-3 text-sm font-semibold leading-6 text-white"
-                    >
+                  <li
+                    @click="current='{{folder}}'"
+                    hx-get="/module?name={{folder}}&command=index"
+                    hx-target="#main"
+                    class="relative border-transparent group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-white hover:bg-gray-800"
+                  >
+                    <span
+                      class="bg-indigo-600 h-full w-1.5 absolute -left-4 top-0 z-2"
+                      x-show="current === '{{folder}}'"
+                    ></span>
+                    <span class="">
                       {{label}}
-                    </a>
+                    </span>
                   </li>
                 {{/each}}
               </ul>
@@ -171,41 +183,6 @@
     </div>
 
     <!-- Module Content -->
-    <main class="pl-72">
-      <div class="p-8">
-        <h1 class="text-sans text-3xl text-white mb-10">Cartographer</h1>
-        <p>{{message}}</p>
-        <form action="/trigger-module" method="POST">
-          <div class="mb-5">
-            <select name="name" class="w-48 rounded p-1 text-sm">
-              <option value="module1">Module 1</option>
-              <option value="module2">Module 2</option>
-            </select>
-          </div>
-          <div class="mb-8">
-            <select name="command" class="w-48 rounded p-1 text-sm">
-              <option value="readConfig">readConfig</option>
-              <option value="writeConfig">writeConfig</option>
-              <option value="deleteConfig">deleteConfig</option>
-              <option value="longProcess">longProcess</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="block text-white mb-1">Key:</label>
-            <input class="w-48 rounded p-1 text-sm" type="text" name="key" />
-          </div>
-          <div class="mb-12">
-            <label class="block text-white mb-1 text-sm">Value:</label>
-            <input class="w-48 rounded p-1 text-sm" type="text" name="value" />
-          </div>
-          <button
-            class="bg-indigo-600 py-1 px-6 rounded text-white text-sm"
-            type="submit"
-          >
-            Submit
-          </button>
-        </form>
-      </div>
-    </main>
+    <main class="pl-72" id="main"></main>
   </body>
 </html>

@@ -1,0 +1,24 @@
+<div class="p-8" style="max-width: 640px">
+  {{> Headline title="Long Process" }}
+  
+  <!-- Form to start process -->
+  {{#> Card }}
+  <form
+    class="flex items-end gap-6 mb-0"
+    hx-post="/trigger-module"
+    hx-target="closest #main"
+    hx-swap="innerHTML"
+    hx-vals='{"name": "long-process", "command": "longProcess"}'
+  >
+    <button
+      class="bg-indigo-600 p-1 px-6 rounded text-white text-sm"
+      type="submit"
+    >
+      Start Process
+    </button>
+    <div>
+      <p class="text-white">{{status}}</p>
+    </div>
+  </form>
+  {{/Card}}
+</div>

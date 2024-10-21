@@ -1,0 +1,23 @@
+<div class="p-8" style="max-width: 640px">
+  {{> Headline title="Module 1" }}
+
+  <!-- List all data stored in the module namespace of the config database -->
+  <div class="p-8 mb-6">
+    {{> KeyValueTable name="module1" data=this}}
+  </div>
+
+  <!-- Post data to the config database, redraw module on completion -->
+  {{#> Card }}
+    <form
+      class="flex items-end gap-6 mb-0"
+      hx-post="/trigger-module"
+      hx-target="closest #main"
+      hx-swap="innerHTML"
+      hx-vals='{"name": "module1", "command": "writeConfig"}'
+    >
+      {{> FormText label="Key" name="key" }}
+      {{> FormText label="Value" name="value" }}
+      {{> FormSubmit label="Add" }}
+    </form>
+  {{/Card}}
+</div>
