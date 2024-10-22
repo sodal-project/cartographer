@@ -88,7 +88,7 @@
                 {{#each modules}}
                   <li
                     @click="current='{{folder}}'"
-                    hx-get="/module?name={{folder}}&command=index"
+                    hx-get="/mod/{{folder}}/index/"
                     hx-target="#main"
                     hx-push-url="?name={{folder}}&command=index"
                     class="relative border-transparent group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-white hover:bg-gray-800"

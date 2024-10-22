@@ -10,10 +10,10 @@
       >
         <form
           class="absolute left-1/2 top-1/2 transform -translate-y-1/2"
-          hx-post="/trigger-module"
+          hx-post="/mod/{{../name}}/deleteConfig/"
           hx-target="closest #main"
           hx-swap="innerHTML"
-          hx-vals='{"name": "{{../name}}", "command": "deleteConfig", "key": "delete", "value": "{{@key}}"}'
+          hx-vals='{"value": "{{@key}}"}'
         >
           <button
             class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"

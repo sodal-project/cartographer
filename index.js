@@ -87,9 +87,14 @@ app.get("/", async (req, res) => {
   res.render("core/index", data); 
 });
 
-app.get('/module', async (req, res) => {
-  const { name, command } = req.query;
-  const modulePath = path.resolve('modules', name, 'index.js');
+/**
+ * Get Module Function
+ * Accept a Get request from the client and call the appropriate module function
+ * Return the response to the client
+ */
+app.get('/mod/:moduleName/:command', async (req, res) => {
+  const { moduleName, command } = req.params;
+  const modulePath = path.resolve('modules', moduleName, 'index.js');
   const module = require(modulePath);
 
   try {
@@ -105,26 +110,17 @@ app.get('/module', async (req, res) => {
 });
 
 /**
- * Trigger a module
- * Accept a POST request from the client and call the appropriate module function
+ * Post Module Function
+ * Accept a POST request from the client and call the appropriate module function passing the data
+ * Return the response to the client
  */ 
-app.post("/trigger-module", async (req, res) => {
-  // Get the name of the module and command (function) to call
-  const { name, command, key, value } = req.body;
+app.post('/mod/:moduleName/:command', async (req, res) => {
+  const { moduleName, command } = req.params;
+  const modulePath = path.resolve('modules', moduleName, 'index.js');
+  const module = require(modulePath);
   
   // Set Data
-  //
-  // TODO: We need a more flexible way to pass data module functions
-  // for now we are just passing a single key-value. This should be updated
-  // to allow for multiple key-value pairs.
-  const data = {};
-  if (key) {
-    data[key.toLowerCase()] = value || "";
-  }
-
-  // Load the module
-  const modulePath = path.resolve('modules', name, 'index.js');
-  const module = require(modulePath);
+  const data = req.body;
 
   try {
     // Call the module function and wait for the response
