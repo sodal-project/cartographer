@@ -90,6 +90,7 @@
                     @click="current='{{folder}}'"
                     hx-get="/module?name={{folder}}&command=index"
                     hx-target="#main"
+                    hx-push-url="?name={{folder}}&command=index"
                     class="relative border-transparent group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-white hover:bg-gray-800"
                   >
                     <span
@@ -183,6 +184,6 @@
     </div>
 
     <!-- Module Content -->
-    <main class="pl-72" id="main"></main>
+    <main class="pl-72" id="main">{{{main}}}</main>
   </body>
 </html>
