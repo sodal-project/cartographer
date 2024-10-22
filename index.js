@@ -45,46 +45,35 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware to serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
 
+// Core Data - this will live in the config database eventually
+const coreData = {
+  user: {
+    name: "Dade Murphy",
+  },
+  modules: [
+    {
+      folder: "module1",
+      label: "Module 1",
+    },
+    {
+      folder: "module2",
+      label: "Module 2",
+    },
+    {
+      folder: "long-process",
+      label: "Long Process",
+    },
+  ]
+}
+
 /**
  * Root
- * Serve the index.html file from the core directory
+ * Serve the index.html file with no module loaded
  */ 
 app.get("/", async (req, res) => {
   registerPartials();
-  const data ={
-    user: {
-      name: "Dade Murphy",
-    },
-    modules: [
-      {
-        folder: "module1",
-        label: "Module 1",
-      },
-      {
-        folder: "module2",
-        label: "Module 2",
-      },
-      {
-        folder: "long-process",
-        label: "Long Process",
-      },
-    ]
-  }
-  const { name, command } = req.query;
-
-  if (name && command) {
-    const modulePath = path.resolve('modules', name, 'index.js');
-    const module = require(modulePath);
-    try {
-      const moduleResponse = await module[command]();
-      data.main = moduleResponse
-    } catch (err) {
-      console.error('Error calling module command:', err);
-      res.status(500).send('Error executing module command');
-    }
-  }
   
-  res.render("core/index", data); 
+  res.render("core/index", coreData); 
 });
 
 /**
@@ -132,6 +121,28 @@ app.post('/mod/:moduleName/:command', async (req, res) => {
     console.error('Error calling module command:', err);
     res.status(500).send('Error executing module command');
   }
+});
+
+/**
+ * Draw the root view with a module loaded
+ */ 
+app.get("/:moduleName/:command", async (req, res) => {
+  registerPartials();
+  const { moduleName, command } = req.params;
+
+  if (moduleName && command) {
+    const modulePath = path.resolve('modules', moduleName, 'index.js');
+    const module = require(modulePath);
+    try {
+      const moduleResponse = await module[command]();
+      data.main = moduleResponse
+    } catch (err) {
+      console.error('Error calling module command:', err);
+      res.status(500).send('Error executing module command');
+    }
+  }
+  
+  res.render("core/index", coreData); 
 });
 
 app.listen(3000, () => {
