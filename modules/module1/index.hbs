@@ -10,10 +10,9 @@
   {{#> Card }}
     <form
       class="flex items-end gap-6 mb-0"
-      hx-post="/trigger-module"
+      hx-post="/mod/module1/writeConfig/"
       hx-target="closest #main"
       hx-swap="innerHTML"
-      hx-vals='{"name": "module1", "command": "writeConfig"}'
     >
       {{> FormText label="Key" name="key" }}
       {{> FormText label="Value" name="value" }}

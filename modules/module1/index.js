@@ -25,7 +25,10 @@ async function index() {
  * @returns {string} - Compiled HTML content
  */
 async function writeConfig(formData) {
-  const response = await core.writeConfig(formData);
+  const newProperty = {
+    [formData.key]: formData.value,
+  };
+  const response = await core.writeConfig(newProperty);
   return redraw();
 }
 
@@ -35,7 +38,7 @@ async function writeConfig(formData) {
  * @returns {string} - Compiled HTML content
  */
 async function deleteConfig(formData) {
-  const response = await core.deleteConfig(formData.delete);
+  const response = await core.deleteConfig(formData.value);
   return redraw();
 }
 

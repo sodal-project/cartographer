@@ -84,13 +84,13 @@
           <ul role="list" class="flex flex-1 flex-col gap-y-7">
             <!-- Module List -->
             <li>
-              <ul role="list" class="space-y-1" x-data="{ current: '' }">
+              <ul role="list" class="space-y-1" x-data="{ current: '{{currentModule}}' }">
                 {{#each modules}}
                   <li
                     @click="current='{{folder}}'"
-                    hx-get="/module?name={{folder}}&command=index"
+                    hx-get="/mod/{{folder}}/index/"
                     hx-target="#main"
-                    hx-push-url="?name={{folder}}&command=index"
+                    hx-push-url="/{{folder}}/index/"
                     class="relative border-transparent group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-white hover:bg-gray-800"
                   >
                     <span
