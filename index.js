@@ -49,7 +49,7 @@ app.use(express.static(path.join(__dirname, "public")));
  * Root
  * Serve the index.html file from the core directory
  */ 
-app.get("/", (req, res) => {
+app.get("/", async (req, res) => {
   registerPartials();
   const data ={
     user: {
@@ -70,7 +70,20 @@ app.get("/", (req, res) => {
       },
     ]
   }
+  const { name, command } = req.query;
 
+  if (name && command) {
+    const modulePath = path.resolve('modules', name, 'index.js');
+    const module = require(modulePath);
+    try {
+      const moduleResponse = await module[command]();
+      data.main = moduleResponse
+    } catch (err) {
+      console.error('Error calling module command:', err);
+      res.status(500).send('Error executing module command');
+    }
+  }
+  
   res.render("core/index", data); 
 });
 
