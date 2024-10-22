@@ -1,0 +1,19 @@
+<div class="p-8" style="max-width: 640px">
+  {{> Headline title="Slack Integration" }}
+
+  <!-- Post data to the config database, redraw module on completion -->
+  {{#> Card }}
+    <form
+      class="mb-0"
+      hx-post="/trigger-module"
+      hx-target="closest #main"
+      hx-swap="innerHTML"
+      hx-vals='{"moduleName": "slack-integration", "command": "addInstance"}'
+    >
+      <div class="mb-4">{{> FormText label="Instance Name" name="name" }}</div>
+      <div class="mb-4">{{> FormText label="Slack Team ID" name="teamId" }}</div>
+      <div class="mb-4">{{> FormText label="Slack Token" name="token" }}</div>
+      {{> FormSubmit label="Add" }}
+    </form>
+  {{/Card}}
+</div>
