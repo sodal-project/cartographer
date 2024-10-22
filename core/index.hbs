@@ -39,7 +39,7 @@
   <body class="poppins-regular" style="background: #080c15">
     <!-- Sidebar -->
     <div
-      class="fixed inset-y-0 z-50 flex w-72 flex-col border-r border-gray-800"
+      class="fixed inset-y-0 z-10 flex w-72 flex-col border-r border-gray-800"
     >
       <div
         class="flex grow flex-col gap-y-5 overflow-y-auto h-full bg-gray-900 px-4 pb-4"
@@ -184,6 +184,18 @@
     </div>
 
     <!-- Module Content -->
-    <main class="pl-72" id="main">{{{main}}}</main>
+    <main id="main" class="pl-72 min-h-full">
+      {{{main}}}
+    </main>
+
+    <!-- Loading Spinner -->
+    <div
+      id="spinner"
+      class="fixed inset-0 z-20 bg-black bg-opacity-70"
+      style="visibility: hidden; backdrop-filter: blur(5px)"
+    >
+      {{> LoadingSpinner}}
+    </div>
+
   </body>
 </html>
