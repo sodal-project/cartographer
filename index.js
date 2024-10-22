@@ -8,7 +8,6 @@ const { engine } = require('express-handlebars');
 const app = express();
 
 // Set up Handlebars
-console.log(path.join(__dirname, 'partials'));
 app.engine("hbs", engine({ 
   defaultLayout: false,
 }));
@@ -50,6 +49,8 @@ const coreData = {
   user: {
     name: "Dade Murphy",
   },
+  main: '',
+  currentModule: 'none',
   modules: [
     {
       folder: "module1",
@@ -71,7 +72,7 @@ const coreData = {
  * Serve the index.html file with no module loaded
  */ 
 app.get("/", async (req, res) => {
-  const data = {...coreData, main: ''};
+  const data = {...coreData};
   registerPartials();
   res.render("core/index", data); 
 });
@@ -128,7 +129,7 @@ app.post('/mod/:moduleName/:command', async (req, res) => {
  */ 
 app.get("/:moduleName/:command", async (req, res) => {
   const { moduleName, command } = req.params;
-  const data = {...coreData};
+  const data = {...coreData, currentModule: moduleName };
   
   registerPartials();
 

@@ -84,7 +84,7 @@
           <ul role="list" class="flex flex-1 flex-col gap-y-7">
             <!-- Module List -->
             <li>
-              <ul role="list" class="space-y-1" x-data="{ current: '' }">
+              <ul role="list" class="space-y-1" x-data="{ current: '{{currentModule}}' }">
                 {{#each modules}}
                   <li
                     @click="current='{{folder}}'"
