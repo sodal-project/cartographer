@@ -71,9 +71,9 @@ const coreData = {
  * Serve the index.html file with no module loaded
  */ 
 app.get("/", async (req, res) => {
+  const data = {...coreData, main: ''};
   registerPartials();
-  
-  res.render("core/index", coreData); 
+  res.render("core/index", data); 
 });
 
 /**
@@ -127,9 +127,12 @@ app.post('/mod/:moduleName/:command', async (req, res) => {
  * Draw the root view with a module loaded
  */ 
 app.get("/:moduleName/:command", async (req, res) => {
-  registerPartials();
   const { moduleName, command } = req.params;
+  const data = {...coreData};
+  
+  registerPartials();
 
+  // Call the module function and set the response in the main attribute
   if (moduleName && command) {
     const modulePath = path.resolve('modules', moduleName, 'index.js');
     const module = require(modulePath);
@@ -142,7 +145,7 @@ app.get("/:moduleName/:command", async (req, res) => {
     }
   }
   
-  res.render("core/index", coreData); 
+  res.render("core/index", data); 
 });
 
 app.listen(3000, () => {
