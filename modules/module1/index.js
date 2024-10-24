@@ -43,6 +43,7 @@ async function deleteConfig(formData) {
 }
 
 module.exports = {
+  init: function() { console.log('Module1 initialized'); },
   index,
   writeConfig,
   deleteConfig,
