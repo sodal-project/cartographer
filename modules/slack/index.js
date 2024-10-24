@@ -1,4 +1,5 @@
 const core = require('../../core/core.js');
+const slack = require('./slack.js');
 
 /**
  * @description Fetch data from the config database namespace and render the index.hbs template
@@ -37,7 +38,33 @@ async function addInstance(formData) {
   return redraw();
 }
 
+async function deleteInstance(formData) {
+  const configData = await core.readConfig();
+  const instances = configData?.instances || [];
+
+  const updatedInstances = instances.filter(instance => instance.teamId !== formData.teamId);
+
+  await core.writeConfig({ instances: updatedInstances });
+
+  return redraw();
+}
+
+async function merge(formData) {
+  const configData = await core.readConfig();
+  const instances = configData?.instances || [];
+
+  const instance = instances.find(instance => instance.teamId === formData.teamId);
+
+  console.log('Merging instance:', instance);
+
+  const response = await slack.merge(instance);
+  return redraw();
+}
+
 module.exports = {
   index,
-  addInstance
+  addInstance,
+  deleteInstance,
+  merge: merge,
+  init: slack.init,
 };

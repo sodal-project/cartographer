@@ -1,9 +1,7 @@
-const {cache} = require('../utils/cache');
-const CC = require('./constants');
 const check = require('./check');
 const connector = require('./graphConnector');
 
-/* Fix: enable automatic pagination
+/* TODO: enable automatic pagination
 
 optionalParams.page = optionalParams.page || 1;
 const pageSize = optionalParams?.pageSize || 1500;
@@ -21,13 +19,6 @@ const defaultPageParams = {
   orderBy: "upn",
   orderByDirection: "ASC",
 }
-
-const defaultAccessLevels = [
-  CC.LEVEL.ALIAS,
-  CC.LEVEL.ADMIN,
-  CC.LEVEL.MANAGE,
-  CC.LEVEL.ACT_AS,
-]
 
 //
 // Public

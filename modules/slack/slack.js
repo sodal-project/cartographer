@@ -1,6 +1,5 @@
 const {WebClient} = require('@slack/web-api');
-const {cache} = require('../utils/cache');
-const core = require('./core');
+const core = require('../../core/core');
 
 async function merge(slackAuthInstance){
   try {
@@ -15,7 +14,7 @@ async function merge(slackAuthInstance){
 
     console.log(`Processing ${slackTeamFriendlyName}`);
     const allPersonas = await getInstancePersonas(slackAuthInstance);
-    await cache.save(`allPersonas-${slackTeamId}`, allPersonas);
+    await core.cache.save(`allPersonas-${slackTeamId}`, allPersonas);
 
     //
     // update graph from remote store
@@ -399,7 +398,7 @@ const loadCached = async (func, client, teamId, itemId) => {
     cacheName += "-" + itemId;
   }
 
-  const cacheElements = await cache.load(cacheName);
+  const cacheElements = await core.cache.load(cacheName);
   let elements = [];
   
   if(cacheElements){
@@ -408,7 +407,7 @@ const loadCached = async (func, client, teamId, itemId) => {
   } else {
     console.log(`Calling remote API for ${cacheName}`)
     elements = await func(client, itemId);
-    await cache.save(cacheName, elements);
+    await core.cache.save(cacheName, elements);
   }
   return elements;
 }

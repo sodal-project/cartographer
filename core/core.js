@@ -1,3 +1,4 @@
+const path = require('path');
 const Handlebars = require('handlebars');
 const fs = require('fs');
 
@@ -5,6 +6,154 @@ const fs = require('fs');
 const { getCallingFolder } = require('./utilities.js');
 const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
 const { writeLog } = require('./log.js');
+
+// Core Namespaced Calls
+const namespaces = {
+  cache: require('./cache.js'),
+  check: require('./check.js'),
+  constants: require('./constants.js'),
+  graph: require('./graph.js'),
+  persona: require('./persona.js'),
+  sourceStore: require('./sourceStore.js'),
+};
+
+// Core External Module Calls
+// In future, this will be moved to the configuration database
+const externalModules = {
+  module1: () => require('../modules/module1/index.js'),
+  module2: () => require('../modules/module2/index.js'),
+  "long-process": () => require('../modules/long-process/index.js'),
+  "slack": () => require('../modules/slack/index.js'),
+  // csv: () => require('../modules/csv/index.js'),
+}
+// Core Data - this will live in the config database eventually
+const coreData = {
+  user: {
+    name: "Dade Murphy",
+  },
+  main: '',
+  currentModule: 'none',
+  modules: [
+    {
+      folder: "module1",
+      label: "Module 1",
+    },
+    {
+      folder: "module2",
+      label: "Module 2",
+    },
+    {
+      folder: "long-process",
+      label: "Long Process",
+    },
+    {
+      folder: "slack",
+      label: "Slack Integration",
+    },
+  ]
+}
+
+// A private object to store the raw calls made through core
+const calls = {};
+
+//
+// Private Functions
+//
+
+/**
+ * Initialize Core Namespaces
+ */
+function initNamespaces() {
+
+  for(const module in namespaces) {
+    calls[module] = namespaces[module]
+    core[module] = {};
+
+    console.log("Core: loading internal module: ", module)
+
+    for(const call in calls[module]) {
+      if(call === 'default') { continue; }
+
+      if(typeof calls[module][call] === 'function') {
+        console.log(`Core: adding function: core.${module}.${call}`)
+        core[module][call] = (...params) => {
+
+          console.log(`Core: calling function: ${call} from ${module}`)
+          
+          return calls[module][call](...params);
+        }
+      } else {
+        console.log(`Core: adding object: core.${module}.${call}`)
+        core[module][call] = calls[module][call];
+      }
+    }
+  }
+}
+
+/**
+ * Initialize External Modules
+ */
+async function initModules() {
+  // 
+  // load external module calls to core.mod
+  // 
+  for(const module in externalModules) {
+    calls[module] = await externalModules[module]()
+    core.mod[module] = {};
+
+    console.log("Core: loading external module: ", module)
+
+    for(const call in calls[module]) {
+      if(call === 'default') { 
+        continue; 
+      } else if(call === 'init') {
+        await calls[module][call]();
+        continue;
+      } else {
+        if(typeof calls[module][call] === 'function') {
+          console.log(`Core: adding function: core.mod.${module}.${call}`)
+          core.mod[module][call] = (...params) => {
+            console.log(`Core: calling function: ${call} from ${module}`)
+            return calls[module][call](...params);
+          }
+        } else {
+          console.log(`Core: adding object: core.mod.${module}.${call}`)
+          core.mod[module][call] = calls[module][call];
+        }
+      }
+    }
+  }
+}
+
+//
+// Core Public Functions
+//
+
+/**
+ * Initialize Core
+ * 
+ * @returns {object} - The core object
+ */
+async function init() {
+  if(core.ready) { 
+    return core; 
+  }
+
+  // Initialize core's namespaced internal calls
+  initNamespaces();
+
+  // Initialize core's external module calls
+  await initModules();
+
+  //
+  // finalize core and freeze
+  //
+  core.ready = true;
+  Object.freeze(core);
+  console.log(`Core frozen status: ${Object.isFrozen(core)}`)
+  console.log("Core: initialized")
+  return core;
+}
 
 /**
  * Log
@@ -88,10 +237,17 @@ function render(templateName, data) {
   return html;
 }
 
-module.exports = {
+// Core object to export
+const core = {
+  ready: false,
+  mod: {},
+  coreData,
   log,
+  render,
   readConfig,
   writeConfig,
   deleteConfig,
-  render,
+  init,
 };
+
+module.exports = core;

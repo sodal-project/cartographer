@@ -4,16 +4,19 @@
   "description": "Cartographer Core Server facilitates communication between modules and provides data and interface strings to the client.",
   "main": "index.js",
   "scripts": {
-    "start": "if [ \"$ENV\" = \"DEV\" ]; then nodemon index.js; else node index.js; fi",
+    "start": "if [ \"$ENV\" = \"DEV\" ]; then npm install && nodemon index.js; else node index.js; fi",
     "test": "test"
   },
   "author": "Sodal",
   "license": "MIT",
   "dependencies": {
+    "@slack/web-api": "^7.7.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-handlebars": "^8.0.1",
     "mongodb": "^6.9.0",
-    "nodemon": "^3.1.7"
+    "neo4j-driver": "^5.26.0",
+    "nodemon": "^3.1.7",
+    "slack-integration": "file:modules/slack-integration"
   }
 }
