@@ -1,4 +1,3 @@
-const path = require('path');
 const Handlebars = require('handlebars');
 const fs = require('fs');
 
@@ -60,26 +59,29 @@ const calls = {};
  */
 function initNamespaces() {
 
-  for(const module in namespaces) {
-    calls[module] = namespaces[module]
-    core[module] = {};
+  for(const namespace in namespaces) {
+    calls[namespace] = namespaces[namespace]
+    core[namespace] = {};
 
-    console.log("Core: loading internal module: ", module)
+    console.log("Core: loading internal module: ", namespace)
 
-    for(const call in calls[module]) {
+    for(const call in calls[namespace]) {
       if(call === 'default') { continue; }
 
-      if(typeof calls[module][call] === 'function') {
-        console.log(`Core: adding function: core.${module}.${call}`)
-        core[module][call] = (...params) => {
-
-          console.log(`Core: calling function: ${call} from ${module}`)
-          
-          return calls[module][call](...params);
+      if(typeof calls[namespace][call] === 'function') {
+        console.log(`Core: adding function: core.${namespace}.${call}`)
+        core[namespace][call] = (...params) => {
+          const moduleName = getCallingFolder(new Error().stack)
+          console.log(`Calling core.${namespace}.${call} from ${moduleName}`) 
+          if(namespace === 'cache') {
+            return calls[namespace][call](moduleName, ...params);
+          } else {
+            return calls[namespace][call](...params);
+          }    
         }
       } else {
-        console.log(`Core: adding object: core.${module}.${call}`)
-        core[module][call] = calls[module][call];
+        console.log(`Core: adding object: core.${namespace}.${call}`)
+        core[namespace][call] = calls[namespace][call];
       }
     }
   }
@@ -111,9 +113,11 @@ async function initModules(moduleArray) {
         if(typeof calls[module][call] === 'function') {
           console.log(`Core: adding function: core.mod.${module}.${call}`)
           core.mod[module][call] = (...params) => {
-            console.log(`Core: calling function: ${call} from ${module}`)
+            const moduleName = getCallingFolder(new Error().stack);
+            console.log(`Core: calling function: ${module}.${call} from ${moduleName}`)
             return calls[module][call](...params);
           }
+          Object.defineProperty(core.mod[module][call], 'name', { value: `core.mod.${module}.${call}` });
         } else {
           console.log(`Core: adding object: core.mod.${module}.${call}`)
           core.mod[module][call] = calls[module][call];

@@ -8,9 +8,13 @@ const path = require('path');
  * @returns {string} The name of the calling folder
  */ 
 function getCallingFolder(stack) {
-  const callerFile = stack.split('\n')[2].trim().match(/\((.*):\d+:\d+\)/)[1];
-  const folderName = path.basename(path.dirname(callerFile));
-  return folderName;
+  try {
+    const callerFile = stack.split('\n')[2].trim().match(/\((.*):\d+:\d+\)/)[1];
+    const folderName = path.basename(path.dirname(callerFile));
+    return folderName;
+  } catch (err) {
+    return "client";
+  }
 }
 
 /**

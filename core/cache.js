@@ -2,11 +2,10 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const localPath = './data/';
-const defaultDir = 'cache';
 
-const save = async (saveName, jsonObjectOutput, rootDir = defaultDir) => {
+const save = async (moduleName, saveName, jsonObjectOutput) => {
   try {
-    const savePathString = localPath + rootDir + '/' + saveName + '.json';
+    const savePathString = localPath + moduleName + '-' + saveName + '.json';
     const savePath = path.join(process.cwd(), savePathString);
     await fs.writeFile(savePath, JSON.stringify(jsonObjectOutput, false, 4));
   } catch (err) {
@@ -16,9 +15,9 @@ const save = async (saveName, jsonObjectOutput, rootDir = defaultDir) => {
   } 
 }
 
-const load = async (loadName, rootDir = defaultDir) => {
+const load = async (moduleName, loadName) => {
   try {
-    const loadPathString = localPath + rootDir + '/' + loadName + '.json';
+    const loadPathString = localPath + moduleName + '-' + loadName + '.json';
     const loadPath = path.join(process.cwd(), loadPathString);
     const content = await fs.readFile(loadPath);
     return JSON.parse(content);
