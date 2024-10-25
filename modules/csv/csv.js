@@ -1,6 +1,6 @@
 const path = require('path');
 const csvtojson = require('csvtojson');
-const core = require('./core');
+const core = require('../../core/core');
 
 const merge = async (instance) => {
   try {
