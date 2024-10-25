@@ -1,8 +1,46 @@
 const express = require("express");
 const fs = require('fs');
 const Handlebars = require('handlebars');
-const path = require('path');
 const { engine } = require('express-handlebars');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+// Temp data storage
+let refreshTokens = [];
+let users = [];
+const posts = [
+  {
+    username: 'Kyle',
+    title: 'Post 1'
+  },
+  {
+    username: 'Jim',
+    title: 'Post 2'
+  }
+];
+const coreData = {
+  user: {
+    name: "Dade Murphy",
+  },
+  main: '',
+  currentModule: 'none',
+  modules: [
+    {
+      folder: "module1",
+      label: "Module 1",
+    },
+    {
+      folder: "module2",
+      label: "Module 2",
+    },
+    {
+      folder: "long-process",
+      label: "Long Process",
+    },
+  ]
+}
 
 // Create an Express application
 const app = express();
@@ -41,41 +79,177 @@ const registerPartials = () => {
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+// Middleware to access cookies
+app.use(cookieParser());
+
 // Middleware to serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, "public")));
 
-// Core Data - this will live in the config database eventually
-const coreData = {
-  user: {
-    name: "Dade Murphy",
-  },
-  main: '',
-  currentModule: 'none',
-  modules: [
-    {
-      folder: "module1",
-      label: "Module 1",
-    },
-    {
-      folder: "module2",
-      label: "Module 2",
-    },
-    {
-      folder: "long-process",
-      label: "Long Process",
-    },
-  ]
+// Authenticate Token Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  
+  console.log('Cookies:', req.cookies);
+  
+  // Check both headers and cookies
+  const token = authHeader?.split(' ')[1] || req.cookies['access_token'];
+
+  // Check if we have a token
+  if (token == null) {
+    return res.status(401).json({ message: 'Access token missing' });
+  }
+
+  // Verify the token
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    
+    // We have a valid token
+    req.user = user;
+    next();
+  });
 }
+
+// Generate an access token
+function generateAccessToken(user) {
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
+}
+
+/**
+ * Temp posts endpoint
+ */
+app.get("/posts", authenticateToken, (req, res) => {
+  res.json(posts);
+});
 
 /**
  * Root
  * Serve the index.html file with no module loaded
  */ 
+// app.get("/", authenticateToken, async (req, res) => {
 app.get("/", async (req, res) => {
   const data = {...coreData};
   registerPartials();
   res.render("core/index", data); 
 });
+
+/**
+ * Login Forn
+ */ 
+app.get("/login", async (req, res) => {
+  registerPartials();
+  res.render("core/login"); 
+});
+
+/**
+ * Login and return tokens
+ */
+app.post("/login", async (req, res) => {
+  // Find the user in the database
+  const user = users.find(user => user.email === req.body.email);
+  
+  // No user found
+  if (user == null) {
+    return res.status(400).json({ message: 'Cannot find user' });
+  }
+
+  // Check if the user's password is valid
+  try {
+    const isValidPassword = await bcrypt.compare(req.body.password, user.password);
+    if (!isValidPassword) {
+      return res.status(403).json({ message: 'Invalid password' });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+
+  // Generate tokens for the user
+  const userData = { name: user.name, email: user.email };
+  const accessToken = generateAccessToken(userData);
+  const refreshToken = jwt.sign(userData, process.env.REFRESH_TOKEN_SECRET);
+
+  // Save the refresh token (You should store this in the DB)
+  refreshTokens.push(refreshToken);
+  
+  // Set the access token in an HTTP-only cookie
+  res.cookie('access_token', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Send cookies only over HTTPS in production
+    sameSite: 'Strict' // Protect against CSRF attacks
+  });
+
+  // Set the refresh token in another HTTP-only cookie
+  res.cookie('refresh_token', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict'
+  });
+
+  // Return success response
+  return res.status(200).json({ message: 'Login successful' });
+});
+
+/**
+ * Logout and destroy the refresh token
+ */
+app.delete("/logout", async (req, res) => {
+  refreshTokens = refreshTokens.filter(token => token !== req.body.token);
+  res.sendStatus(204);
+});
+
+/**
+ * Refresh access token
+ */
+app.post("/token", async (req, res) => {
+  const refreshToken = req.body.token;
+
+  // Check if refresh token exists
+  if (refreshToken == null) return res.sendStatus(401);
+  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403);
+  
+  // Validate refresh token
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    const accessToken = generateAccessToken({ name: user.name });
+    res.json({ accessToken: accessToken });
+  });
+});
+
+/**
+ * Register Form
+ */ 
+app.get("/register", async (req, res) => {
+  registerPartials();
+  res.render("core/register"); 
+});
+
+/**
+ * Users
+ */
+app.get("/users", async (req, res) => {
+  res.json(users);
+});
+
+// Register a new user
+app.post('/users/register', async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const user = {
+      name: req.body.name,
+      email: req.body.email,
+      password: hashedPassword
+    }
+    users.push (user)
+    res.status(201).send();
+  } catch {
+    res.status(500).send();
+  }
+});
+
 
 /**
  * Get Module Function

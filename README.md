@@ -31,6 +31,18 @@ The processes will run in a single terminal window (they are color coded). You c
 
 The open-source "Core" system offers fundamental tools for working with a graph database and includes MongoDB for handling additional data. It supports creating modules that ingest, format, store, and display graph data.
 
+## Auth
+
+- Using JWT
+
+### Generating secret keys for .env
+
+To generate a value for the ACCESS_TOKEN_SECRET and the REFRESH_TOKEN_SECRET in .env
+
+  1. Open a terminal window and type node followed by the enter key to enter the Node REPL
+  2. Run this `require('crypto').randomBytes(64).toString('hex')`
+  3. Use the resulting value for ACCESS_TOKEN_SECRET and run again for the REFRESH_TOKEN_SECRET
+
 ## Dependencies
 
 ### Client Dependencies
