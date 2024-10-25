@@ -3,13 +3,13 @@ const fs = require('fs');
 
 // Core Imports
 const { getCallingFolder } = require('./utilities.js');
-const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
 const { writeLog } = require('./log.js');
 
 // Core Namespaced Calls
 const namespaces = {
   cache: require('./cache.js'),
   check: require('./check.js'),
+  config: require('./config.js'),
   constants: require('./constants.js'),
   graph: require('./graph.js'),
   persona: require('./persona.js'),
@@ -71,13 +71,14 @@ function initNamespaces() {
       if(typeof calls[namespace][call] === 'function') {
         console.log(`Core: adding function: core.${namespace}.${call}`)
         core[namespace][call] = (...params) => {
-          const moduleName = getCallingFolder(new Error().stack)
-          console.log(`Calling core.${namespace}.${call} from ${moduleName}`) 
-          if(namespace === 'cache') {
-            return calls[namespace][call](moduleName, ...params);
+          const callingModule = getCallingFolder(new Error().stack)
+          console.log(`Calling core.${namespace}.${call} from ${callingModule}`)
+
+          if(namespace === 'cache' || namespace === 'config') {
+            return calls[namespace][call](callingModule, ...params);
           } else {
             return calls[namespace][call](...params);
-          }    
+          }
         }
       } else {
         console.log(`Core: adding object: core.${namespace}.${call}`)
@@ -113,8 +114,8 @@ async function initModules(moduleArray) {
         if(typeof calls[module][call] === 'function') {
           console.log(`Core: adding function: core.mod.${module}.${call}`)
           core.mod[module][call] = (...params) => {
-            const moduleName = getCallingFolder(new Error().stack);
-            console.log(`Core: calling function: ${module}.${call} from ${moduleName}`)
+            const callingModule = getCallingFolder(new Error().stack);
+            console.log(`Calling core.mod.${module}.${call} from ${callingModule}`)
             return calls[module][call](...params);
           }
           Object.defineProperty(core.mod[module][call], 'name', { value: `core.mod.${module}.${call}` });
@@ -171,50 +172,6 @@ function log(message, type='UNKNOWN_TYPE') {
 }
 
 /**
- * Read Config
- * 
- * @param {object} data - The data to write to the config file
- */
-async function readConfig() {
-  const moduleName = getCallingFolder(new Error().stack);
-  const data = await readFromMongo(moduleName);
-
-  return data;
-}
-
-/**
- * Write Config
- * 
- * @param {object} data - The data to write to the config file
- */
-async function writeConfig(data) {
-  const moduleName = getCallingFolder(new Error().stack);
-
-  try {
-    const response = await writeToMongo(moduleName, data);
-    return response;
-  } catch (err) {
-    console.error(`Error in writeConfig: ${err}`);
-  }
-}
-
-/**
- * Delete Config
- * 
- * @param {string} property - The property to delete from the namespace
- */
-async function deleteConfig(property) {
-  const moduleName = getCallingFolder(new Error().stack);
-
-  try {
-    const response = await deleteFromMongo(moduleName, property);
-    return response;
-  } catch (err) {
-    console.error(`Error in deleteConfig: ${err}`);
-  }
-}
-
-/**
  * Render Handlebars Template
  * 
  * @param {string} templateName - The name of the modules Handlebars template file
@@ -246,9 +203,6 @@ const core = {
   coreData,
   log,
   render,
-  readConfig,
-  writeConfig,
-  deleteConfig,
   init,
 };
 

@@ -5,7 +5,7 @@ const core = require('../../core/core.js');
  * @returns {string} - Compiled HTML content
  */
 async function redraw() {
-  const data = await core.readConfig();
+  const data = await core.config.readConfig();
   return core.render('index.hbs', data);
 }
 
@@ -28,7 +28,7 @@ async function writeConfig(formData) {
   const newProperty = {
     [formData.key]: formData.value,
   };
-  const response = await core.writeConfig(newProperty);
+  const response = await core.config.writeConfig(newProperty);
   return redraw();
 }
 
@@ -38,7 +38,7 @@ async function writeConfig(formData) {
  * @returns {string} - Compiled HTML content
  */
 async function deleteConfig(formData) {
-  const response = await core.deleteConfig(formData.value);
+  const response = await core.config.deleteConfig(formData.value);
   return redraw();
 }
 

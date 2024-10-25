@@ -6,7 +6,7 @@ const csv = require('./csv.js');
  * @returns {string} - Compiled HTML content
  */
 async function redraw() {
-  const data = await core.readConfig();
+  const data = await core.config.readConfig();
   return core.render('index.hbs', data);
 }
 
@@ -23,7 +23,7 @@ async function index() {
  * @param {object} formData - The form data
  */
 async function addInstance(formData) {
-  const configData = await core.readConfig();
+  const configData = await core.config.readConfig();
   const instances = configData?.instances || [];
 
   const instance = {
@@ -33,24 +33,24 @@ async function addInstance(formData) {
   }
   instances.push(instance);
 
-  await core.writeConfig({ instances });
+  await core.config.writeConfig({ instances });
 
   return redraw();
 }
 
 async function deleteInstance(formData) {
-  const configData = await core.readConfig();
+  const configData = await core.config.readConfig();
   const instances = configData?.instances || [];
 
   const updatedInstances = instances.filter(instance => instance.teamId !== formData.teamId);
 
-  await core.writeConfig({ instances: updatedInstances });
+  await core.config.writeConfig({ instances: updatedInstances });
 
   return redraw();
 }
 
 async function merge(formData) {
-  const configData = await core.readConfig();
+  const configData = await core.config.readConfig();
   const instances = configData?.instances || [];
 
   const instance = instances.find(instance => instance.teamId === formData.teamId);
