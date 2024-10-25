@@ -5,17 +5,15 @@
   <div class="p-8 mb-6">
     <ul class="text-white border-t border-gray-700">
       <li class="group relative border-b border-gray-800 py-2 flex items-center">
-        <span class="flex-grow text-white-200">Name</span>
-        <span class="flex-grow text-white-200">File</span>
+        <span class="flex-grow text-white-200">File Id</span>
+        <span class="flex-grow text-white-200">File Name</span>
         <span class="flex-grow text-white-200">Import Date</span>
-        <span class="flex-grow text-white-200">Status</span>
       </li>
       {{#each this.files }}
         <li class="group relative border-b border-gray-800 py-2 flex items-center">
-          <span class="flex-grow text-gray-400">{{this.name}}</span>
-          <span class="flex-grow text-gray-400">{{this.file}}</span>
-          <span class="flex-grow text-gray-400">{{this.date}}</span>
-          <span class="flex-grow text-gray-400">{{this.status}}</span>
+          <span class="flex-grow text-gray-400">{{this.fileId}}</span>
+          <span class="flex-grow text-gray-400">{{this.fileName}}</span>
+          <span class="flex-grow text-gray-400">{{dateFormat this.fileDate "YYYY-MM-DD"}}</span>
 
           <!-- Form to run a merge sync for this instance -->
           <div
@@ -26,7 +24,7 @@
               hx-post="/mod/csv/merge/"
               hx-target="closest #main"
               hx-swap="innerHTML"
-              hx-vals='{"csvId": "{{this.csvId}}"}'
+              hx-vals='{"fileId": "{{this.fileId}}"}'
             >
               <button
                 class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
@@ -46,7 +44,7 @@
               hx-post="/mod/csv/deleteFile/"
               hx-target="closest #main"
               hx-swap="innerHTML"
-              hx-vals='{"teamId": "{{this.csvId}}"}'
+              hx-vals='{"fileId": "{{this.fileId}}"}'
             >
               <button
                 class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
@@ -70,12 +68,13 @@
   {{#> Card }}
     <form
       class="mb-0"
-      hx-post="/mod/csv/addFile/"
+      hx-encoding="multipart/form-data"
+      hx-post="/mod/csv/addFile/upload"
       hx-target="closest #main"
       hx-swap="innerHTML"
     >
-      <div class="mb-4">{{> FormText label="CSV Name" name="name" }}</div>
-      <div class="mb-4">{{> FormFilePicker label="File" name="token" }}</div>
+      <div class="mb-4">{{> FormText label="CSV Name" name="fileName" }}</div>
+      <div class="mb-4">{{> FormFilePicker label="File" name="file" }}</div>
       {{> FormSubmit label="Add" }}
     </form>
   {{/Card}}

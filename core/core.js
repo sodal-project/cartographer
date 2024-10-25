@@ -1,20 +1,18 @@
 const Handlebars = require('handlebars');
 const fs = require('fs');
 
+// Core Namespaces
+const cache = require('./cache.js')
+const check = require('./check.js')
+const config = require('./config.js')
+const constants = require('./constants.js')
+const graph = require('./graph.js')
+const persona = require('./persona.js')
+const sourceStore = require('./sourceStore.js')
+
 // Core Imports
 const { getCallingFolder } = require('./utilities.js');
 const { writeLog } = require('./log.js');
-
-// Core Namespaced Calls
-const namespaces = {
-  cache: require('./cache.js'),
-  check: require('./check.js'),
-  config: require('./config.js'),
-  constants: require('./constants.js'),
-  graph: require('./graph.js'),
-  persona: require('./persona.js'),
-  sourceStore: require('./sourceStore.js'),
-};
 
 // Core Data - this will live in the config database eventually
 const coreData = {
@@ -58,6 +56,16 @@ const calls = {};
  * Initialize Core Namespaces
  */
 function initNamespaces() {
+  
+  const namespaces = {
+    cache,
+    check,
+    config,
+    constants,
+    graph,
+    persona,
+    sourceStore,
+  };
 
   for(const namespace in namespaces) {
     calls[namespace] = namespaces[namespace]

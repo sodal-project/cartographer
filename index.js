@@ -3,6 +3,11 @@ const fs = require('fs');
 const Handlebars = require('handlebars');
 const path = require('path');
 const { engine } = require('express-handlebars');
+
+const multer = require('multer'); // enable file uploads from the client
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
 const core = require('./core/core.js');
 core.init();
 
@@ -20,6 +25,7 @@ app.set("views", __dirname);
 Handlebars.registerHelper('json', function(context) {
   return JSON.stringify(context);
 });
+Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
 
 // Register Partials Manually
 const registerPartials = () => {
@@ -86,6 +92,32 @@ app.post('/mod/:moduleName/:command', async (req, res) => {
   
   // Set Data
   const data = req.body;
+
+  try {
+    // Call the module function and wait for the response
+    const moduleResponse = await core.mod[moduleName][command](data); 
+
+    // Send the response back to the client
+    res.send(moduleResponse);
+  } catch (err) {
+    console.error('Error calling module command:', err);
+    res.status(500).send('Error executing module command');
+  }
+});
+
+/**
+ * Support File Uploads
+ * 
+ * Post Module Function with Multer Middleware for File Upload Support
+ * Accept a multipart/form-data POST request from the client and call the appropriate module function
+ * Return the response to the client
+ */ 
+app.post('/mod/:moduleName/:command/upload', upload.single('file'), async (req, res) => {
+  const { moduleName, command } = req.params;
+  
+  // Set Data
+  const data = req.body;
+  data.file = req.file;
 
   try {
     // Call the module function and wait for the response

@@ -29,7 +29,25 @@ const deleteOrphanedPersonas = async () => {
 }
 
 const deleteSource = async (sourceId, querySetOnly) => {
+  const queries = [];
+  queries.push({
+    query: `MATCH (source:Source {id: $sourceId})
+    DETACH DELETE source`,
+    values: { sourceId }
+  })
+  queries.push({
+    query: `MATCH ()-[r:CONTROL]-() WHERE r.sourceId = $sourceId DELETE r`,
+    values: { sourceId }
+  })
 
+  if(querySetOnly) {
+    return queries;
+  }
+
+  const response = await connector.runRawQueryArray(queries);
+
+  console.log('Deleted source:', sourceId);
+  return response
 }
 
 const mergePersonaDeclaration = async (sourceId, personaUpn, confidence, querySetOnly) => {

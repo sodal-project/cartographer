@@ -55,16 +55,18 @@ async function merge(formData) {
 
   const instance = instances.find(instance => instance.teamId === formData.teamId);
 
-  console.log('Merging instance:', instance);
-
   const response = await slack.merge(instance);
   return redraw();
+}
+
+async function init() {
+  return await slack.init();
 }
 
 module.exports = {
   index,
   addInstance,
   deleteInstance,
-  merge: merge,
-  init: slack.init,
+  merge,
+  init,
 };

@@ -5,8 +5,12 @@ const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
  * 
  * @param {object} data - The data to write to the config file
  */
-async function readConfig(moduleName) {
+async function readConfig(moduleName, optionalKey) {
   const data = await readFromMongo(moduleName);
+
+  if(optionalKey && data) {
+    return data[optionalKey];
+  }
 
   return data;
 }

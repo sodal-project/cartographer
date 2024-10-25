@@ -1,5 +1,19 @@
 const core = require('../../core/core.js');
+const { Readable } = require('stream');
 const csv = require('./csv.js');
+const csvtojson = require('csvtojson');
+
+/**
+ * @description Get the next unused file id number
+ * @returns {number} - The next available file identification number
+ */
+async function getNextFileId() {
+  const nextFileId = await core.config.readConfig("nextFileId") || 1;
+
+  await core.config.writeConfig({ nextFileId: nextFileId + 1 });
+
+  return nextFileId;
+}
 
 /**
  * @description Fetch data from the config database namespace and render the index.hbs template
@@ -22,49 +36,60 @@ async function index() {
  * @description Handle adding a new Slack integration instance
  * @param {object} formData - The form data
  */
-async function addInstance(formData) {
-  const configData = await core.config.readConfig();
-  const instances = configData?.instances || [];
+async function addFile(formData) {
+  const files = await core.config.readConfig("files") || {};
+  const fileId = await getNextFileId();
+  const fileData = await csvtojson().fromStream(Readable.from(formData.file.buffer));
+  const fileName = formData.fileName;
+  const fileDate = new Date();
 
-  const instance = {
-    name: formData.name,
-    teamId: formData.teamId,
-    token: formData.token
-  }
-  instances.push(instance);
+  console.log('Adding file:', formData.fileName);
 
-  await core.config.writeConfig({ instances });
+  files[fileId] = {
+    fileId,
+    fileName,
+    fileData,
+    fileDate,
+  };
+
+  await core.config.writeConfig({ files });
 
   return redraw();
 }
 
-async function deleteInstance(formData) {
-  const configData = await core.config.readConfig();
-  const instances = configData?.instances || [];
+async function deleteFile(formData) {
+  const files = await core.config.readConfig("files")
+  const fileId = formData.fileId;
 
-  const updatedInstances = instances.filter(instance => instance.teamId !== formData.teamId);
-
-  await core.config.writeConfig({ instances: updatedInstances });
+  if(files[fileId]) {
+    console.log('Deleting file:', files[fileId].fileName);
+    await core.graph.deleteSource(`source:csv:${fileId}`);
+    await core.config.deleteConfig(`files.${fileId}`);
+  } 
 
   return redraw();
 }
 
 async function merge(formData) {
-  const configData = await core.config.readConfig();
-  const instances = configData?.instances || [];
+  const files = await core.config.readConfig("files")
 
-  const instance = instances.find(instance => instance.teamId === formData.teamId);
+  const file = files[formData.fileId];
 
-  console.log('Merging instance:', instance);
+  console.log('Merging file:', file.fileName);
 
-  const response = await slack.merge(instance);
+  const response = await csv.merge(file.fileId, file.fileName, file.fileData);
+
   return redraw();
+}
+
+async function init() {
+  return await csv.init();
 }
 
 module.exports = {
   index,
-  addInstance,
-  deleteInstance,
-  merge: merge,
-  init: csv.init,
+  addFile,
+  deleteFile,
+  merge,
+  init,
 };

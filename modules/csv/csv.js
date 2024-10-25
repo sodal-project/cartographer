@@ -1,36 +1,32 @@
-const path = require('path');
-const csvtojson = require('csvtojson');
 const core = require('../../core/core');
 
-const merge = async (instance) => {
+/**
+ * 
+ * @param {object} instance 
+ */
+const merge = async (fileId, fileName, fileData) => {
   try {
-
-    // TODO switch to real instance id
-    const instanceId = instance.name.replace(/\s/g, "");
-
     const source = {
-      id: `source:csv:${instanceId}`,
-      name: instance.name,
+      id: `source:csv:${fileId}`,
+      name: fileName,
       lastUpdate: new Date().toISOString()
     }
 
-    console.log(`Processing CSV file ${instance.name}...`);
-    const csvPath = path.join(__dirname, `../data/integrations/${instance.file}`);
-    const csvJsonData = await csvtojson().fromFile(csvPath);
-    const r0 = csvJsonData[0];
+    console.log(`Processing CSV file ${fileName}...`);
+    const r0 = fileData[0];
 
     const store = core.sourceStore.newStore(source);
 
     // process personas csv
     if(r0.hasOwnProperty("id")&&r0.hasOwnProperty("type")&&r0.hasOwnProperty("platform")){
       console.log('Processing personas...');
-      const personas = mapCsvPersonas(csvJsonData);
+      const personas = mapCsvPersonas(fileData);
       core.sourceStore.addPersonas(store, personas);
 
     // process relationships csv
     } else if(r0.hasOwnProperty("controlUpn")&&r0.hasOwnProperty("obeyUpn")){
       console.log('Processing relationships...');
-      const relationships = mapCsvRelationships(csvJsonData);
+      const relationships = mapCsvRelationships(fileData);
       core.sourceStore.addRelationships(store, relationships);
 
     } else {
