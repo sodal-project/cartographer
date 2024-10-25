@@ -17,15 +17,6 @@ const namespaces = {
   sourceStore: require('./sourceStore.js'),
 };
 
-// Core External Module Calls
-// In future, this will be moved to the configuration database
-const externalModules = {
-  module1: () => require('../modules/module1/index.js'),
-  module2: () => require('../modules/module2/index.js'),
-  "long-process": () => require('../modules/long-process/index.js'),
-  "slack": () => require('../modules/slack/index.js'),
-  // csv: () => require('../modules/csv/index.js'),
-}
 // Core Data - this will live in the config database eventually
 const coreData = {
   user: {
@@ -50,6 +41,10 @@ const coreData = {
       folder: "slack",
       label: "Slack Integration",
     },
+    {
+      folder: "csv",
+      label: "CSV Integration",
+    }
   ]
 }
 
@@ -93,12 +88,15 @@ function initNamespaces() {
 /**
  * Initialize External Modules
  */
-async function initModules() {
-  // 
+async function initModules(moduleArray) {
+
+  // Generate Core External Module Calls
+  // In future, this will be moved to the configuration database
+
   // load external module calls to core.mod
-  // 
-  for(const module in externalModules) {
-    calls[module] = await externalModules[module]()
+  for(const item in moduleArray) {
+    const module = moduleArray[item].folder;
+    calls[module] = await require(`../modules/${module}/index.js`);
     core.mod[module] = {};
 
     console.log("Core: loading external module: ", module)
@@ -143,7 +141,7 @@ async function init() {
   initNamespaces();
 
   // Initialize core's external module calls
-  await initModules();
+  await initModules(coreData.modules);
 
   //
   // finalize core and freeze
