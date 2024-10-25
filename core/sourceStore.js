@@ -264,7 +264,7 @@ const getControlQuery = (sourceId, controlUpn, obeyUpn, relProps) => {
   relProps.sourceId = sourceId;
   return {
     query: `MATCH (control:Persona { upn: $controlUpn }), (obey:Persona { upn: $obeyUpn })
-    MERGE (control)-[rel:CONTROL]->(obey)
+    MERGE (control)-[rel:CONTROL { sourceId: $relProps.sourceId }]->(obey)
     SET rel += $relProps
     `,
     values: {
