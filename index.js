@@ -110,8 +110,6 @@ function generateAccessToken(user) {
  * Serve the index.html file with no module loaded
  */ 
 app.get("/", authenticateToken, async (req, res) => {
-// app.get("/", async (req, res) => {
-  console.log('req:', req.user);
   const data = {...coreData, user: req.user};
   registerPartials();
   res.render("core/index", data); 
@@ -324,8 +322,7 @@ app.post('/mod/:moduleName/:command', authenticateToken, async (req, res) => {
  */ 
 app.get("/:moduleName/:command", authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
-  const data = {...coreData, currentModule: moduleName };
-  
+  const data = {...coreData, user: req.user, currentModule: moduleName };  
   registerPartials();
 
   // Call the module function and set the response in the main attribute
