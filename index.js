@@ -21,9 +21,6 @@ const posts = [
   }
 ];
 const coreData = {
-  user: {
-    name: "Dade Murphy",
-  },
   main: '',
   currentModule: 'none',
   modules: [
@@ -92,8 +89,6 @@ app.use(express.static(path.join(__dirname, "public")));
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   
-  console.log('Cookies:', req.cookies);
-  
   // Check both headers and cookies
   const token = authHeader?.split(' ')[1] || req.cookies['access_token'];
 
@@ -116,7 +111,7 @@ const authenticateToken = (req, res, next) => {
 
 // Generate an access token
 function generateAccessToken(user) {
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '120m' });
 }
 
 /**
@@ -130,9 +125,10 @@ app.get("/posts", authenticateToken, (req, res) => {
  * Root
  * Serve the index.html file with no module loaded
  */ 
-// app.get("/", authenticateToken, async (req, res) => {
-app.get("/", async (req, res) => {
-  const data = {...coreData};
+app.get("/", authenticateToken, async (req, res) => {
+// app.get("/", async (req, res) => {
+  console.log('req:', req.user);
+  const data = {...coreData, user: req.user};
   registerPartials();
   res.render("core/index", data); 
 });
@@ -168,7 +164,7 @@ app.post("/login", async (req, res) => {
   }
 
   // Generate tokens for the user
-  const userData = { name: user.name, email: user.email };
+  const userData = { name: user.name, email: user.email, role: user.role };
   const accessToken = generateAccessToken(userData);
   const refreshToken = jwt.sign(userData, process.env.REFRESH_TOKEN_SECRET);
 
@@ -197,8 +193,26 @@ app.post("/login", async (req, res) => {
  * Logout and destroy the refresh token
  */
 app.delete("/logout", async (req, res) => {
-  refreshTokens = refreshTokens.filter(token => token !== req.body.token);
-  res.sendStatus(204);
+  // Remove the refresh token from the server's storage
+  refreshTokens = refreshTokens.filter(token => token !== req.cookies['refresh_token']);
+
+  // Clear the cookies (both access and refresh tokens)
+  res.clearCookie('access_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict'
+  });
+  res.clearCookie('refresh_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict'
+  });
+
+  // Indicate a redirect in the response header
+  res.set('HX-Redirect', '/login');
+
+  // Return success response
+  res.status(204).json({ message: 'Logout successful' });
 });
 
 /**
@@ -235,12 +249,13 @@ app.get("/users", async (req, res) => {
 });
 
 // Register a new user
-app.post('/users/register', async (req, res) => {
+app.post('/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = {
       name: req.body.name,
       email: req.body.email,
+      role: req.body.role,
       password: hashedPassword
     }
     users.push (user)

@@ -80,10 +80,16 @@
                       alt="anonymous avatar"
                     />
                     <div class="flex items-center w-full">
-                      <span
-                        class="ml-3 text-sm text-left font-semibold leading-6"
-                        aria-hidden="true"
-                      >{{user.name}}</span>
+                      <span class="ml-3 text-left text-sm leading-tight">
+                        <span
+                          class="block font-semibold"
+                          aria-hidden="true"
+                        >{{user.name}}</span>
+                        <span
+                          class="block text-gray-400"
+                          aria-hidden="true"
+                        >{{user.role}}</span>
+                      </span>
                       <div class="flex-shrink-0">
                         <svg
                           class="ml-2 h-5 w-5 text-gray-400"
@@ -110,22 +116,20 @@
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="user-menu-button"
-                  tabindex="-1"
                   @click="open = false"
                 >
                   <a
                     href="#"
                     class="block px-3 py-1 text-sm leading-6 text-white hover:text-indigo-400"
                     role="menuitem"
-                    tabindex="-1"
-                    id="user-menu-item-0"
                   >Your profile</a>
                   <a
                     href="#"
                     class="block px-3 py-1 text-sm leading-6 text-white hover:text-indigo-400"
                     role="menuitem"
-                    tabindex="-1"
-                    id="user-menu-item-1"
+                    hx-delete="/logout"
+                    hx-confirm="Are you sure you want to sign out?"
+                    hx-redirect="/login"
                   >Sign out</a>
                 </div>
               </div>

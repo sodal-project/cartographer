@@ -8,8 +8,12 @@
       <div class="w-80 py-20">
         {{#> Card }}
           <h1 class="text-white text-center mb-4">Register</h1>
-          <form class="flex flex-col gap-6" action="/login" method="POST">
+          <form class="flex flex-col gap-6" action="/register" method="POST">
             {{> FormText label="Name" name="name" }}
+            <select class="form-select" name="role">
+              <option value="admin">Admin</option>
+              <option value="viewer">Viewer</option>
+            </select>
             {{> FormEmail label="Email" name="email" }}
             {{> FormPassword label="Password" name="password" }}
             <div class="flex items-center justify-center gap-8 mt-4">
