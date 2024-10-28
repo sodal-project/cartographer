@@ -418,6 +418,13 @@ const getSyncControlQueries = (sourceId, personaNew, personaOld) => {
   return queries;
 }
 
+/**
+ * Get a query set to remove a persona declaration
+ * 
+ * @param {string} sourceId
+ * @param {string} upn
+ * @returns {object} - The query set object
+ */
 const getUndeclarePersonaQuery = (sourceId, upn) => {
   const query = `MATCH (source:Source { id: $sourceId })-[rel:DECLARE]->(persona:Persona { upn: $upn })
     DELETE rel
@@ -425,6 +432,13 @@ const getUndeclarePersonaQuery = (sourceId, upn) => {
   return {query, values: {sourceId, upn}};
 }
 
+/**
+ * Get a query set to remove a control relationship
+ * 
+ * @param {string} sourceId
+ * @param {string} upn
+ * @returns {object} - The query set object
+ */
 const getUndeclareControlQuery = (sourceId, upn) => {
   const query = `MATCH (persona:Persona { upn: $upn })-[rel:CONTROL]-(:Persona)
     WHERE rel.sourceId = $sourceId
@@ -434,6 +448,14 @@ const getUndeclareControlQuery = (sourceId, upn) => {
   return {query, values: {sourceId, upn}};
 }
 
+/**
+ * Get a query set to remove a control relationship
+ * 
+ * @param {string} sourceId 
+ * @param {string} controlUpn 
+ * @param {string} obeyUpn 
+ * @returns {object} - The query set object
+ */
 const getRemoveControlQuery = (sourceId, controlUpn, obeyUpn) => {
   const query = `MATCH (control:Persona { upn: $controlUpn })-[rel:CONTROL]->(obey:Persona { upn: $obeyUpn })
     WHERE rel.sourceId = $sourceId

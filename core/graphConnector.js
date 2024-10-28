@@ -28,9 +28,7 @@ const healthCheck = async () => {
   if(Config.healthCheck) {
     return true;
   } else {
-    let driver = null;
-    let session = null;
-
+    let driver, session;
     try {
 
       // connect to the default database with the admin login
@@ -39,8 +37,8 @@ const healthCheck = async () => {
       session = driver.session();
 
       // verify that the database is connected
-      let result = await session.run(HealthQueries.getCount);
-      let count = result.records[0].get('count');
+      const result = await session.run(HealthQueries.getCount);
+      const count = result.records[0].get('count');
       console.log(`Health Check: OK - Connected, ${count} nodes in the database`);
 
       // verify that indexes and constraints are set
@@ -52,16 +50,14 @@ const healthCheck = async () => {
       console.log('Health Check: OK - Constraints and Indexes are set on the database');
 
       // return true if all checks pass
-      await session.close();
-      await driver.close();
       Config.healthCheck = true;
       return true;
-
     } catch (error) {
       console.error('Health Check error:', error);
+      return false;
+    } finally {
       await session.close();
       await driver.close();
-      return false;
     }
   }
 }
@@ -78,7 +74,7 @@ const runRawQuery = async (query, optionalParams) => {
     console.error('Health Check failed, unable to process raw query.');
     return false;
   } else {
-    console.log('Health Check passed, processing raw query with params:', Object.keys(optionalParams));
+    // console.log('Health Check passed, processing raw query with params:', Object.keys(optionalParams));
   }
 
   const driver = neo4j.driver(Config.db_host, neo4j.auth.basic(Config.db_username, Config.db_password));
