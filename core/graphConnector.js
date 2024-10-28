@@ -16,6 +16,14 @@ const HealthQueries = {
   "setIndexPlatform": "CREATE INDEX index_persona_platform IF NOT EXISTS FOR (n:Persona) ON (n.platform)",
 }
 
+/**
+ * Verify that the database is connected and healthy
+ * 
+ * On first run, this function will set the healthCheck flag
+ * and create the necessary constraints and indexes in the database
+ * 
+ * @returns {boolean} - True if the database is connected and healthy
+ */
 const healthCheck = async () => {
   if(Config.healthCheck) {
     return true;
@@ -24,10 +32,13 @@ const healthCheck = async () => {
     let session = null;
 
     try {
+
       // connect to the default database with the admin login
       console.log('Health Check: CHECK - connecting to the database');
       driver = neo4j.driver(Config.db_host, neo4j.auth.basic(Config.db_username, Config.db_password));
       session = driver.session();
+
+      // verify that the database is connected
       let result = await session.run(HealthQueries.getCount);
       let count = result.records[0].get('count');
       console.log(`Health Check: OK - Connected, ${count} nodes in the database`);
@@ -44,6 +55,7 @@ const healthCheck = async () => {
       await session.close();
       await driver.close();
       Config.healthCheck = true;
+      return true;
 
     } catch (error) {
       console.error('Health Check error:', error);
@@ -51,10 +63,16 @@ const healthCheck = async () => {
       await driver.close();
       return false;
     }
-    return true;
   }
 }
 
+/**
+ * Executes a single query against the database
+ * 
+ * @param {string} query - cypher query to execute
+ * @param {object} optionalParams 
+ * @returns {object} - The response from the database
+ */
 const runRawQuery = async (query, optionalParams) => {
   if(!(await healthCheck())) {
     console.error('Health Check failed, unable to process raw query.');
@@ -78,6 +96,31 @@ const runRawQuery = async (query, optionalParams) => {
   }
 }
 
+/**
+ * Executes an array of queries in a set of transaction
+ * 
+ * NOTE: this is a more performant way to execute 
+ * multiple queries than executing runRawQuery multiple times
+ * 
+ * NOTE: 
+ * 
+ * The queryArray is an array of objects with the following structure:
+ * -- query: a string representing the cypher query to execute
+ * -- values: an object containing the parameters for the query
+ * 
+ * Example:
+ * [
+ *   {
+ *    query: "MATCH (n) WHERE n.type = $type RETURN n",
+ *    values: { type: "account" },
+ *   },
+ *   {...},
+ *   {...},
+ * ]
+ * 
+ * @param {array} queryArray 
+ * @returns {object} - The aggregate response from the database
+ */
 const runRawQueryArray = async (queryArray) => {
   if(!(await healthCheck())) {
     console.error('Health Check failed, unable to process query array.');
