@@ -1,5 +1,12 @@
 const CC = require('./constants');
 
+/**
+ * Test if an object is a valid persona
+ * 
+ * @param {object} persona 
+ * @throws {Error} - If the persona object is invalid
+ * @returns {boolean} - True if the persona object is valid
+ */
 const personaObject = (persona) => {
   try {
     if(!persona) { 
@@ -42,6 +49,13 @@ const personaObject = (persona) => {
   return true;
 }
 
+/**
+ * Test if a string is a valid UPN
+ * 
+ * @param {string} upn 
+ * @throws {Error} - If the UPN string is invalid
+ * @returns {boolean} - True if the UPN string is valid 
+ */
 const upnString = (upn) => {
   try {
     if(!upn) { 
@@ -62,6 +76,13 @@ const upnString = (upn) => {
   return true;
 }
 
+/**
+ * Test if a string is a valid persona ID
+ * 
+ * @param {string} id 
+ * @throws {Error} - If the ID string is invalid
+ * @returns {boolean} - True if the ID string is valid
+ */
 const idString = (id) => {
   if(!id) {
     throw Error('ID is empty');
@@ -69,6 +90,13 @@ const idString = (id) => {
   return true;
 }
 
+/**
+ * Test if a string is a valid source ID (source:<type>:<instanceId>)
+ * 
+ * @param {string} id 
+ * @throws {Error} - If the source ID string is invalid
+ * @returns {boolean} - True if the source ID string is valid
+ */
 const sourceId = (id) => {
   if(!id) {
     throw Error('ID is empty');
@@ -88,6 +116,14 @@ const sourceId = (id) => {
   return true;
 }
 
+/**
+ * Test if a persona type string is valid
+ * 
+ * @param {string} type 
+ * @throws {Error} - If the type string is invalid
+ * @returns {boolean} - True if the type string is valid
+ */
+
 const typeString = (type) => {
   if(!type) {
     throw Error('TYPE is empty');
@@ -95,6 +131,13 @@ const typeString = (type) => {
   return true;
 }
 
+/**
+ * Test if a platform string is valid
+ * 
+ * @param {string} platform 
+ * @throws {Error} - If the platform string is invalid
+ * @returns {boolean} - True if the platform string is valid
+ */
 const platformString = (platform) => {
   if(!platform) {
     throw Error('PLATFORM is empty');
@@ -102,6 +145,13 @@ const platformString = (platform) => {
   return true;
 }
 
+/**
+ * Test if a persona custom property is a simple value (string, number, or boolean)
+ * 
+ * @param {*} property 
+ * @throws {Error} - If the property is not a string, number, or boolean
+ * @returns {boolean} - True if the property is a simple value 
+ */
 const simpleValue = (property) => {
   try {
     if(property !== undefined){
@@ -121,6 +171,22 @@ const simpleValue = (property) => {
   return true;
 }
 
+/**
+ * Test if a persona's internal control or obey relationship array is valid
+ * 
+ * A valid internal relationship array is an array of objects with the following properties:
+ * {
+ *  upn: string,
+ *  level: number,
+ *  confidence: number,
+ *  sourceId: string,
+ * }
+ * 
+ * @param {string} upn 
+ * @param {array} relArray 
+ * @throws {Error} - If the relationship array is invalid
+ * @returns {boolean} - True if the relationship array is valid
+ */
 const personaRelsArray = (upn, relArray) => {
   try {
     if(!relArray) {
@@ -154,6 +220,22 @@ const personaRelsArray = (upn, relArray) => {
   }
 }
 
+/**
+ * Test if a relationship object is valid
+ * 
+ * A valid relationship object has the following properties:
+ * {
+ *   controlUpn: string,
+ *   obeyUpn: string,
+ *   level: number,
+ *   confidence: number,
+ *   ... <custom simple properties>
+ * }
+ * 
+ * @param {object} relationship 
+ * @throws {Error} - If the relationship object is invalid
+ * @returns {boolean} - True if the relationship object is valid
+ */
 const relationshipObject = (relationship) => {
   try {
     if(!relationship) {
@@ -181,6 +263,17 @@ const relationshipObject = (relationship) => {
   }
 }
 
+/**
+ * Test if a source store object is valid
+ * 
+ * A valid source store object has the following properties:
+ * {
+ *  source: <valid source object>
+ *  personas: <object of upn:persona source store modified perons objects>,
+ * }
+ * 
+ * @param {object} store 
+ */
 const sourceStoreObject = (store) => {
   try {
     if(!store) {
@@ -200,6 +293,22 @@ const sourceStoreObject = (store) => {
   }
 }
 
+/**
+ * Test if a source store modified persona object is valid
+ * 
+ * A valid source store modified persona object has the following properties:
+ * {
+ *   upn: string,
+ *   platform: string,
+ *   type: string,
+ *   id: string,
+ *   control: <object of upn:relationship source store modified relationship objects>,
+ * }
+ * 
+ * @param {object} persona 
+ * @throws {Error} - If the persona object is invalid
+ * @returns {boolean} - True if the persona object is valid
+ */
 const sourceStoreModifiedPersonaObject = (persona) => {
   try {
     if(!persona) { 
@@ -239,6 +348,20 @@ const sourceStoreModifiedPersonaObject = (persona) => {
   }
 }
 
+/**
+ * Test if a source store modified persona relationships object is valid
+ * This modified object contains only control relationships
+ * 
+ * A valid source store modified persona relationships object is an object with the following properties:
+ * {
+ *   upn: string,
+ *   level: number,
+ *   confidence: number,
+ *   ... <custom simple properties>
+ * }
+ * @param {string} upn 
+ * @param {object} relObject 
+ */
 const sourceStoreModifiedPersonaRelationshipsObject = (upn, relObject) => {
   try {
     if(!relObject) {
@@ -270,6 +393,13 @@ const sourceStoreModifiedPersonaRelationshipsObject = (upn, relObject) => {
   }
 }
 
+/**
+ * Test if a source object is valid
+ * 
+ * @param {object} source 
+ * @throws {Error} - If the source object is invalid
+ * @returns {boolean} - True if the source object is valid 
+ */
 const sourceObject = (source) => {
   try {
     if(!source) {
@@ -298,6 +428,13 @@ const sourceObject = (source) => {
   return true;
 }
 
+/**
+ * Test if a number is a valid level number (integer from 1 and 12)
+ * 
+ * @param {number} level 
+ * @throws {Error} - If the level number is invalid
+ * @returns {boolean} - True if the level number is valid 
+ */
 const levelNumber = (level) => {
   if(!level) {
     throw Error('Level is empty');
@@ -309,6 +446,13 @@ const levelNumber = (level) => {
   return true;
 }
 
+/**
+ * Test if a number is a valid confidence number (float from 0 to 1)
+ * 
+ * @param {number} confidence 
+ * @throws {Error} - If the confidence number is invalid
+ * @returns {boolean} - True if the confidence number is valid 
+ */
 const confidenceNumber = (confidence) => {
   if(!confidence) {
     throw Error('Confidence is not set');
