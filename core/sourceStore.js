@@ -1,11 +1,45 @@
+/**
+ * Source Store
+ * 
+ * The purpose of the Source Store is to simplify
+ * the process of updating a source in the graph
+ * 
+ * Source Store
+ * -- builds Source Stores from standard persona objects
+ * -- compares the current source graph state with new source state
+ * -- generates and executes the necessary queries to update the graph
+ */
+
 const utilPersona = require('./persona');
 const utilGraph = require('./graph');
 const check = require('./check');
 
-//
-// Public Calls
-//
-
+/**
+ * Create a new source store object
+ * 
+ * Structure of a source store object
+ * {
+ *   source: {
+ *     id: string,
+ *     name: string,
+ *     lastUpdate: string,
+ *   },
+ *   personas: {
+ *     ...props,
+ *     control: [{
+ *      upn: { 
+ *        level,
+ *        confidence,
+ *        ...customProps
+ *      },
+ *      {...}]
+ *    },
+ *   }
+ * }
+ * 
+ * @param {object} source - The source object
+ * @returns {object} - The new source store object
+ */
 const newStore = (source) => {
   check.sourceObject(source);
   const store = {
@@ -15,6 +49,15 @@ const newStore = (source) => {
   return store;
 }
 
+/**
+ * Add a persona object to the store
+ * 
+ * WARNING: This function modifies the incoming store object
+ * 
+ * @param {object} store
+ * @param {object[]} personas
+ * @returns {object} - The updated store object
+ */
 const addPersonas = (store, personas) => {
   for(const persona of personas) {
     check.personaObject(persona);
@@ -23,6 +66,15 @@ const addPersonas = (store, personas) => {
   return store;
 }
 
+/**
+ * Add an array of relationship objects to the store
+ * 
+ * WARNING: This function modifies the incoming store object
+ * 
+ * @param {object} store
+ * @param {object[]} relationships
+ * @returns {object} - The updated store object
+ */
 const addRelationships = (store, relationships) => {
 
   for(const relationship of relationships) {
@@ -39,7 +91,8 @@ const addRelationships = (store, relationships) => {
     const subordinatePersona = forcePersona(store, obeyUpn);
     const controlPersona = forcePersona(store, controlUpn);
 
-    // add relationship if it doesn't already exist, or is lower confidence
+    // add relationship if it doesn't already exist,
+    //   or if the existing relationship is lower confidence
     const confidence = relationship.confidence;
     if(!controlPersona.control[obeyUpn] || confidence > controlPersona.control[obeyUpn].confidence) {
       controlPersona.control[obeyUpn] = relationship;
@@ -48,6 +101,12 @@ const addRelationships = (store, relationships) => {
   return store;
 }
 
+/**
+ * Merge a source store object with the graph
+ * 
+ * @param {object} store - The source store object
+ * @returns {object} - The result of the merge queries
+ */
 const merge = async (store) => {
   check.sourceStoreObject(store);
   
@@ -66,6 +125,8 @@ const merge = async (store) => {
     queries = queries.concat(getSimpleMergeQueries(store));
   } else {
     check.sourceStoreObject(storeOld);
+
+    // store sources should always match
     if(store.source.id !== storeOld.source.id) {
       throw Error(`Cannot merge stores with different sources.`);
     }
