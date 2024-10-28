@@ -85,7 +85,7 @@ const authenticateToken = (req, res, next) => {
 
   // Check if we have a token
   if (token == null) {
-    return res.status(401).json({ message: 'Access token missing' });
+    return res.redirect('/login');
   }
 
   // Verify the token
