@@ -1,5 +1,4 @@
 const check = require('./check');
-const { log } = require('./core');
 const connector = require('./graphConnector');
 
 /* TODO: enable pagination

@@ -78,6 +78,7 @@ const calls = {};
  * Core namepaces use the form: core.namespace.function() 
  */
 function initNamespaces() {
+  let counter = 0;
 
   // Map exported calls from each namespace to core
   for(const namespace in namespaces) {
@@ -91,6 +92,8 @@ function initNamespaces() {
 
       // skip the default export
       if(call === 'default') { continue; }
+
+      counter++;
 
       // if this is a function, add it to the core object
       if(typeof calls[namespace][call] === 'function') {
@@ -126,6 +129,8 @@ function initNamespaces() {
       }
     }
   }
+
+  console.log(`Core: loaded ${counter} internal namespace calls`)
 }
 
 /**
@@ -135,6 +140,7 @@ function initNamespaces() {
  * @param {array} moduleArray - An array of objects containing the module folder name and label
  */
 async function initModules(moduleArray) {
+  let counter = 0;
 
   // Generate Core External Module Calls
   core.mod = {};
@@ -169,7 +175,7 @@ async function initModules(moduleArray) {
       } 
       
       else {
-
+        counter++;
         // if this is a function, add it to the core object
         if(typeof calls[module][call] === 'function') {
 
@@ -193,6 +199,7 @@ async function initModules(moduleArray) {
       }
     }
   }
+  console.log(`Core: loaded ${counter} external module calls`)
 }
 
 /**
