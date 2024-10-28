@@ -173,7 +173,7 @@ app.post("/login", async (req, res) => {
     });
 
     // Return success response
-    return res.status(200).json({ message: 'Login successful' });
+    return res.status(200).redirect('/');
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: 'Internal server error' });
@@ -181,6 +181,7 @@ app.post("/login", async (req, res) => {
     await client.close();
   }
 });
+
 /**
  * Logout and destroy the refresh token
  */
