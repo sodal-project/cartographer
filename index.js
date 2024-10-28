@@ -1,6 +1,8 @@
 const express = require("express");
+require('dotenv').config();
 const fs = require('fs');
 const Handlebars = require('handlebars');
+const { MongoClient } = require('mongodb');
 const { engine } = require('express-handlebars');
 const cookieParser = require('cookie-parser');
 const path = require('path');
@@ -9,17 +11,6 @@ const jwt = require('jsonwebtoken');
 
 // Temp data storage
 let refreshTokens = [];
-let users = [];
-const posts = [
-  {
-    username: 'Kyle',
-    title: 'Post 1'
-  },
-  {
-    username: 'Jim',
-    title: 'Post 2'
-  }
-];
 const coreData = {
   main: '',
   currentModule: 'none',
@@ -115,13 +106,6 @@ function generateAccessToken(user) {
 }
 
 /**
- * Temp posts endpoint
- */
-app.get("/posts", authenticateToken, (req, res) => {
-  res.json(posts);
-});
-
-/**
  * Root
  * Serve the index.html file with no module loaded
  */ 
@@ -145,50 +129,60 @@ app.get("/login", async (req, res) => {
  * Login and return tokens
  */
 app.post("/login", async (req, res) => {
-  // Find the user in the database
-  const user = users.find(user => user.email === req.body.email);
-  
-  // No user found
-  if (user == null) {
-    return res.status(400).json({ message: 'Cannot find user' });
-  }
+  const uri = process.env.MONGO_URI;
+  const dbName = process.env.MONGO_DB_NAME;
+  const client = new MongoClient(uri);
 
-  // Check if the user's password is valid
   try {
+    await client.connect();
+    const db = client.db(dbName);
+    const collection = db.collection('users');
+
+    // Find the user in the users collection by email
+    const user = await collection.findOne({ email: req.body.email });
+
+    // No user found
+    if (!user) {
+      return res.status(400).json({ message: 'Cannot find user' });
+    }
+
+    // Check if the user's password is valid
     const isValidPassword = await bcrypt.compare(req.body.password, user.password);
     if (!isValidPassword) {
       return res.status(403).json({ message: 'Invalid password' });
     }
+
+    // Generate tokens for the user
+    const userData = { name: user.name, email: user.email, role: user.role };
+    const accessToken = generateAccessToken(userData);
+    const refreshToken = jwt.sign(userData, process.env.REFRESH_TOKEN_SECRET);
+
+    // Save the refresh token
+    refreshTokens.push(refreshToken);
+
+    // Set the access token in an HTTP-only cookie
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict'
+    });
+
+    // Set the refresh token in another HTTP-only cookie
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict'
+    });
+
+    // Return success response
+    return res.status(200).json({ message: 'Login successful' });
   } catch (error) {
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("Login error:", error);
+    res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    await client.close();
   }
-
-  // Generate tokens for the user
-  const userData = { name: user.name, email: user.email, role: user.role };
-  const accessToken = generateAccessToken(userData);
-  const refreshToken = jwt.sign(userData, process.env.REFRESH_TOKEN_SECRET);
-
-  // Save the refresh token (You should store this in the DB)
-  refreshTokens.push(refreshToken);
-  
-  // Set the access token in an HTTP-only cookie
-  res.cookie('access_token', accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Send cookies only over HTTPS in production
-    sameSite: 'Strict' // Protect against CSRF attacks
-  });
-
-  // Set the refresh token in another HTTP-only cookie
-  res.cookie('refresh_token', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Strict'
-  });
-
-  // Return success response
-  return res.status(200).json({ message: 'Login successful' });
 });
-
 /**
  * Logout and destroy the refresh token
  */
@@ -241,15 +235,12 @@ app.get("/register", async (req, res) => {
   res.render("core/register"); 
 });
 
-/**
- * Users
- */
-app.get("/users", async (req, res) => {
-  res.json(users);
-});
-
 // Register a new user
 app.post('/register', async (req, res) => {
+  const uri = process.env.MONGO_URI;
+  const dbName = process.env.MONGO_DB_NAME;
+  const client = new MongoClient(uri);
+
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = {
@@ -257,11 +248,26 @@ app.post('/register', async (req, res) => {
       email: req.body.email,
       role: req.body.role,
       password: hashedPassword
+    };
+
+    // Connect to MongoDB
+    await client.connect();
+    const db = client.db(dbName);
+    const collection = db.collection('users');
+
+    // Insert the new user document
+    const result = await collection.insertOne(user);
+    
+    if (result.insertedId) {
+      res.status(201).send({ message: 'User registered successfully' });
+    } else {
+      res.status(500).send({ message: 'Failed to register user' });
     }
-    users.push (user)
-    res.status(201).send();
-  } catch {
-    res.status(500).send();
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).send({ message: 'Internal server error' });
+  } finally {
+    await client.close();
   }
 });
 
@@ -271,7 +277,7 @@ app.post('/register', async (req, res) => {
  * Accept a Get request from the client and call the appropriate module function
  * Return the response to the client
  */
-app.get('/mod/:moduleName/:command', async (req, res) => {
+app.get('/mod/:moduleName/:command', authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
   const modulePath = path.resolve('modules', moduleName, 'index.js');
   const module = require(modulePath);
@@ -293,7 +299,7 @@ app.get('/mod/:moduleName/:command', async (req, res) => {
  * Accept a POST request from the client and call the appropriate module function passing the data
  * Return the response to the client
  */ 
-app.post('/mod/:moduleName/:command', async (req, res) => {
+app.post('/mod/:moduleName/:command', authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
   const modulePath = path.resolve('modules', moduleName, 'index.js');
   const module = require(modulePath);
@@ -316,7 +322,7 @@ app.post('/mod/:moduleName/:command', async (req, res) => {
 /**
  * Draw the root view with a module loaded
  */ 
-app.get("/:moduleName/:command", async (req, res) => {
+app.get("/:moduleName/:command", authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
   const data = {...coreData, currentModule: moduleName };
   
