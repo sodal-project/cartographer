@@ -1,17 +1,26 @@
-const Handlebars = require('handlebars');
-const sanitize = require('sanitize-filename');
-const fs = require('fs');
-
 // Core Namespaces
-// Accessed via core.namespace.function()
-
+// Accessed via core.<namespace>.<call>()
 const cache = require('./cache.js')
 const check = require('./check.js')
+const client = require('./client.js')
 const config = require('./config.js')
+const crypto = require('./crypto.js')
 const constants = require('./constants.js')
 const graph = require('./graph.js')
 const persona = require('./persona.js')
 const sourceStore = require('./sourceStore.js')
+
+const namespaces = {
+  cache,
+  check,
+  client,
+  config,
+  constants,
+  crypto,
+  graph,
+  persona,
+  sourceStore,
+};
 
 // Core Imports
 const { getCallingFolder } = require('./utilities.js');
@@ -68,17 +77,6 @@ const calls = {};
  * Core namepaces use the form: core.namespace.function() 
  */
 function initNamespaces() {
-  
-  // Core Namespaces
-  const namespaces = {
-    cache,
-    check,
-    config,
-    constants,
-    graph,
-    persona,
-    sourceStore,
-  };
 
   // Map exported calls from each namespace to core
   for(const namespace in namespaces) {
@@ -109,8 +107,11 @@ function initNamespaces() {
            * Currently required for:
            * - cache: module name is used to prevent modules from overwriting each other's cache
            * - config: module name is used to prevent modules from overwriting each other's config
+           * - client: module name is used to reference the correct location for the Handlebars template
            */ 
-          if(namespace === 'cache' || namespace === 'config') {
+          if(namespace === 'cache' ||
+             namespace === 'config' ||
+             namespace === 'client') {
             return calls[namespace][call](callingModule, ...params);
           } else {
             return calls[namespace][call](...params);
@@ -135,7 +136,7 @@ function initNamespaces() {
 async function initModules(moduleArray) {
 
   // Generate Core External Module Calls
-  // In future, this will be moved to the configuration database
+  core.mod = {};
 
   // load external module calls to core.mod.<module>.<call>
   for(const item in moduleArray) {
@@ -206,10 +207,10 @@ async function initModules(moduleArray) {
  * @returns {object} - The initialized core object
  */
 async function init() {
-
-  // If core is already initialized, return it
-  if(core.ready) { 
-    return core; 
+  console.log("Core: initializing")
+  if(core.ready) {
+    console.log("Core: already initialized")
+    return core;
   }
 
   // Initialize core's namespaced internal calls
@@ -240,43 +241,6 @@ function log(message, type='UNKNOWN_TYPE') {
 }
 
 /**
- * Render Handlebars Template
- * 
- * @param {string} templateName - The name of the modules Handlebars template file
- * @param {object} data - The data to pass to the Handlebars template
- * 
- * @returns {string|boolean} - The compiled HTML content or false if the template name is invalid
- */
-function render(templateName, data) {
-  const moduleName = getCallingFolder(new Error().stack);
-  
-  // Path to the Handlebars template file
-
-  // sanitize the template name
-  templateName = sanitize(templateName);
-
-  // validate the template name
-  if(!templateName) {
-    console.error('Invalid or empty template name');
-    return false;
-  }
-
-  const templatePath = `/app/modules/${moduleName}/${templateName}`;
-  
-  // Read the template file
-  const templateSource = fs.readFileSync(templatePath, 'utf8');
-  
-  // Compile the template
-  const template = Handlebars.compile(templateSource);
-
-  // Generate the HTML by passing the data to the compiled template
-  const html = template(data);
-
-  // Return the HTML
-  return html;
-}
-
-/**
  * Core object to export
  * 
  * This object is the main interface for all modules across Cartographer
@@ -289,12 +253,9 @@ function render(templateName, data) {
  * -- external module calls (assigned to core.mod.<module>.<function>)
  */
 const core = {
-  ready: false,
   coreData,
   init,
   log,
-  mod: {},
-  render,
 };
 
 module.exports = core;

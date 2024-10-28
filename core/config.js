@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
 
 /**

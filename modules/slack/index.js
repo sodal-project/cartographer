@@ -7,7 +7,7 @@ const slack = require('./slack.js');
  */
 async function redraw() {
   const data = await core.config.readConfig();
-  return core.render('index.hbs', data);
+  return core.client.render('index.hbs', data);
 }
 
 /**

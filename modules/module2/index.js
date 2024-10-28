@@ -6,7 +6,7 @@ const core = require('../../core/core.js');
  */
 async function redraw() {
   const data = await core.config.readConfig();
-  return core.render('index.hbs', data);
+  return core.client.render('index.hbs', data);
 }
 
 // PUBLIC
