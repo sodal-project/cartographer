@@ -86,6 +86,12 @@ const runRawQuery = async (query, optionalParams) => {
 
   try {
     const result = await session.run(query, optionalParams);
+
+    // log notifications
+    if(result.summary.notifications.length > 0) {
+      console.log('Notifications:', result.summary.notifications);
+    }
+
     return result;
   } catch (error) {
     console.error('Error processing raw query:', error);

@@ -26,7 +26,8 @@ const namespaces = {
 const { getCallingFolder } = require('./utilities.js');
 const { writeLog } = require('./log.js');
 
-// Core Data - this will live in the config database eventually
+// Core Data
+// TODO: move this to config database
 const coreData = {
   user: {
     name: "Dade Murphy",
