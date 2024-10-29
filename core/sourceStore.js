@@ -20,7 +20,6 @@
  */
 
 const utilPersona = require('./persona');
-const utilGraph = require('./graph');
 const check = require('./check');
 
 /**
@@ -117,9 +116,9 @@ const addRelationships = (store, relationships) => {
  * @param {object} store - The source store object
  * @returns {object} - The result of the merge queries
  */
-const merge = async (store) => {
+const getSyncQueries = (store, storeOld) => {
   check.sourceStoreObject(store);
-  
+
   let personaQueries = [];
   let controlQueries = [];
   let declareQueries = [];
@@ -132,9 +131,6 @@ const merge = async (store) => {
   let undeclaredRels = 0;
 
   const sourceId = store.source.id;
-  
-  await utilGraph.mergeSource(store.source);
-  const storeOld = await readStore(sourceId);
 
   if(storeOld){
     // check that the old source data is valid
@@ -148,8 +144,8 @@ const merge = async (store) => {
 
     // undeclare old personas that are not in the new store
     for(const upn of oldUpns) {
-      personaQueries.push(getUndeclarePersonaQuery(upn));
-      controlQueries = controlQueries.concat(getUndeclareControlQuery(upn));
+      personaQueries.push(getUndeclarePersonaQuery(sourceId, upn));
+      controlQueries = controlQueries.concat(getUndeclareControlQuery(sourceId, upn));
       undeclaredPersonas++;
       undeclaredRels += Object.keys(storeOld.personas[upn]?.control).length;
     }
@@ -186,7 +182,7 @@ const merge = async (store) => {
   // Report merge statistics
   const incomingPersonas = Object.keys(store.personas).length;
   const existingPersonas = storeOld ? Object.keys(storeOld.personas).length : 0;
-  console.log(`Identified: 
+  console.log(`Sync Query Generation: 
     ${incomingPersonas} Incoming Personas,
     ${existingPersonas} Existing Personas,
 Sync Process Identified:
@@ -201,57 +197,7 @@ Sync Process Identified:
   // process persona, then relationship, then declare queries
   const queries = personaQueries.concat(controlQueries).concat(declareQueries);
 
-  // execute the merge queries
-  if(queries.length > 0) {
-    console.log(`Merge Sync with ${queries.length} queries`);
-    return await utilGraph.runRawQueryArray(queries);
-  } else {
-    console.log(`Merge Sync found ${queries.length} queries, no changes to process`);
-  }
-}
-
-/**
- * Get a source store object from the graph
- * 
- * @param {string} sourceId 
- * @returns {object} - A source store object representing the entire
- *  graph associated with this source
- */
-const readStore = async (sourceId) => {
-
-  // get the source object
-  const source = await utilGraph.readSource(sourceId);
-
-  // if the source doesn't exist, return null
-  if(!source) {
-    console.log(`Source ${sourceId} not found`);
-    return null;
-  }
-
-  // get all personas for this source
-  const graphPersonas = await utilGraph.readSourcePersonas(sourceId);
-
-  // get all relationships for this source
-  const graphRelationships = await utilGraph.readSourceRelationships(sourceId);
-
-  // create a new store object
-  let store = newStore(source);
-
-  // add personas to the store
-  store = addPersonas(store, graphPersonas);
-
-  // add relationships to the store
-  store = addRelationships(store, graphRelationships);
-
-  // validate the store object
-  try {
-    check.sourceStoreObject(store);
-  } catch (error) {
-    console.error(`Error validating the source store for Source: ${sourceId}`);
-    throw error;
-  }
-
-  return store;
+  return queries;
 }
 
 const forcePersona = (store, upn) => {
@@ -451,5 +397,5 @@ module.exports = {
   newStore,
   addPersonas,
   addRelationships,
-  merge,
+  getSyncQueries,
 }

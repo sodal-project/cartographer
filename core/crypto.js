@@ -5,13 +5,13 @@
 const crypto = require('crypto');
 require('dotenv').config();
 
+const algorithm = "aes-256-cbc";
+
 /**
  * Encrypt a string
  */
 function encrypt(text, optionalKey) {
-  const secret = process.env.GLOBAL_CONFIG_SECRET + optionalKey;
-  const algorithm = process.env.GLOBAL_CONFIG_KEY_ALGORITHM;
-
+  const secret = process.env.MODULE_SECRET + optionalKey;
   const cipher = crypto.createCipher(algorithm, secret);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -22,9 +22,7 @@ function encrypt(text, optionalKey) {
  * Decrypt a string
  */
 function decrypt(text, optionalKey) {
-  const secret = process.env.GLOBAL_CONFIG_SECRET + optionalKey;
-  const algorithm = process.env.GLOBAL_CONFIG_KEY_ALGORITHM;
-
+  const secret = process.env.MODULE_SECRET + optionalKey;
   const decipher = crypto.createDecipher(algorithm, secret);
   let decrypted = decipher.update(text, 'hex', 'utf8');
   decrypted += decipher.final('utf8');

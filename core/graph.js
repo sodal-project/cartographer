@@ -1,5 +1,7 @@
 const check = require('./check');
-const connector = require('./graphConnector');
+const connector = require('./graphNeo4jConnector');
+const sourceUtils = require('./source');
+const sourceStore = require('./sourceStore');
 
 /* TODO: enable pagination
 
@@ -22,18 +24,23 @@ const defaultPageParams = {
 */
 
 // TODO: Implement deleteOrphanedPersonas
-const deleteOrphanedPersonas = async () => { 
+const deleteOrphanedPersonas = async (module) => { 
+
+}
+
+// TODO: Implement remove function
+const removePersona = async (module, upn, sourceId, querySetOnly) => {
 
 }
 
 /**
- * Delete a source form the persona graph database
+ * Delete a source from the persona graph database
  * 
  * @param {string} sourceId 
  * @param {boolean} querySetOnly - if true, return a query set object instead of executing the query
  * @returns {object} - The response from the database, or the query set object
  */
-const deleteSource = async (sourceId, querySetOnly) => {
+const deleteSource = async (module, sourceId, querySetOnly) => {
   const queries = [];
   queries.push({
     query: `MATCH (source:Source {id: $sourceId})
@@ -55,14 +62,8 @@ const deleteSource = async (sourceId, querySetOnly) => {
   return response
 }
 
-// TODO: Implement mergePersonaDeclaration
-const mergePersonaDeclaration = async (sourceId, personaUpn, confidence, querySetOnly) => {
-
-}
-
-// TODO: Implement mergeRelationshipDeclaration
-const mergeRelationshipDeclaration = async (relationshipObject, querySetOnly) => {
-
+// TODO: Implement merge function
+const mergePersona = async (module, persona, source, querySetOnly) => {
 }
 
 /**
@@ -72,7 +73,7 @@ const mergeRelationshipDeclaration = async (relationshipObject, querySetOnly) =>
  * @param {boolean} querySetOnly - if true, return a query set object instead of executing the query
  * @returns {object} - The source object from the database, or the query set object
  */
-const mergeSource = async (source, querySetOnly) => {
+const mergeSource = async (module, source, querySetOnly) => {
   check.sourceObject(source);
 
   const query = `MERGE (source:Source {id: $source.id})
@@ -123,7 +124,7 @@ filter: {
 }
 
 */
-const readFilter = async (filter, pageParams) => {
+const readFilter = async (module, filter, pageParams) => {
 
 }
 
@@ -132,7 +133,7 @@ const readFilter = async (filter, pageParams) => {
  * 
  * @returns {object[]} - An array of persona objects
  */ 
-const readOrphanedPersonas = async () => {
+const readOrphanedPersonas = async (module) => {
   const query = `MATCH (persona:Persona)
   WHERE NOT ()-[:DECLARE]->(persona)
   RETURN persona`
@@ -146,69 +147,9 @@ const readOrphanedPersonas = async () => {
   return personas;
 }
 
-/**
- * Get all personas that a given person directly controls
- * 
- * @param {string} upn 
- * @param {number[]} levels 
- * @returns {object[]} - An array of persona objects
- */
-const readPersonaControl = async (upn, levels) => {
-  const query = `MATCH (persona:Persona {upn: $upn})-[rel:CONTROL]->(relation:Persona)
-  WHERE rel.level IN $levels
-  RETURN relation`
+// TODO: Implement readPersona
+const readPersona = async (module, upn) => {
 
-  const response = await connector.runRawQuery(query, { upn, levels });
-
-  const personas = response.records.map(record => {
-    return record.get('relation').properties;
-  })
-
-  return personas;
-}
-
-const readPersonaDeclarations = async (upn) => {
-
-}
-
-/**
- * Get all personas that directly control a given person
- * 
- * @param {string} upn
- * @param {number[]} levels
- * @returns {object[]} - An array of persona objects
- */
-const readPersonaObey = async (upn, levels) => {
-  const query = `MATCH (persona:Persona)-[rel:CONTROL]->(relation:Persona {upn: $upn})
-  WHERE rel.level IN $levels
-  RETURN persona`
-
-  const response = await connector.runRawQuery(query, { upn, levels });
-
-  const personas = response.records.map(record => {
-    return record.get('persona').properties;
-  })
-
-  return personas;
-}
-
-/**
- * Get direct properties of a persona object
- * 
- * @param {string} upn
- * @returns {object} - The properties of the persona object
- */
-const readPersonaProperties = async (upn) => {
-  const query = `MATCH (persona:Persona {upn: $upn})
-  RETURN persona`
-
-  const response = await connector.runRawQuery(query, { upn });
-
-  const persona = response.records.map(record => {
-    return record.get('persona').properties;
-  });
-
-  return persona[0];
 }
 
 /**
@@ -217,7 +158,7 @@ const readPersonaProperties = async (upn) => {
  * @param {string} sourceId
  * @returns {object} - The source object
  */
-const readSource = async (sourceId) => {
+const readSource = async (module, sourceId) => {
   const query = `MATCH (source:Source {id: $sourceId})
   RETURN source`
 
@@ -236,7 +177,7 @@ const readSource = async (sourceId) => {
  * @param {string} sourceId
  * @returns {object[]} - An array of persona objects
  */
-const readSourcePersonas = async (sourceId) => {
+const readSourcePersonas = async (module, sourceId) => {
   const query = `MATCH (source:Source {id: $sourceId})-[:DECLARE]->(persona:Persona)
   RETURN persona`
 
@@ -255,7 +196,7 @@ const readSourcePersonas = async (sourceId) => {
  * @param {string} sourceId
  * @returns {object[]} - An array of relationship objects
  */
-const readSourceRelationships = async (sourceId) => {
+const readSourceRelationships = async (module, sourceId) => {
   const query = `MATCH (persona:Persona)-[rel:CONTROL]->(relation:Persona)
   WHERE rel.sourceId = $sourceId
   RETURN DISTINCT persona.upn AS controlUpn, relation.upn AS obeyUpn, properties(rel)`
@@ -271,16 +212,6 @@ const readSourceRelationships = async (sourceId) => {
   return relationships;
 }
 
-// TODO: Implement removePersonaDeclaration
-const removePersonaDeclaration = async (sourceId, personaUpn, querySetOnly) => {
-
-}
-
-// TODO: Implement removeRelationshipDeclaration
-const removeRelationshipDeclaration = async (sourceId, controlUpn, obeyUpn, querySetOnly) => {
-
-}
-
 /**
  * Execute a raw query against the persona graph database
  * 
@@ -288,7 +219,9 @@ const removeRelationshipDeclaration = async (sourceId, controlUpn, obeyUpn, quer
  * @param {object} optionalParams - The parameters for the query
  * @returns {object} - The response from the database
  */
-const runRawQuery = connector.runRawQuery;
+const runRawQuery = async (module, query, optionalParams) => {
+  return await connector.runRawQuery (query, optionalParams);
+}
 
 /**
  * Execute an array of queries in a set of transactions
@@ -296,25 +229,92 @@ const runRawQuery = connector.runRawQuery;
  * @param {object[]} queryArray - An array of query objects
  * @returns {object} - The response from the database
  */
-const runRawQueryArray = connector.runRawQueryArray;
+const runRawQueryArray = async (module, queryArray) => {
+  return await connector.runRawQueryArray(queryArray);
+}
+
+const syncPersonas = async (module, personaArray, customSource) => {
+
+  const source = customSource ? customSource : sourceUtils.getSourceObject(module);
+  check.sourceObject(source);
+
+  const store = sourceStore.newStore(source)
+  sourceStore.addPersonas(store, personaArray);
+  check.sourceStoreObject(store);
+
+  const oldStore = await readSourceStore(module, source.id); 
+  const queries = sourceStore.getSyncQueries(store, oldStore);
+
+  // ensure the source is in the graph
+  await mergeSource(module, source);
+
+  // execute the merge queries
+  if(queries.length > 0) {
+    console.log(`Merge Sync with ${queries.length} queries`);
+    return await connector.runRawQueryArray(queries);
+  } else {
+    console.log(`Merge Sync found ${queries.length} queries, no changes to process`);
+  }
+
+}
+
+/**
+ * Get a source store object from the graph
+ * 
+ * @param {string} sourceId 
+ * @returns {object} - A source store object representing the entire
+ *  graph associated with this source
+ */
+const readSourceStore = async (module, sourceId) => {
+
+  // get the source object
+  const source = await readSource(module, sourceId);
+
+  // if the source doesn't exist, return null
+  if(!source) {
+    console.log(`Source ${sourceId} not found`);
+    return null;
+  }
+
+  // get all personas for this source
+  const graphPersonas = await readSourcePersonas(module, sourceId);
+
+  // get all relationships for this source
+  const graphRelationships = await readSourceRelationships(module, sourceId);
+
+  // create a new store object
+  let store = sourceStore.newStore(source);
+
+  // add personas to the store
+  store = sourceStore.addPersonas(store, graphPersonas);
+
+  // add relationships to the store
+  store = sourceStore.addRelationships(store, graphRelationships);
+
+  // validate the store object
+  try {
+    check.sourceStoreObject(store);
+  } catch (error) {
+    console.error(`Error validating the source store for Source: ${sourceId}`);
+    throw error;
+  }
+
+  return store;
+}
 
 module.exports = {
   deleteOrphanedPersonas,
+  removePersona,
   deleteSource,
-  mergePersonaDeclaration,
-  mergeRelationshipDeclaration,
+  mergePersona,
   mergeSource,
   readFilter,
   readOrphanedPersonas,
-  readPersonaControl,
-  readPersonaDeclarations,
-  readPersonaObey,
-  readPersonaProperties,
+  readPersona,
   readSource,
   readSourcePersonas,
   readSourceRelationships,
-  removePersonaDeclaration,
-  removeRelationshipDeclaration,
   runRawQuery,
   runRawQueryArray,
+  syncPersonas,
 }

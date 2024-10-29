@@ -9,19 +9,18 @@ async function merge(slackAuthInstance){
       name: slackAuthInstance.name,
       lastUpdate: new Date().toISOString(),
     }
+
     const slackTeamId = slackAuthInstance.teamId;
     const slackTeamFriendlyName = slackAuthInstance.name;
 
     console.log(`Processing ${slackTeamFriendlyName}`);
-    const allPersonas = await getInstancePersonas(slackAuthInstance);
-    await core.cache.save(`allPersonas-${slackTeamId}`, allPersonas);
+    const personas = await getInstancePersonas(slackAuthInstance);
+    await core.cache.save(`allPersonas-${slackTeamId}`, personas);
 
     //
     // update graph from remote store
     //
-    const store = core.sourceStore.newStore(source);
-    core.sourceStore.addPersonas(store, allPersonas);
-    await core.sourceStore.merge(store);
+    await core.graph.syncPersonas(personas, source);
 
     console.log(`Process Complete for ${slackTeamFriendlyName}`);
     

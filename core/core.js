@@ -8,7 +8,7 @@ const crypto = require('./crypto.js')
 const constants = require('./constants.js')
 const graph = require('./graph.js')
 const persona = require('./persona.js')
-const sourceStore = require('./sourceStore.js')
+const source = require('./source.js')
 
 const namespaces = {
   cache,
@@ -19,7 +19,7 @@ const namespaces = {
   crypto,
   graph,
   persona,
-  sourceStore,
+  source,
 };
 
 // Core Imports
@@ -115,7 +115,9 @@ function initNamespaces() {
            */ 
           if(namespace === 'cache' ||
              namespace === 'config' ||
-             namespace === 'client') {
+             namespace === 'client' ||
+             namespace === 'source' ||
+             namespace === 'graph') {
             return calls[namespace][call](callingModule, ...params);
           } else {
             return calls[namespace][call](...params);

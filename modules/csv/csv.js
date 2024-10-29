@@ -14,27 +14,25 @@ const merge = async (fileId, fileName, fileData) => {
 
     console.log(`Processing CSV file ${fileName}...`);
     const r0 = fileData[0];
-
-    const store = core.sourceStore.newStore(source);
+    let personas = [];
 
     // process personas csv
     if(r0.hasOwnProperty("id")&&r0.hasOwnProperty("type")&&r0.hasOwnProperty("platform")){
       console.log('Processing personas...');
-      const personas = mapCsvPersonas(fileData);
-      core.sourceStore.addPersonas(store, personas);
+      personas = personas.concat(mapCsvPersonas(fileData));
 
     // process relationships csv
     } else if(r0.hasOwnProperty("controlUpn")&&r0.hasOwnProperty("obeyUpn")){
       console.log('Processing relationships...');
       const relationships = mapCsvRelationships(fileData);
-      core.sourceStore.addRelationships(store, relationships);
+      personas = personas.concat(core.persona.getFromRelationships(relationships));
 
     } else {
       throw Error('CSV file does not contain the required columns');
     }
 
     // generate and process merge sync queries
-    await core.sourceStore.merge(store)
+    await core.graph.syncPersonas(personas, source);
 
     // await graph.runRawQueryArray(queries);
     console.log(`CSV file processed successfully`);

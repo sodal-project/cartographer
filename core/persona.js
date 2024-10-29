@@ -16,6 +16,27 @@ const generateUpnRaw = (platform, type, id) => {
   return newUpn;
 }
 
+const getFromRelationships = (relationships) => {
+  if(!relationships) { return null; }
+
+  const personas = [];
+
+  for(const rel of relationships) {
+    const persona = newFromUpn(rel.controlUpn);
+    const control = {
+      upn: rel.obeyUpn,
+      ...rel
+    }
+    delete control.controlUpn;
+    delete control.obeyUpn;
+    persona.control = [control];
+    personas.push(persona);
+    check.personaObject(persona);
+  }
+
+  return personas;
+}
+
 /**
  * Get the simple properties of a persona object (no relationships)
  * 
@@ -78,14 +99,6 @@ const getRelationships = (persona) => {
   return relationships;
 }
 
-// TODO: Implement list function
-const list = (filter) => {
-}
-
-// TODO: Implement merge function
-const merge = (source, persona, querySetOnly) => {
-}
-
 /**
  * Create a new persona object from an email address
  * 
@@ -141,24 +154,11 @@ const newPersona = (platform, type, id, optionalParams) => {
   return persona;
 }
 
-// TODO: Implement read function
-const read = (upn) => {
-
-}
-
-// TODO: Implement remove function
-const remove = (sourceId, upn, querySetOnly) => {
-
-}
-
 module.exports = {
+  getFromRelationships,
   getProps,
   getRelationships,
-  list,
-  merge,
   newFromEmail,
   newFromUpn,
   newPersona,
-  read,
-  remove,
 }
