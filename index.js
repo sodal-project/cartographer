@@ -64,6 +64,10 @@ const coreData = {
       folder: "long-process",
       label: "Long Process",
     },
+    {
+      folder: "table-demo",
+      label: "Table Demo",
+    },
   ]
 }
 
