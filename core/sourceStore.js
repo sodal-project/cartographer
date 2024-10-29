@@ -97,6 +97,7 @@ const addRelationships = (store, relationships) => {
     delete relationship.obeyUpn;
     delete relationship.sourceId;
 
+    // get or create the control and subordinate personas
     const subordinatePersona = forcePersona(store, obeyUpn);
     const controlPersona = forcePersona(store, controlUpn);
 
@@ -119,71 +120,94 @@ const addRelationships = (store, relationships) => {
 const merge = async (store) => {
   check.sourceStoreObject(store);
   
-  let queries = [];
+  let personaQueries = [];
+  let controlQueries = [];
+  let declareQueries = [];
+
+  let newPersonas = 0;
+  let updatedPersonas = 0;
+  let undeclaredPersonas = 0;
+  let newRels = 0;
+  let updatedRels = 0; 
+  let undeclaredRels = 0;
 
   const sourceId = store.source.id;
   
   await utilGraph.mergeSource(store.source);
   const storeOld = await readStore(sourceId);
 
-  // if there is no previous store, or the previous store is empty,
-  //   execute a simple merge (no source comparison operations)
-  if(!storeOld) {
-    console.log("Merging with no previous store, executing non-sync merge.");
-    queries = queries.concat(getSimpleMergeQueries(store));
-  } else if(Object.keys(storeOld.personas).length === 0) {
-    console.log("Merging with empty previous store, executing non-sync merge.");
-    queries = queries.concat(getSimpleMergeQueries(store));
-  
-  // if this source already exists in the graph, execute a sync merge
-  } else {
+  if(storeOld){
+    // check that the old source data is valid
     check.sourceStoreObject(storeOld);
-
-    // ensure source stores match before continuing
     if(store.source.id !== storeOld.source.id) {
       throw Error(`Cannot merge stores with different sources.`);
     }
 
-    // get a list of all existing upns in the graph for this source
-    //   as the final step of the sync, we will
-    //   undeclare any personas that were not processed
-    let oldUpns = Object.keys(storeOld.personas);
-    
-    // compare each persona in the new store with the old store
-    for(const upn in store.personas) {
-      const personaNew = store.personas[upn];
-      const personaOld = storeOld.personas[upn];
-  
-      // if the persona is already declared in the graph, compare and sync the persona details
-      if(oldUpns.includes(upn)) {
+    // create array of upns in the old store that are not in new store
+    const oldUpns = Object.keys(storeOld.personas).filter((upn) => !store.personas[upn]);
 
-        // sync the persona properties
-        const syncPersonaQuery = getSyncPersonaQuery(personaNew, personaOld)
-        if(syncPersonaQuery) { queries.push(syncPersonaQuery); }
-
-        // sync the persona control relationships
-        queries = queries.concat(getSyncControlQueries(sourceId, personaNew, personaOld));
-  
-        // indicate that this persona has been processed
-        oldUpns = oldUpns.filter((oldUpn) => oldUpn !== upn);
-      
-      // if the persona is not declared, declare it and all of its control relationships
-      } else {
-        queries.push(getPersonaQuery(personaNew));
-        queries = queries.concat(getControlQueries(sourceId, personaNew));
-      }
-    }
-
-    // undeclare any old personas that were not in the new store
+    // undeclare old personas that are not in the new store
     for(const upn of oldUpns) {
-      queries.push(getUndeclarePersonaQuery(upn));
-      queries = queries.concat(getUndeclareControlQuery(upn));
+      personaQueries.push(getUndeclarePersonaQuery(upn));
+      controlQueries = controlQueries.concat(getUndeclareControlQuery(upn));
+      undeclaredPersonas++;
+      undeclaredRels += Object.keys(storeOld.personas[upn]?.control).length;
     }
   }
 
+  for(const upn in store.personas) {
+    const personaNew = store.personas[upn];
+    const personaOld = storeOld?.personas[upn];
+
+    // sync the persona properties
+    const personaQuery = getPersonaQuery(personaNew, personaOld)
+
+    // if the persona query is not null, the persona must be updated or created
+    if(personaQuery) {
+      personaQueries.push(personaQuery); 
+
+      // if the persona is new, declare it
+      if(!personaOld) { 
+        newPersonas++; 
+        declareQueries.push(getDeclareQuery(sourceId, upn));
+      }
+      else { updatedPersonas++; }
+    }
+
+    // sync the persona control relationships
+    const personaControlQueries = getSyncControlQueries(sourceId, personaNew, personaOld);
+    if(personaControlQueries.length > 0) {
+      if(!personaOld) { newRels++; }
+      else { updatedRels++; }
+    }
+    controlQueries = controlQueries.concat(personaControlQueries);
+  }
+
+  // Report merge statistics
+  const incomingPersonas = Object.keys(store.personas).length;
+  const existingPersonas = storeOld ? Object.keys(storeOld.personas).length : 0;
+  console.log(`Identified: 
+    ${incomingPersonas} Incoming Personas,
+    ${existingPersonas} Existing Personas,
+Sync Process Identified:
+    ${declareQueries.length} Persona Declaration Relationships,
+    ${newPersonas} New Personas,
+    ${newRels} New Relationships,
+    ${updatedPersonas} Updated Personas,
+    ${updatedRels} Updated Relationships,
+    ${undeclaredPersonas} Undeclared Personas,
+    ${undeclaredRels} Undeclared Relationships`);
+
+  // process persona, then relationship, then declare queries
+  const queries = personaQueries.concat(controlQueries).concat(declareQueries);
+
   // execute the merge queries
-  console.log(`Merge Sync with ${queries.length} queries`);
-  return await utilGraph.runRawQueryArray(queries);
+  if(queries.length > 0) {
+    console.log(`Merge Sync with ${queries.length} queries`);
+    return await utilGraph.runRawQueryArray(queries);
+  } else {
+    console.log(`Merge Sync found ${queries.length} queries, no changes to process`);
+  }
 }
 
 /**
@@ -200,7 +224,7 @@ const readStore = async (sourceId) => {
 
   // if the source doesn't exist, return null
   if(!source) {
-    console.error(`Source ${sourceId} not found`);
+    console.log(`Source ${sourceId} not found`);
     return null;
   }
 
@@ -219,43 +243,15 @@ const readStore = async (sourceId) => {
   // add relationships to the store
   store = addRelationships(store, graphRelationships);
 
+  // validate the store object
+  try {
+    check.sourceStoreObject(store);
+  } catch (error) {
+    console.error(`Error validating the source store for Source: ${sourceId}`);
+    throw error;
+  }
+
   return store;
-}
-
-/**
- * Get an array of queries to merge a complete, new source store with the graph
- * 
- * @param {object} store 
- * @returns {object[]} - An array of queries to blind merge the store with the graph
- */
-const getSimpleMergeQueries = (store) => {
-
-  check.sourceStoreObject(store);
-
-  console.log(`Processing ${store.source.name} store`);
-  console.log(`Found ${Object.keys(store.personas).length} personas`);
-
-  // a merge has three components:
-  //   - merge all persona nodes with related persona properties
-  //   - declare all control relationships for those personas
-  //   - create control relationship edges between related personas
-  const personaQueries = getSourcePersonaQueries(store);
-  const declareQueries = getSourceDeclareQueries(store);
-  const controlQueries = getStoreControlQueries(store);
-
-  const queries = [
-    ...personaQueries,
-    ...declareQueries,
-    ...controlQueries,
-  ]
-  console.log(`Identified: 
-    ${personaQueries.length} persona queries,
-    ${declareQueries.length} declare queries,
-    ${controlQueries.length} control queries
-    `);
-  console.log(`Merge with ${queries.length} queries`);
-
-  return queries;
 }
 
 const forcePersona = (store, upn) => {
@@ -298,19 +294,6 @@ const addPersona = (store, persona) => {
   return store;
 }
 
-//
-// Merge Queries
-//
-
-const getSourceDeclareQueries = (store) => {
-  const queries = [];
-
-  for(const upn in store.personas) {
-    queries.push(getDeclareQuery(store.source.id, upn));
-  }
-  return queries;
-}
-
 const getDeclareQuery = (sourceId, upn) => {
   return {
     query: `MATCH (source:Source { id: $sourceId }), (persona:Persona { upn: $upn })
@@ -321,58 +304,6 @@ const getDeclareQuery = (sourceId, upn) => {
       upn: upn,
     }
   }
-}
-
-const getSourcePersonaQueries = (store) => {
-  const queries = [];
-  for(const upn in store.personas) {
-    queries.push(getPersonaQuery(store.personas[upn]));
-  }
-  return queries;
-}
-
-const getPersonaQuery = (persona) => { 
-  const query = `MERGE (persona:Persona { upn: $upn })
-    SET persona += $personaProps
-    `
-  const props = {};
-
-  for(const prop in persona) {
-    switch(prop) {
-      case "control":
-      case "obey":
-      case "upn":
-        break;
-      default:
-        props[prop] = persona[prop];
-        break;
-    }
-  }
-
-  return {
-    query: query,
-    values: {
-      upn: persona.upn,
-      personaProps: props,
-    }
-  }
-}
-
-const getStoreControlQueries = (store) => {
-  let queries = [];
-
-  for(const upn in store.personas) {
-    queries = queries.concat(getControlQueries(store.source.id, store.personas[upn]));
-  }
-  return queries;
-}
-
-const getControlQueries = (sourceId, persona) => {
-  const queries = [];
-  for(const obeyUpn in persona.control) {
-    queries.push(getControlQuery(sourceId, persona.upn, obeyUpn, persona.control[obeyUpn]));
-  }
-  return queries;
 }
 
 const getControlQuery = (sourceId, controlUpn, obeyUpn, relProps) => {
@@ -390,12 +321,8 @@ const getControlQuery = (sourceId, controlUpn, obeyUpn, relProps) => {
   }
 }
 
-//
-// Merge Sync Queries
-//
-
-const getSyncPersonaQuery = (personaNew, personaOld) => {
-  const query = `MATCH (persona:Persona { upn: $upn })
+const getPersonaQuery = (personaNew, personaOld) => {
+  const query = `MERGE (persona:Persona { upn: $upn })
     SET persona += $personaProps
     `
   const props = {};
@@ -407,7 +334,7 @@ const getSyncPersonaQuery = (personaNew, personaOld) => {
       case "upn":
         break;
       default:
-        if(personaNew[prop] !== personaOld[prop]) {
+        if(!personaOld || personaNew[prop] !== personaOld[prop]) {
           props[prop] = personaNew[prop];
         }
         break;
@@ -438,11 +365,17 @@ const getSyncPersonaQuery = (personaNew, personaOld) => {
 const getSyncControlQueries = (sourceId, personaNew, personaOld) => {
   let queries = [];
 
-  let controlRelOldUpns = Object.keys(personaOld.control);
-  
+  if(personaOld) {
+    // create an array of upns in the old persona that are not in the new persona
+    const controlRelOldUpns = Object.keys(personaOld.control).filter((upn) => !personaNew.control[upn]);
+    for(const controlRelOldUpn of controlRelOldUpns) {
+      queries.push(getRemoveControlQuery(sourceId, personaNew.upn, controlRelOldUpn));
+    }
+  }
+
   for(const obeyUpn in personaNew.control) {
     const controlRelNew = personaNew.control[obeyUpn];
-    const controlRelOld = personaOld.control[obeyUpn];
+    const controlRelOld = personaOld?.control[obeyUpn];
 
     if(!controlRelOld) {
       queries.push(getControlQuery(sourceId, personaNew.upn, obeyUpn, controlRelNew));
@@ -460,14 +393,10 @@ const getSyncControlQueries = (sourceId, personaNew, personaOld) => {
           relProps[prop] = null;
         }
       }
-      controlRelOldUpns = controlRelOldUpns.filter((upn) => upn !== obeyUpn);
       if(Object.keys(relProps).length > 0) {
         queries.push(getControlQuery(sourceId, personaNew.upn, obeyUpn, relProps));
       }
     }
-  }
-  for(const controlRelOldUpn of controlRelOldUpns) {
-    queries.push(getRemoveControlQuery(sourceId, personaNew.upn, controlRelOldUpn));
   }
   return queries;
 }

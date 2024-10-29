@@ -1,5 +1,6 @@
 require('dotenv').config();
 const neo4j = require('neo4j-driver');
+const cache = require('./cache.js');
 
 const Config = {
   db_host: `bolt://${process.env.INSTANCE_NAME_DB}:${process.env.NEO4J_BOLT_PORT}`,
@@ -70,6 +71,8 @@ const healthCheck = async () => {
  * @returns {object} - The response from the database
  */
 const runRawQuery = async (query, optionalParams) => {
+  await saveCache('querySingle', {query, optionalParams});
+
   if(!(await healthCheck())) {
     console.error('Health Check failed, unable to process raw query.');
     return false;
@@ -87,6 +90,8 @@ const runRawQuery = async (query, optionalParams) => {
     if(result.summary.notifications.length > 0) {
       console.log('Notifications:', result.summary.notifications);
     }
+
+    saveCache('singleResponse', result);
 
     return result;
   } catch (error) {
@@ -124,6 +129,8 @@ const runRawQuery = async (query, optionalParams) => {
  * @returns {object} - The aggregate response from the database
  */
 const runRawQueryArray = async (queryArray) => {
+  await saveCache('queryArray', queryArray);
+
   if(!(await healthCheck())) {
     console.error('Health Check failed, unable to process query array.');
     return null;
@@ -161,6 +168,12 @@ const runRawQueryArray = async (queryArray) => {
     await transaction.commit();
     const duration = performance.now() - startTime;
     console.log(`Processed ${queryArray.length} queries in ${duration} milliseconds.`);
+    if(response.summary?.notifications?.length) {
+      console.log(`Notifications:\n${response.summary.notifications}`);
+    } else {
+      console.log('No notifications to display.');
+    }
+    await saveCache('arrayResponse', response);
 
   } catch (error) {
     console.error(`Error processing query array: ${error}`);
@@ -169,6 +182,11 @@ const runRawQueryArray = async (queryArray) => {
     await driver.close()
   }
   return response;
+}
+
+const saveCache = async (type, data) => {
+  const unixTime = Math.floor(Date.now() / 1000);
+  await cache.save(`graph-${unixTime}`, type, data);
 }
 
 module.exports = {
