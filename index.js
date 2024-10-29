@@ -25,7 +25,6 @@ app.set("views", __dirname);
 Handlebars.registerHelper('json', function(context) {
   return JSON.stringify(context);
 });
-Handlebars.registerHelper('dateFormat', require('handlebars-dateformat'));
 
 // Register Partials Manually
 const registerPartials = () => {

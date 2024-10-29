@@ -7,13 +7,11 @@
       <li class="group relative border-b border-gray-800 py-2 flex items-center">
         <span class="flex-grow text-white-200">File Id</span>
         <span class="flex-grow text-white-200">File Name</span>
-        <span class="flex-grow text-white-200">Import Date</span>
       </li>
       {{#each this.files }}
         <li class="group relative border-b border-gray-800 py-2 flex items-center">
           <span class="flex-grow text-gray-400">{{this.fileId}}</span>
           <span class="flex-grow text-gray-400">{{this.fileName}}</span>
-          <span class="flex-grow text-gray-400">{{dateFormat this.fileDate "YYYY-MM-DD"}}</span>
 
           <!-- Form to run a merge sync for this instance -->
           <div
