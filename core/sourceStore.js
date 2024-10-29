@@ -1,13 +1,22 @@
 /**
  * Source Store
  * 
- * The purpose of the Source Store is to simplify
- * the process of updating a source in the graph
+ * Source Store provides a simple way to sync source data
+ * with the persona graph.
+ * 
+ * WARNING: Merging an incomplete source store will
+ * result in data loss. A merge operation will remove
+ * any source personas or relationships from the 
+ * graph that are not present in the new source store.
  * 
  * Source Store
  * -- builds Source Stores from standard persona objects
  * -- compares the current source graph state with new source state
  * -- generates and executes the necessary queries to update the graph
+ * 
+ * A Source Store object includes modified persona objects.
+ * These modified objects are NOT canonical persona objects. 
+ * Do not access them directly.
  */
 
 const utilPersona = require('./persona');
@@ -117,67 +126,108 @@ const merge = async (store) => {
   await utilGraph.mergeSource(store.source);
   const storeOld = await readStore(sourceId);
 
+  // if there is no previous store, or the previous store is empty,
+  //   execute a simple merge (no source comparison operations)
   if(!storeOld) {
     console.log("Merging with no previous store, executing non-sync merge.");
     queries = queries.concat(getSimpleMergeQueries(store));
   } else if(Object.keys(storeOld.personas).length === 0) {
     console.log("Merging with empty previous store, executing non-sync merge.");
     queries = queries.concat(getSimpleMergeQueries(store));
+  
+  // if this source already exists in the graph, execute a sync merge
   } else {
     check.sourceStoreObject(storeOld);
 
-    // store sources should always match
+    // ensure source stores match before continuing
     if(store.source.id !== storeOld.source.id) {
       throw Error(`Cannot merge stores with different sources.`);
     }
+
+    // get a list of all existing upns in the graph for this source
+    //   as the final step of the sync, we will
+    //   undeclare any personas that were not processed
     let oldUpns = Object.keys(storeOld.personas);
+    
+    // compare each persona in the new store with the old store
     for(const upn in store.personas) {
       const personaNew = store.personas[upn];
       const personaOld = storeOld.personas[upn];
   
+      // if the persona is already declared in the graph, compare and sync the persona details
       if(oldUpns.includes(upn)) {
+
+        // sync the persona properties
         const syncPersonaQuery = getSyncPersonaQuery(personaNew, personaOld)
         if(syncPersonaQuery) { queries.push(syncPersonaQuery); }
+
+        // sync the persona control relationships
         queries = queries.concat(getSyncControlQueries(sourceId, personaNew, personaOld));
   
+        // indicate that this persona has been processed
         oldUpns = oldUpns.filter((oldUpn) => oldUpn !== upn);
+      
+      // if the persona is not declared, declare it and all of its control relationships
       } else {
         queries.push(getPersonaQuery(personaNew));
         queries = queries.concat(getControlQueries(sourceId, personaNew));
       }
     }
+
+    // undeclare any old personas that were not in the new store
     for(const upn of oldUpns) {
       queries.push(getUndeclarePersonaQuery(upn));
       queries = queries.concat(getUndeclareControlQuery(upn));
     }
   }
 
+  // execute the merge queries
   console.log(`Merge Sync with ${queries.length} queries`);
   return await utilGraph.runRawQueryArray(queries);
 }
 
-//
-// Private Utils
-//
-
+/**
+ * Get a source store object from the graph
+ * 
+ * @param {string} sourceId 
+ * @returns {object} - A source store object representing the entire
+ *  graph associated with this source
+ */
 const readStore = async (sourceId) => {
 
+  // get the source object
   const source = await utilGraph.readSource(sourceId);
+
+  // if the source doesn't exist, return null
   if(!source) {
     console.error(`Source ${sourceId} not found`);
     return null;
   }
 
+  // get all personas for this source
   const graphPersonas = await utilGraph.readSourcePersonas(sourceId);
+
+  // get all relationships for this source
   const graphRelationships = await utilGraph.readSourceRelationships(sourceId);
+
+  // create a new store object
   let store = newStore(source);
 
+  // add personas to the store
   store = addPersonas(store, graphPersonas);
+
+  // add relationships to the store
   store = addRelationships(store, graphRelationships);
 
   return store;
 }
 
+/**
+ * Get an array of queries to merge a complete, new source store with the graph
+ * 
+ * @param {object} store 
+ * @returns {object[]} - An array of queries to blind merge the store with the graph
+ */
 const getSimpleMergeQueries = (store) => {
 
   check.sourceStoreObject(store);
@@ -185,6 +235,10 @@ const getSimpleMergeQueries = (store) => {
   console.log(`Processing ${store.source.name} store`);
   console.log(`Found ${Object.keys(store.personas).length} personas`);
 
+  // a merge has three components:
+  //   - merge all persona nodes with related persona properties
+  //   - declare all control relationships for those personas
+  //   - create control relationship edges between related personas
   const personaQueries = getSourcePersonaQueries(store);
   const declareQueries = getSourceDeclareQueries(store);
   const controlQueries = getStoreControlQueries(store);
