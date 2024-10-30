@@ -28,15 +28,16 @@ async function addInstance(formData) {
   }
 
   const configData = await core.config.readConfig();
-  const instances = configData?.instances || [];
+  const instances = configData?.instances || {};
   const secret = await core.crypto.encrypt(formData.token);
 
   const instance = {
     name: formData.name,
     teamId: formData.teamId,
     secret: secret,
+    ready: true,
   }
-  instances.push(instance);
+  instances[formData.teamId] = instance;
 
   await core.config.writeConfig({ instances });
 
@@ -44,23 +45,45 @@ async function addInstance(formData) {
 }
 
 async function deleteInstance(formData) {
-  const configData = await core.config.readConfig();
-  const instances = configData?.instances || [];
+  const instances = await core.config.readConfig("instances");
+  const teamId = formData.teamId;
 
-  const updatedInstances = instances.filter(instance => instance.teamId !== formData.teamId);
-
-  await core.config.writeConfig({ instances: updatedInstances });
+  if(instances[teamId]) {
+    console.log('Deleting Slack Instance: ', instances[teamId].name);
+    await core.graph.deleteSource(`source:slack:${teamId}`);
+    await core.config.deleteConfig(`instances.${teamId}`);
+  } else {
+    console.log(`Instance ${teamId} not found`);
+  }
 
   return redraw();
 }
 
 async function sync(formData) {
-  const configData = await core.config.readConfig();
-  const instances = configData?.instances || [];
+  const instances = await core.config.readConfig("instances");
+  const teamId = formData.teamId;
+  const instance = instances[teamId];
 
-  const instance = instances.find(instance => instance.teamId === formData.teamId);
+  if(!instance) {
+    throw new Error('Instance not found');
+  } else if(!instance.ready) {
+    console.log('Instance not ready, skipping sync');
+    return redraw();
+  } else {
+    console.log('Syncing instance:', instance.name);
+    instance.ready = false;
+    await core.config.writeConfig({ instances });
 
-  const response = await slack.sync(instance);
+    console.log(new Error().stack);
+
+    slack.sync(instance).then(async () => {
+      instance.ready = true;
+      console.log(new Error().stack);
+      console.log(`Instance ${instance.name} is ready`);
+      await core.config.writeConfig({ instances });
+    });
+  }
+
   return redraw();
 }
 

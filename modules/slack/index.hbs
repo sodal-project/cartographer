@@ -8,14 +8,17 @@
         <span class="flex-grow text-white-200">Name</span>
         <span class="flex-grow text-white-200">Team ID</span>
         <span class="flex-grow text-white-200">Token</span>
+        <span class="flex-grow text-white-200">Status</span>
       </li> 
       {{#each this.instances }}
         <li class="group relative border-b border-gray-800 py-2 flex items-center">
           <span class="flex-grow text-gray-400">{{this.name}}</span>
           <span class="flex-grow text-gray-400">{{this.teamId}}</span>
           <span class="flex-grow text-gray-400">******</span>
+          <span class="flex-grow text-gray-400">{{#if this.ready}}Ready{{else}}Processing{{/if}}</span>
 
           <!-- Form to run a sync for this instance -->
+          {{#if this.ready }}
           <div
             class="absolute -right-16 opacity-0 group-hover:opacity-100 h-full w-8"
           >
@@ -34,7 +37,6 @@
               </button>
             </form>
           </div>
-
           <!-- Form to delete data from config db -->
           <div
             class="absolute -right-8 opacity-0 group-hover:opacity-100 h-full w-8"
@@ -60,6 +62,7 @@
             </form>
           </div>
         </li>
+        {{/if}} <!-- end if this.ready -->
       {{/each}}
     </ul>
   </div>
