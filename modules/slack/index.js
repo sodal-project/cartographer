@@ -54,13 +54,13 @@ async function deleteInstance(formData) {
   return redraw();
 }
 
-async function merge(formData) {
+async function sync(formData) {
   const configData = await core.config.readConfig();
   const instances = configData?.instances || [];
 
   const instance = instances.find(instance => instance.teamId === formData.teamId);
 
-  const response = await slack.merge(instance);
+  const response = await slack.sync(instance);
   return redraw();
 }
 
@@ -72,6 +72,6 @@ module.exports = {
   index,
   addInstance,
   deleteInstance,
-  merge,
+  sync,
   init,
 };

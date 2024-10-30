@@ -15,13 +15,13 @@
           <span class="flex-grow text-gray-400">{{this.teamId}}</span>
           <span class="flex-grow text-gray-400">******</span>
 
-          <!-- Form to run a merge sync for this instance -->
+          <!-- Form to run a sync for this instance -->
           <div
             class="absolute -right-16 opacity-0 group-hover:opacity-100 h-full w-8"
           >
             <form
               class="absolute left-1/2 top-1/2 transform -translate-y-1/2"
-              hx-post="/mod/slack/merge/"
+              hx-post="/mod/slack/sync/"
               hx-target="closest #main"
               hx-swap="innerHTML"
               hx-vals='{"teamId": "{{this.teamId}}"}'

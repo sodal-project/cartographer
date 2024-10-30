@@ -70,14 +70,14 @@ async function deleteFile(formData) {
   return redraw();
 }
 
-async function merge(formData) {
+async function sync(formData) {
   const files = await core.config.readConfig("files")
 
   const file = files[formData.fileId];
 
   console.log('Merging file:', file.fileName);
 
-  const response = await csv.merge(file.fileId, file.fileName, file.fileData);
+  const response = await csv.sync(file.fileId, file.fileName, file.fileData);
 
   return redraw();
 }
@@ -90,6 +90,6 @@ module.exports = {
   index,
   addFile,
   deleteFile,
-  merge,
+  sync,
   init,
 };

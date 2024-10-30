@@ -4,7 +4,7 @@ const core = require('../../core/core');
  * 
  * @param {object} instance 
  */
-const merge = async (fileId, fileName, fileData) => {
+const sync = async (fileId, fileName, fileData) => {
   try {
     const source = {
       id: `source:csv:${fileId}`,
@@ -31,7 +31,7 @@ const merge = async (fileId, fileName, fileData) => {
       throw Error('CSV file does not contain the required columns');
     }
 
-    // generate and process merge sync queries
+    // generate and process sync queries
     await core.graph.syncPersonas(personas, source);
 
     // await graph.runRawQueryArray(queries);
@@ -76,6 +76,6 @@ const mapCsvRelationships = (data) => {
 }
 
 module.exports = {
-  merge,
+  sync,
   init,
 }

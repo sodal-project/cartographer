@@ -1,7 +1,7 @@
 const {WebClient} = require('@slack/web-api');
 const core = require('../../core/core');
 
-async function merge(instance){
+async function sync(instance){
   try {
 
     const source = {
@@ -542,6 +542,6 @@ const getTeamUpn = (teamId) => {
 }
 
 module.exports = {
-  merge,
+  sync,
   init,
 }
