@@ -1,20 +1,20 @@
 const {WebClient} = require('@slack/web-api');
 const core = require('../../core/core');
 
-async function merge(slackAuthInstance){
+async function merge(instance){
   try {
 
     const source = {
-      id: `source:slack:${slackAuthInstance.teamId}`,
-      name: slackAuthInstance.name,
+      id: `source:slack:${instance.teamId}`,
+      name: instance.name,
       lastUpdate: new Date().toISOString(),
     }
 
-    const slackTeamId = slackAuthInstance.teamId;
-    const slackTeamFriendlyName = slackAuthInstance.name;
+    const slackTeamId = instance.teamId;
+    const slackTeamFriendlyName = instance.name;
 
     console.log(`Processing ${slackTeamFriendlyName}`);
-    const personas = await getInstancePersonas(slackAuthInstance);
+    const personas = await getInstancePersonas(instance);
     await core.cache.save(`allPersonas-${slackTeamId}`, personas);
 
     //
@@ -34,30 +34,31 @@ async function init(){
   console.log('Slack Integration module initialized');
 }
 
-const getInstancePersonas = async (slackAuthInstance) => {
+const getInstancePersonas = async (instance) => {
     //
     // setup team (Slack workspace)
     //
-    const slackClient = new WebClient(slackAuthInstance.token);
-    const slackTeamId = slackAuthInstance.teamId;
-    const slackTeamFriendlyName = slackAuthInstance.name;
+    const token = await core.crypto.decrypt(instance.secret);
+    const client = new WebClient(token);
+    const teamId = instance.teamId;
+    const friendlyName = instance.name;
     
     // 
     // load cache with raw data
     // 
-    const users = await loadCached(loadUsers, slackClient, slackTeamId);
-    const channels = await loadCached(loadChannels, slackClient, slackTeamId);
-    const groups = await loadCached(loadUsergroups, slackClient, slackTeamId);
-    const logs = await loadCached(loadUserAccessLogs, slackClient, slackTeamId);
+    const users = await loadCached(loadUsers, client, teamId);
+    const channels = await loadCached(loadChannels, client, teamId);
+    const groups = await loadCached(loadUsergroups, client, teamId);
+    const logs = await loadCached(loadUserAccessLogs, client, teamId);
 
-    const teamRaw = await loadCached(loadTeam, slackClient, slackTeamId, slackTeamId);
+    const teamRaw = await loadCached(loadTeam, client, teamId, teamId);
     const teams = [teamRaw];
 
     // load channel member data
     const channelMembers = [];
     const channelMembersUniqueIds = {};
     for(const channel of channels){
-      const members = await loadCached(loadChannelMembers, slackClient, slackTeamId, channel.id);
+      const members = await loadCached(loadChannelMembers, client, teamId, channel.id);
       for(const member of members){
         channelMembers.push({
           channel: channel.id,
@@ -72,10 +73,10 @@ const getInstancePersonas = async (slackAuthInstance) => {
     const missingChannelMembers = Object.keys(channelMembersUniqueIds).filter(id => !usersUniqueIds.includes(id));
 
     const channelMemberTeamIds = {};
-    channelMemberTeamIds[slackTeamId] = true;
+    channelMemberTeamIds[teamId] = true;
 
     for(const id of missingChannelMembers){
-      const user = await loadCached(loadUser, slackClient, slackTeamId, id);
+      const user = await loadCached(loadUser, client, teamId, id);
       if(user) { 
         users.push(user);
         channelMemberTeamIds[user.team_id] = true;
@@ -85,7 +86,7 @@ const getInstancePersonas = async (slackAuthInstance) => {
     // load slack team data
     for(const teamId of Object.keys(channelMemberTeamIds)){
       if(teamId) {
-        const team = await loadCached(loadTeam, slackClient, slackTeamId, teamId);
+        const team = await loadCached(loadTeam, client, teamId, teamId);
         teams.push(team);
       }
     }
@@ -93,12 +94,12 @@ const getInstancePersonas = async (slackAuthInstance) => {
     // 
     // generate personas
     // 
-    const userPersonas = mapUserPersonas(users, slackTeamId);
-    const channelPersonas = mapChannelPersonas(channels, slackTeamId, slackTeamFriendlyName);
-    const groupPersonas = mapUsergroupPersonas(groups, slackTeamId);
+    const userPersonas = mapUserPersonas(users, teamId);
+    const channelPersonas = mapChannelPersonas(channels, teamId, friendlyName);
+    const groupPersonas = mapUsergroupPersonas(groups, teamId);
     const teamPersonas = mapTeamPersonas(teams);
     const userPersonaLastAccess = mapUserPersonaLastAccess(logs);
-    const channelMemberPersonas = mapChannelMemberPersonas(channelMembers, slackTeamId);
+    const channelMemberPersonas = mapChannelMemberPersonas(channelMembers, teamId);
 
     const allPersonas = userPersonas.concat(channelPersonas).concat(groupPersonas).concat(teamPersonas).concat(userPersonaLastAccess).concat(channelMemberPersonas);
 

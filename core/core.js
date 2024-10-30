@@ -117,7 +117,8 @@ function initNamespaces() {
              namespace === 'config' ||
              namespace === 'client' ||
              namespace === 'source' ||
-             namespace === 'graph') {
+             namespace === 'graph' ||
+             namespace === 'crypto') {
             return calls[namespace][call](callingModule, ...params);
           } else {
             return calls[namespace][call](...params);

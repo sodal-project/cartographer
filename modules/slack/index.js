@@ -23,13 +23,18 @@ async function index() {
  * @param {object} formData - The form data
  */
 async function addInstance(formData) {
+  if(!formData.name || !formData.teamId || !formData.token) {
+    throw new Error('Missing required fields');
+  }
+
   const configData = await core.config.readConfig();
   const instances = configData?.instances || [];
+  const secret = await core.crypto.encrypt(formData.token);
 
   const instance = {
     name: formData.name,
     teamId: formData.teamId,
-    token: formData.token
+    secret: secret,
   }
   instances.push(instance);
 
