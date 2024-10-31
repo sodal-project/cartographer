@@ -106,16 +106,30 @@ async function redraw(formData) {
   }
   
   if (formData) {
-    console.log('filter property', formData['filter-property']);
-    const filters = formData['filter-property'].map((property, index) => ({
-      property,
-      condition: formData['filter-condition'][index],
-      value: formData['filter-term'][index],
-    }));
     data.tableData.sortDirection = formData['sort-direction'];
     data.tableData.sortProperty = formData['sort-property'];
+    
+    // Ensure that formData properties are always arrays
+    const properties = Array.isArray(formData['filterProperty']) ? formData['filterProperty'] : [formData['filterProperty']];
+    const conditions = Array.isArray(formData['filterCondition']) ? formData['filterCondition'] : [formData['filterCondition']];
+    const terms = Array.isArray(formData['filterTerm']) ? formData['filterTerm'] : [formData['filterTerm']];
+
+    // Initialize the filters array
+    const filters = [];
+
+    // Loop through properties and add valid entries to filters
+    for (let i = 0; i < properties.length; i++) {
+      const property = properties[i];
+      const condition = conditions[i];
+      const value = terms[i];
+
+      // Only add if none of the values are undefined
+      if (property !== undefined && condition !== undefined && value !== undefined) {
+        filters.push({ property, condition, value });
+      }
+    }
+    
     data.tableData.filters = [ ...filters ];
-    console.log('Form Data', formData)
   }
 
   return core.client.render('index.hbs', data);
@@ -128,7 +142,6 @@ async function redraw(formData) {
 async function index() {
   return redraw();
 }
-
 
 /**
  * @description The main interface for the module.
@@ -144,7 +157,6 @@ async function filter(formData) {
 async function init() {
   console.log('table demo initialized');
 }
-
 
 module.exports = {
   index,

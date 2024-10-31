@@ -26,10 +26,10 @@
     >
       <div x-ref="filterFields">
         <div class="flex gap-3 items-center w-full mb-3">
-          {{> FormSelect name="filter-property" options=properties selected=property }}
-          {{> FormSelect name="filter-condition" options=filterConditions selected=condition }}
+          {{> FormSelect name="filterProperty" options=properties selected=property }}
+          {{> FormSelect name="filterCondition" options=filterConditions selected=condition }}
         </div>
-        <input type="text" name="filter-term" value={{value}} class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-1 px-3 w-full" />
+        <input type="text" name="filterTerm" value={{value}} class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-1 px-3 w-full" />
       </div>
       <div class="flex justify-between w-full">
         {{> FormSubmit label="Save" }}

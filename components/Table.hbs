@@ -84,10 +84,10 @@
             class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
           >
             <div class="flex gap-3 items-center w-full mb-3">
-              {{> FormSelect name="filter-new-property" options=data.properties }}
-              {{> FormSelect name="filter-new-condition" options=data.filterConditions }}
+              {{> FormSelect name="filterNewProperty" options=data.properties }}
+              {{> FormSelect name="filterNewCondition" options=data.filterConditions }}
             </div>
-            <input type="text" name="filter-new-term" class="text-white bg-gray-900 border border-gray-700 rounded-md p-1 px-3 w-full" />
+            <input type="text" name="filterNewTerm" class="text-white bg-gray-900 border border-gray-700 rounded-md p-1 px-3 w-full" />
             {{> FormSubmit label="Save" }}
           </div>
         </div>
