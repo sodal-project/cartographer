@@ -1,103 +1,105 @@
 <div>
+  <form
+    hx-post="/mod/table-demo/filter/"
+    hx-target="closest #main"
+    hx-swap="innerHTML"
+  >
+    <div class="flex mb-4">
 
-  <div class="flex mb-4">
-
-    <!-- Sort -->
-    <div class="relative border-r border-gray-700 pr-4 mr-4">
-      <button
-        class="flex gap-1 items-center inline-block h-7 px-3 rounded-full border border-indigo-500 text-indigo-400 bg-indigo-900 bg-opacity-30"
+      <!-- Sort -->
+      <div
+        class="relative border-r border-gray-700 pr-4 mr-4"
+        x-data="{ open: false }"
+        @click.away="open = false"
       >
-        <span class="relative h-3.5 text-indigo-400 inline-block">
-          {{> icons/ArrowUp }}
-        </span>
-        <span class="text-sm">Word</span>
-        <span class="relative w-3.5 h-3.5 text-indigo-400 inline-block">
-          {{> icons/AngleDown }}
-        </span>
-      </button>
-
-      <!-- Sort Form -->
-      <div class="absolute z-10 top-9 left-1/2 w-px h-px">
-        <div
-          class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+        <button
+          class="flex gap-1 items-center inline-block h-7 px-3 rounded-full border border-indigo-500 text-indigo-400 bg-indigo-900 bg-opacity-30"
+          type="button"
+          @click="open = !open"
         >
-          <div class="flex gap-3 items-center w-full mb-5">
-            {{> FormSelect options="
-              <option value='word1'>Word 1</option>
-              <option value='word2'>Word 2</option>
-              <option value='word3'>Word 3</option>
-            "}}
-            {{> FormSelect options="
-              <option value='ascending'>Ascending</option>
-              <option value='descending'>Descending</option>
-            "}}
-            <div class="text-gray-300">X</div>
-          </div>
-          <div>
-            <button
-              class="inline-block h-7 px-2 text-gray-500 rounded-md hover:bg-gray-800"
-            >
-              <span>+ Add sort</span>
-            </button>
+         <span class="relative h-3.5 text-indigo-400 inline-block">
+          
+            {{#if (eq data.sortDirection 'ascending')}}
+              {{> icons/ArrowUp }}
+            {{else}}
+              {{> icons/ArrowDown }}
+            {{/if}}
+          </span>
+          <span class="text-sm">{{data.sortProperty}}</span>
+          <span class="relative w-3.5 h-3.5 text-indigo-400 inline-block">
+            {{> icons/AngleDown }}
+          </span>
+        </button>
+
+        <!-- Sort Form -->
+        <div
+          class="absolute z-10 top-9 left-1/2 w-px h-px"
+          x-show="open"
+        >
+          <div
+            class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+          >
+            <div class="flex gap-3 items-center w-full">
+              {{> FormSelect name="sort-property" options=data.properties selected=data.sortProperty }}
+              {{> FormSelect name="sort-direction" options=data.sortDirections selected=data.sortDirection }}
+            </div>
+            {{> FormSubmit label="Save" }}
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Active Filters -->
-    <div class="relative mr-2">
-      <button
-        class="flex gap-1 items-center inline-block h-7 px-3 rounded-full border border-gray-700 text-sm text-gray-500 bg-gray-900 bg-opacity-30 hover:bg-gray-800 hover:bg-opacity-100"
+      <!-- Active Filters -->
+      <div class="flex gap-3 mr-2">
+        {{#each data.filters}}
+          {{> TableFilter
+            property=this.property
+            condition=this.condition
+            value=this.value
+            properties=../data.properties
+            filterConditions=../data.filterConditions
+          }}
+        {{/each}}
+      </div>
+
+      <!-- New Filter -->
+      <div 
+        class="relative"
+        x-data="{ open: false }"
+        @click.away="open = false"
       >
-        <span>Name</span>
-
-        <!-- Angle Down -->
-        <span class="relative w-3.5 h-3.5 text-gray-500 inline-block">
-          {{> icons/AngleDown }}
-        </span>
-      </button>
-
-            <div class="absolute z-10 top-9 left-1/2 w-px h-px">
-        <div
-          class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+        <button
+          class="inline-block h-7 px-2 text-gray-500 text-sm rounded-md hover:bg-gray-800"
+          type="button"
+          @click="open = !open"
         >
-          <div class="flex gap-3 items-center w-full mb-3">
-            {{> FormSelect options="
-              <option value='word1'>Word 1</option>
-              <option value='word2'>Word 2</option>
-              <option value='word3'>Word 3</option>
-            "}}
-            {{> FormSelect options="
-              <option value='is'>Is</option>
-              <option value='is-not'>Is not</option>
-              <option value='contains'>Contains</option>
-              <option value='does-not-contain'>Does not contain</option>
-              <option value='starts-with'>Starts with</option>
-              <option value='ends-with'>Ends with</option>
-              <option value='is-empty'>Is empty</option>
-              <option value='is-not-empty'>Is not empty</option>
-            "}}
+          <span>+ Add filter</span>
+        </button>
+      
+        <!-- New Filter Form -->
+        <div
+          class="absolute z-10 top-9 left-1/2 w-px h-px"
+          x-show="open"
+        >
+          <div
+            class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+          >
+            <div class="flex gap-3 items-center w-full mb-3">
+              {{> FormSelect name="filter-new-property" options=data.properties }}
+              {{> FormSelect name="filter-new-condition" options=data.filterConditions }}
+            </div>
+            <input type="text" name="filter-new-term" class="text-white bg-gray-900 border border-gray-700 rounded-md p-1 px-3 w-full" />
+            {{> FormSubmit label="Save" }}
           </div>
-          <input type="text" class="text-white bg-gray-900 border border-gray-700 rounded-md p-1 px-3 w-full" />
         </div>
+
       </div>
     </div>
-
-    <!-- New Filter -->
-    <div>
-      <button
-        class="inline-block h-7 px-2 text-gray-500 rounded-md hover:bg-gray-800"
-      >
-        <span>+ Add filter</span>
-      </button>
-    </div>
-
-  </div>
+  </form>
 
   <table class="min-w-full">
     <thead class="sticky top-0">
       <tr>
-        {{#each data.columns}}
+        {{#each data.properties}}
           <th
             class="sticky top-0 px-4 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
           >
@@ -105,7 +107,7 @@
               class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
             ></div>
             <span onClick="sort" class="cursor-pointer">
-              {{this}}
+              {{this.label}}
             </span>
           </th>
         {{/each}}

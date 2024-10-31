@@ -1,8 +1,16 @@
 <div class="relative w-full">
   <select
     class="appearance-none w-full text-sm rounded-md bg-gray-900 border border-gray-700 text-white py-2 pl-3 pr-8"
+    name={{name}}
   >
-    {{{options}}}
+    {{#if options}}
+      <option value=""></option>
+      {{#each options}}
+        <option value="{{this.value}}" {{#if (eq ../selected this.value)}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    {{else}}
+      {{{slot}}}
+    {{/if}}
   </select>
   <div
     class="absolute top-2.5 right-3 w-3.5 h-3.5 flex items-center pointer-events-none text-gray-400"

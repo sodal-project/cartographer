@@ -18,6 +18,9 @@ app.set("views", __dirname);
 Handlebars.registerHelper('json', function(context) {
   return JSON.stringify(context);
 });
+Handlebars.registerHelper('eq', function(a, b) {
+  return a === b;
+});
 
 // Register Partials Manually
 const registerPartials = () => {
