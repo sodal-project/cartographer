@@ -104,7 +104,6 @@ async function redraw(formData) {
       ],
     }
   }
-
   
   if (formData) {
     console.log('filter property', formData['filter-property']);
@@ -119,7 +118,7 @@ async function redraw(formData) {
     console.log('Form Data', formData)
   }
 
-  return core.render('index.hbs', data);
+  return core.client.render('index.hbs', data);
 }
 
 /**
@@ -139,7 +138,16 @@ async function filter(formData) {
   return redraw(formData);
 }
 
+/**
+ * Initialize the module
+ */
+async function init() {
+  console.log('table demo initialized');
+}
+
+
 module.exports = {
   index,
   filter,
+  init,
 };
