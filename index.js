@@ -30,6 +30,13 @@ const coreData = {
   ]
 }
 
+const multer = require('multer'); // enable file uploads from the client
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+const core = require('./core/core.js');
+core.init();
+
 // Create an Express application
 const app = express();
 
@@ -110,7 +117,7 @@ function generateAccessToken(user) {
  * Serve the index.html file with no module loaded
  */ 
 app.get("/", authenticateToken, async (req, res) => {
-  const data = {...coreData, user: req.user};
+  const data = {...core.coreData, user: req.user};
   registerPartials();
   res.render("core/index", data); 
 });
@@ -278,12 +285,10 @@ app.post('/register', async (req, res) => {
  */
 app.get('/mod/:moduleName/:command', authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
-  const modulePath = path.resolve('modules', moduleName, 'index.js');
-  const module = require(modulePath);
 
   try {
     // Call the module function and wait for the response
-    const moduleResponse = await module[command]();
+    const moduleResponse = await core.mod[moduleName][command](); 
 
     // Send the response back to the client
     res.send(moduleResponse);
@@ -300,15 +305,39 @@ app.get('/mod/:moduleName/:command', authenticateToken, async (req, res) => {
  */ 
 app.post('/mod/:moduleName/:command', authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
-  const modulePath = path.resolve('modules', moduleName, 'index.js');
-  const module = require(modulePath);
   
   // Set Data
   const data = req.body;
 
   try {
     // Call the module function and wait for the response
-    const moduleResponse = await module[command](data);
+    const moduleResponse = await core.mod[moduleName][command](data); 
+
+    // Send the response back to the client
+    res.send(moduleResponse);
+  } catch (err) {
+    console.error('Error calling module command:', err);
+    res.status(500).send('Error executing module command');
+  }
+});
+
+/**
+ * Support File Uploads
+ * 
+ * Post Module Function with Multer Middleware for File Upload Support
+ * Accept a multipart/form-data POST request from the client and call the appropriate module function
+ * Return the response to the client
+ */ 
+app.post('/mod/:moduleName/:command/upload', upload.single('file'), async (req, res) => {
+  const { moduleName, command } = req.params;
+  
+  // Set Data
+  const data = req.body;
+  data.file = req.file;
+
+  try {
+    // Call the module function and wait for the response
+    const moduleResponse = await core.mod[moduleName][command](data); 
 
     // Send the response back to the client
     res.send(moduleResponse);
@@ -323,15 +352,13 @@ app.post('/mod/:moduleName/:command', authenticateToken, async (req, res) => {
  */ 
 app.get("/:moduleName/:command", authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
-  const data = {...coreData, user: req.user, currentModule: moduleName };  
+  const data = {...core.coreData, user: req.user, currentModule: moduleName };  
   registerPartials();
 
   // Call the module function and set the response in the main attribute
   if (moduleName && command) {
-    const modulePath = path.resolve('modules', moduleName, 'index.js');
-    const module = require(modulePath);
     try {
-      const moduleResponse = await module[command]();
+      const moduleResponse = await core.mod[moduleName][command]();
       data.main = moduleResponse
     } catch (err) {
       console.error('Error calling module command:', err);

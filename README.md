@@ -61,4 +61,7 @@ Name | Description | License
 [express](http://expressjs.com/)|Fast, unopinionated, minimalist web framework|MIT
 [express-handlebars](https://github.com/express-handlebars/express-handlebars)|A Handlebars view engine for Express which doesn't suck.|BSD-3-Clause
 [mongodb](https://github.com/mongodb/node-mongodb-native)|The official MongoDB driver for Node.js|Apache-2.0
+[multer](https://github.com/expressjs/multer)|Middleware for handling multipart/form-data, used for uploading files|MIT
+[neo4j-driver](https://github.com/neo4j/neo4j-javascript-driver#readme)|Official Neo4j driver for JavaScript|Apache-2.0
 [nodemon](https://nodemon.io)|Simple monitor script for use during development of a Node.js app.|MIT
+[sanitize-filename](https://github.com/parshap/node-sanitize-filename#readme)|Sanitize a string to be safe for use as a filename|WTFPL, ISC
