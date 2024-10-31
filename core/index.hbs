@@ -1,41 +1,5 @@
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cartographer</title>
-
-    <!-- Tailwind CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-
-    <!-- Alpine JS -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"
-      defer
-    ></script>
-
-    <!-- HTMX -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.12/dist/htmx.min.js"
-      defer
-    ></script>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Main JS -->
-    <script src="/js/main.js" defer></script>
-
-    <!-- Styles -->
-    <link href="/css/main.css" rel="stylesheet" />
-  </head>
+  {{> Head }}
   <body class="poppins-regular" style="background: #080c15">
     <!-- Sidebar -->
     <div
@@ -45,19 +9,7 @@
         class="flex grow flex-col gap-y-5 overflow-y-auto h-full bg-gray-900 px-4 pb-4"
       >
         <!-- Logo -->
-        <div class="flex h-6 my-5 mx-2 shrink-0 items-center">
-          <svg
-            class="h-6"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 576 512"
-            fill="#6366f1"
-          >
-            <path
-              d="M384 476.1L192 421.2l0-385.3L384 90.8l0 385.3zm32-1.2l0-386.5L543.1 37.5c15.8-6.3 32.9 5.3 32.9 22.3l0 334.8c0 9.8-6 18.6-15.1 22.3L416 474.8zM15.1 95.1L160 37.2l0 386.5L32.9 474.5C17.1 480.8 0 469.2 0 452.2L0 117.4c0-9.8 6-18.6 15.1-22.3z"
-            />
-          </svg>
-          <h1 class="text-white text-xl ml-3 nunito-font-400">cartographer</h1>
-        </div>
+        {{> Logo }}
 
         <!-- Tabs -->
         <div
@@ -128,10 +80,16 @@
                       alt="anonymous avatar"
                     />
                     <div class="flex items-center w-full">
-                      <span
-                        class="ml-3 text-sm text-left font-semibold leading-6"
-                        aria-hidden="true"
-                      >{{user.name}}</span>
+                      <span class="ml-3 text-left text-sm leading-tight">
+                        <span
+                          class="block font-semibold"
+                          aria-hidden="true"
+                        >{{user.name}}</span>
+                        <span
+                          class="block text-gray-400"
+                          aria-hidden="true"
+                        >{{user.role}}</span>
+                      </span>
                       <div class="flex-shrink-0">
                         <svg
                           class="ml-2 h-5 w-5 text-gray-400"
@@ -158,22 +116,15 @@
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="user-menu-button"
-                  tabindex="-1"
                   @click="open = false"
                 >
                   <a
                     href="#"
                     class="block px-3 py-1 text-sm leading-6 text-white hover:text-indigo-400"
                     role="menuitem"
-                    tabindex="-1"
-                    id="user-menu-item-0"
-                  >Your profile</a>
-                  <a
-                    href="#"
-                    class="block px-3 py-1 text-sm leading-6 text-white hover:text-indigo-400"
-                    role="menuitem"
-                    tabindex="-1"
-                    id="user-menu-item-1"
+                    hx-delete="/logout"
+                    hx-confirm="Are you sure you want to sign out?"
+                    hx-redirect="/login"
                   >Sign out</a>
                 </div>
               </div>

@@ -31,6 +31,18 @@ The processes will run in a single terminal window (they are color coded). You c
 
 The open-source "Core" system offers fundamental tools for working with a graph database and includes MongoDB for handling additional data. It supports creating modules that ingest, format, store, and display graph data.
 
+## Auth
+
+- Using JWT
+
+### Generating secret keys for .env
+
+To generate a value for the ACCESS_TOKEN_SECRET and the REFRESH_TOKEN_SECRET in .env
+
+  1. Open a terminal window and type node followed by the enter key to enter the Node REPL
+  2. Run this `require('crypto').randomBytes(64).toString('hex')`
+  3. Use the resulting value for ACCESS_TOKEN_SECRET and run again for the REFRESH_TOKEN_SECRET
+
 ## Dependencies
 
 ### Client Dependencies
@@ -49,4 +61,7 @@ Name | Description | License
 [express](http://expressjs.com/)|Fast, unopinionated, minimalist web framework|MIT
 [express-handlebars](https://github.com/express-handlebars/express-handlebars)|A Handlebars view engine for Express which doesn't suck.|BSD-3-Clause
 [mongodb](https://github.com/mongodb/node-mongodb-native)|The official MongoDB driver for Node.js|Apache-2.0
+[multer](https://github.com/expressjs/multer)|Middleware for handling multipart/form-data, used for uploading files|MIT
+[neo4j-driver](https://github.com/neo4j/neo4j-javascript-driver#readme)|Official Neo4j driver for JavaScript|Apache-2.0
 [nodemon](https://nodemon.io)|Simple monitor script for use during development of a Node.js app.|MIT
+[sanitize-filename](https://github.com/parshap/node-sanitize-filename#readme)|Sanitize a string to be safe for use as a filename|WTFPL, ISC
