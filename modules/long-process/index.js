@@ -5,8 +5,8 @@ const core = require('../../core/core.js');
  * @returns {string} - Compiled HTML content
  */
 async function redraw() {
-  const data = await core.readConfig();
-  return core.render('index.hbs', data);
+  const data = await core.config.readConfig();
+  return core.client.render('index.hbs', data);
 }
 
 // PUBLIC
@@ -26,16 +26,16 @@ async function index() {
  * @returns {object} - A message string and the data object with the property to delete
  */
 async function longProcess() {
-  const data = await core.readConfig() || {};
+  const data = await core.config.readConfig() || {};
 
   // Default to ready if no processStatus is set
   const status = data.status || 'ready'
 
   // Simulate a long running process 
   if (status === 'ready') {
-    await core.writeConfig({ status: 'running' });
+    await core.config.writeConfig({ status: 'running' });
     setTimeout(async () => {
-      await core.writeConfig({ status: 'ready' });
+      await core.config.writeConfig({ status: 'ready' });
     }, 15000);
   }
   return redraw();
