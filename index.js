@@ -11,24 +11,6 @@ const jwt = require('jsonwebtoken');
 
 // Temp data storage
 let refreshTokens = [];
-const coreData = {
-  main: '',
-  currentModule: 'none',
-  modules: [
-    {
-      folder: "module1",
-      label: "Module 1",
-    },
-    {
-      folder: "module2",
-      label: "Module 2",
-    },
-    {
-      folder: "long-process",
-      label: "Long Process",
-    },
-  ]
-}
 
 const multer = require('multer'); // enable file uploads from the client
 const storage = multer.memoryStorage();
