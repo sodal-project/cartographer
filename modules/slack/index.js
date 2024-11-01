@@ -87,14 +87,9 @@ async function sync(formData) {
   return redraw();
 }
 
-async function init() {
-  return await slack.init();
-}
-
 module.exports = {
   index,
   addInstance,
   deleteInstance,
   sync,
-  init,
 };

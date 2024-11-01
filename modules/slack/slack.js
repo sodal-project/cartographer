@@ -30,10 +30,6 @@ async function sync(instance){
   return true;
 }
 
-async function init(){
-  console.log('Slack Integration module initialized');
-}
-
 const getInstancePersonas = async (instance) => {
     //
     // setup team (Slack workspace)
@@ -543,5 +539,4 @@ const getTeamUpn = (teamId) => {
 
 module.exports = {
   sync,
-  init,
 }

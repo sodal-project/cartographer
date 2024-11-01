@@ -42,10 +42,6 @@ const sync = async (fileId, fileName, fileData) => {
   }
 }
 
-const init = async () => {
-  console.log('CSV Integration module initialized');
-}
-
 const mapCsvPersonas = (data) => {
   const personas = [];
   for(const i in data) {
@@ -77,5 +73,4 @@ const mapCsvRelationships = (data) => {
 
 module.exports = {
   sync,
-  init,
 }

@@ -97,7 +97,6 @@ function initNamespaces() {
 
       // if this is a function, add it to the core object
       if(typeof calls[namespace][call] === 'function') {
-        console.log(`Core: adding function: core.${namespace}.${call}`)
         core[namespace][call] = (...params) => {
 
           // get the calling module name
@@ -127,7 +126,6 @@ function initNamespaces() {
       } else {
 
         // if this is an object instead of a function, add it to core as is
-        console.log(`Core: adding object: core.${namespace}.${call}`)
         core[namespace][call] = calls[namespace][call];
       }
     }
@@ -183,7 +181,6 @@ async function initModules(moduleArray) {
         if(typeof calls[module][call] === 'function') {
 
           // add the function to the core object
-          console.log(`Core: adding function: core.mod.${module}.${call}`)
           core.mod[module][call] = (...params) => {
             const callingModule = getCallingFolder(new Error().stack);
             console.log(`Calling core.mod.${module}.${call} from ${callingModule}`)
@@ -196,7 +193,6 @@ async function initModules(moduleArray) {
         } else {
 
           // if this is an object instead of a function, add it to core as is
-          console.log(`Core: adding object: core.mod.${module}.${call}`)
           core.mod[module][call] = calls[module][call];
         }
       }
