@@ -82,14 +82,9 @@ async function sync(formData) {
   return redraw();
 }
 
-async function init() {
-  return await csv.init();
-}
-
 module.exports = {
   index,
   addFile,
   deleteFile,
   sync,
-  init,
 };

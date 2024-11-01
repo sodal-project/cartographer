@@ -42,15 +42,7 @@ async function deleteConfig(formData) {
   return redraw();
 }
 
-/**
- * Initialize the module
- */
-async function init() {
-  // no action to take
-}
-
 module.exports = {
-  init,
   index,
   writeConfig,
   deleteConfig,

@@ -30,10 +30,6 @@ async function sync(instance){
   return true;
 }
 
-async function init(){
-  // no action to take
-}
-
 const getInstancePersonas = async (instance) => {
     //
     // setup team (Slack workspace)
@@ -543,5 +539,4 @@ const getTeamUpn = (teamId) => {
 
 module.exports = {
   sync,
-  init,
 }

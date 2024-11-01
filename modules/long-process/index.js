@@ -41,15 +41,7 @@ async function longProcess() {
   return redraw();
 }
 
-/**
- * Initialize the module
- */
-async function init() {
-  // no action to take
-}
-
 module.exports = {
   index,
-  init,
   longProcess,
 };
