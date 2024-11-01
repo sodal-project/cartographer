@@ -30,11 +30,6 @@ async function redraw(formData) {
           condition: 'contains',
           value: 'Anytown',
         },
-        {
-          property: 'state',
-          condition: 'contains',
-          value: 'Minnesota',
-        }
       ],
       filterConditions: [
         {
@@ -106,13 +101,13 @@ async function redraw(formData) {
   }
   
   if (formData) {
-    data.tableData.sortDirection = formData['sort-direction'];
-    data.tableData.sortProperty = formData['sort-property'];
+    data.tableData.sortDirection = formData.sortDirection;
+    data.tableData.sortProperty = formData.sortProperty;
     
     // Ensure that formData properties are always arrays
-    const properties = Array.isArray(formData['filterProperty']) ? formData['filterProperty'] : [formData['filterProperty']];
-    const conditions = Array.isArray(formData['filterCondition']) ? formData['filterCondition'] : [formData['filterCondition']];
-    const terms = Array.isArray(formData['filterTerm']) ? formData['filterTerm'] : [formData['filterTerm']];
+    const properties = Array.isArray(formData.filterProperty) ? formData.filterProperty : [formData.filterProperty];
+    const conditions = Array.isArray(formData.filterCondition) ? formData.filterCondition : [formData.filterCondition];
+    const terms = Array.isArray(formData.filterTerm) ? formData.filterTerm : [formData.filterTerm];
 
     // Initialize the filters array
     const filters = [];
@@ -128,7 +123,17 @@ async function redraw(formData) {
         filters.push({ property, condition, value });
       }
     }
+
+    // Check for new filter
+    if (formData.filterNewProperty && formData.filterNewCondition && formData.filterNewTerm) {
+      filters.push({
+        property: formData.filterNewProperty,
+        condition: formData.filterNewCondition,
+        value: formData.filterNewTerm,
+      });
+    }
     
+    // Update the filters array
     data.tableData.filters = [ ...filters ];
   }
 

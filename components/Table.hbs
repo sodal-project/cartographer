@@ -40,8 +40,8 @@
             class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
           >
             <div class="flex gap-3 items-center w-full">
-              {{> FormSelect name="sort-property" options=data.properties selected=data.sortProperty }}
-              {{> FormSelect name="sort-direction" options=data.sortDirections selected=data.sortDirection }}
+              {{> FormSelect name="sortProperty" options=data.properties selected=data.sortProperty }}
+              {{> FormSelect name="sortDirection" options=data.sortDirections selected=data.sortDirection }}
             </div>
             {{> FormSubmit label="Save" }}
           </div>
