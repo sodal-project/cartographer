@@ -42,7 +42,7 @@ services:
   mongo-db:
     image: mongo
     hostname: mongo-db
-    command: mongod --port 28000 # Change internal port to 28000
+    command: mongod --quiet --port 28000 # Change internal port to 28000
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME} # Set MongoDB username
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD} # Set MongoDB password
