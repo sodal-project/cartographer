@@ -43,7 +43,7 @@ const sync = async (fileId, fileName, fileData) => {
 }
 
 const init = async () => {
-  console.log('CSV Integration module initialized');
+  // no action to take
 }
 
 const mapCsvPersonas = (data) => {

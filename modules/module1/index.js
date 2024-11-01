@@ -46,7 +46,7 @@ async function deleteConfig(formData) {
  * Initialize the module
  */
 async function init() {
-  console.log('Module1 initialized');
+  // no action to take
 }
 
 module.exports = {

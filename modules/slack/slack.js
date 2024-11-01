@@ -31,7 +31,7 @@ async function sync(instance){
 }
 
 async function init(){
-  console.log('Slack Integration module initialized');
+  // no action to take
 }
 
 const getInstancePersonas = async (instance) => {

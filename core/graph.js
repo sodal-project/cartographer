@@ -226,7 +226,7 @@ filter: {
 }
 
 */
-const readFilter = async (module, filter, pageParams) => {
+const readFilter = async (module, filter, upnArray, upnArrayOnly) => {
 
 }
 
