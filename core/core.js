@@ -54,6 +54,10 @@ const coreData = {
     {
       folder: "csv",
       label: "CSV Integration",
+    },
+    {
+      folder: "test-filter",
+      label: "Test Filter",
     }
   ]
 }

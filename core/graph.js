@@ -2,6 +2,7 @@ const check = require('./check');
 const connector = require('./graphNeo4jConnector');
 const sourceUtils = require('./source');
 const sourceStore = require('./sourceStore');
+const graphFilter = require('./graphFilter');
 
 /* TODO: enable pagination
 
@@ -199,35 +200,55 @@ const mergeSource = async (module, source, querySetOnly) => {
 
 // TODO: persona filter list query
 /*
-filter: {
-  props: {
-    ids: [],
-    upns: [],
-    platforms: [],
-    types: [],
-  }
-  obey: {
-    levels: [],
-    sources: [],
-    min-confidence: 0,
-    max-confidence: 1,
-  }
-  control: {
-    levels: [],
-    sources: [],
-    min-confidence: 0,
-    max-confidence: 1,
-  }
-  source: {
-    ids: [],
-    min-confidence: 0,
-    max-confidence: 1,
-  }
+sort: {
+  key: string
+  direction: ASC | DESC
 }
 
-*/
-const readFilter = async (module, filter, upnArray, upnArrayOnly) => {
+filter: [
+  {
+    type: field
+    key: string
+    value: string
+    operator: string
+    not: boolean
+  },
+  {
+    type: source
+    key: id | name | lastUpdate
+    value: string
+    operator: string
+    not: boolean
+  },
+  {
+    type: agency
+    key: control | obey | notControl | notObey
+    levels: number[]
+    filter: [ ... ]
+    confidence: {
+      min: number
+      max: number
+    }
+  },
+  {
+    type: compare,
+    key: in, not, and, or
+    filter: [ ... ]
+  },
+]
 
+*/
+
+const readAgents = async (module, filter, sort = { key: "upn", direction: "ASC"}) => {
+  const results = await graphFilter(filter, sort);
+
+  return results;
+}
+
+const readPersonas = async (module, filter, sort = { key: "upn", direction: "ASC"}) => {
+  const results = await graphFilter(filter, sort);
+
+  return results;
 }
 
 /**
@@ -471,9 +492,10 @@ module.exports = {
   deleteSource,
   mergePersona,
   mergeSource,
-  readFilter,
+  readAgents,
   readOrphanedPersonas,
   readPersonaObject,
+  readPersonas,
   readSource,
   readSourcePersonas,
   readSourceRelationships,
