@@ -1,10 +1,10 @@
-<div>
+<div x-data="columnVisibility([{{data.visibility}}])">
   <form
     hx-post="/mod/table-demo/filter/"
     hx-target="closest #main"
     hx-swap="innerHTML"
   >
-    <div class="flex mb-4">
+    <div class="relative flex mb-4">
 
       <!-- Sort -->
       <div
@@ -93,15 +93,86 @@
         </div>
 
       </div>
+
+      <!-- Hide/Show Columns -->
+      <div
+        class="absolute top-0 right-0"
+        x-data="{ open: false }"
+        @click.away="open = false"
+      >
+        <button
+          class="text-white"
+          type="button"
+          @click="open = !open"
+        >
+          <div class="w-6 h-6 mr-2 mt-1 text-gray-500 hover:text-white">{{> icons/Eye }}</div>
+        </button>
+
+        <div
+          class="absolute z-10 top-9 right-48 w-px h-px"
+          x-show="open"
+        >
+          <div
+            class="w-48 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+          >
+            <p class="text-gray-300 mb-4">Shown in table...</p>
+            <ul class="text-white">
+              {{#each data.properties}}
+              <li>
+                <label class="flex items-center cursor-pointer">
+
+                  
+
+                  <!-- Unchecked Icon -->
+                  <svg 
+                      class="w-6 h-6 text-gray-400 hover:text-gray-600 peer-checked:hidden" 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke-width="2" 
+                      stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7 12a5 5 0 1010 0 5 5 0 00-10 0z" />
+                  </svg>
+
+                  <!-- Checked Icon -->
+                  <svg 
+                      class="w-6 h-6 text-blue-500 hover:text-blue-700 hidden peer-checked:inline" 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke-width="2" 
+                      stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />  
+                  </svg>
+
+                  <!-- Hidden Checkbox -->
+                  <input 
+                      name="visibility" 
+                      type="checkbox" 
+                      value="{{add @index 2}}" 
+                      x-model="hiddenColumns" 
+                      class=""
+                  />
+
+                  <!-- Label Text -->
+                  <span class="ml-2">{{this.label}}</span>
+                </label>
+              </li>
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </form>
 
-  <table class="min-w-full" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
-    
+  <table class="min-w-full" :class="getColumnClasses()" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
     <thead class="sticky top-0">
       <tr>
         <th
-          class="sticky top-0 p-4 bg-gray-900"
+          class="sticky top-0 p-4 bg-gray-900 text-left w-12"
         >
           <div
             class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
@@ -112,11 +183,10 @@
             @click="toggleSelectAll()"
             x-ref="headerCheckbox"
           >
-          <p x-show="isIndeterminate">hello</p>
         </th>
         {{#each data.properties}}
           <th
-            class="sticky top-0 p-4 text-left text-sm font-semibold bg-gray-900 text-white"
+            class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
           >
             <div
               class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
@@ -136,7 +206,7 @@
           </td>
           {{#each this}}
             <td
-              class="whitespace-nowrap p-4 text-sm font-medium text-white"
+              class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white"
             >
               {{this}}
             </td>
@@ -172,5 +242,13 @@ function tableCheckbox() {
       this.$refs.headerCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.totalCheckboxes;
     }
   }
+}
+function columnVisibility(preCheckedColumns = []) {
+  return {
+    hiddenColumns: preCheckedColumns,
+    getColumnClasses() {
+      return this.hiddenColumns.map(col => `hide-col-${col}`).join(' ');
+    }
+  };
 }
 </script>

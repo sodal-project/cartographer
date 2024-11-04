@@ -36,6 +36,9 @@ Handlebars.registerHelper('json', function(context) {
 Handlebars.registerHelper('eq', function(a, b) {
   return a === b;
 });
+Handlebars.registerHelper('add', function(a, b) {
+  return a + b;
+});
 
 // Register Partials Manually
 const registerPartials = () => {

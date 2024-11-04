@@ -33,7 +33,7 @@ async function redraw(formData) {
       ],
       filterConditions: [
         {
-          label: 'is',
+          label: 'Is',
           value: 'is',
         },
         {
@@ -135,6 +135,11 @@ async function redraw(formData) {
     
     // Update the filters array
     data.tableData.filters = [ ...filters ];
+
+    // Check for visibility
+    if (formData.visibility) {
+      data.tableData.visibility = formData.visibility;
+    }
   }
 
   return core.client.render('index.hbs', data);
