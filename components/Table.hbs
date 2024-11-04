@@ -25,7 +25,7 @@
               {{> icons/ArrowDown }}
             {{/if}}
           </span>
-          <span class="text-sm">{{data.sortProperty}}</span>
+          <span class="text-sm capitalize">{{data.sortProperty}}</span>
           <span class="relative w-3.5 h-3.5 text-indigo-400 inline-block">
             {{> icons/AngleDown }}
           </span>
@@ -96,12 +96,27 @@
     </div>
   </form>
 
-  <table class="min-w-full">
+  <table class="min-w-full" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
+    
     <thead class="sticky top-0">
       <tr>
+        <th
+          class="sticky top-0 p-4 bg-gray-900"
+        >
+          <div
+            class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+          ></div>
+          <input
+            type="checkbox"
+            x-model="selectAll"
+            @click="toggleSelectAll()"
+            x-ref="headerCheckbox"
+          >
+          <p x-show="isIndeterminate">hello</p>
+        </th>
         {{#each data.properties}}
           <th
-            class="sticky top-0 px-4 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+            class="sticky top-0 p-4 text-left text-sm font-semibold bg-gray-900 text-white"
           >
             <div
               class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
@@ -115,10 +130,13 @@
     </thead>
     <tbody class="divide-y divide-gray-800">
       {{#each data.rows}}
-        <tr class="hover:bg-violet-600/10 cursor-pointer" }>
+        <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
+          <td class="p-4">
+            <input type="checkbox"  value={{this.id}} x-model="selected" @change="updateSelectAllState()">
+          </td>
           {{#each this}}
             <td
-              class="whitespace-nowrap pl-4 py-4 text-sm font-medium text-white"
+              class="whitespace-nowrap p-4 text-sm font-medium text-white"
             >
               {{this}}
             </td>
@@ -128,3 +146,31 @@
     </tbody>
   </table>
 </div>
+
+<script>
+function tableCheckbox() {
+  return {
+    selectAll: false,
+    selected: [],
+    totalCheckboxes: 0,
+
+    initializeTotalCheckboxes() {
+      // Set `totalCheckboxes` based on the number of rows in the tbody
+      this.totalCheckboxes = document.querySelectorAll('tbody tr').length;
+    },
+
+    toggleSelectAll() {
+      this.selected = this.selectAll ? [] : Array.from({ length: this.totalCheckboxes }, (_, i) => (i + 1).toString());
+      this.updateSelectAllState();
+    },
+
+    updateSelectAllState() {
+      const checkedCount = this.selected.length;
+      this.selectAll = checkedCount === this.totalCheckboxes;
+      
+      // Set the `indeterminate` property directly on the checkbox
+      this.$refs.headerCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.totalCheckboxes;
+    }
+  }
+}
+</script>
