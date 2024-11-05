@@ -198,54 +198,27 @@ const mergeSource = async (module, source, querySetOnly) => {
   return graphSource[0];
 }
 
-// TODO: persona filter list query
-/*
-sort: {
-  key: string
-  direction: ASC | DESC
-}
-
-filter: [
-  {
-    type: field
-    key: string
-    value: string
-    operator: string
-    not: boolean
-  },
-  {
-    type: source
-    key: id | name | lastUpdate
-    value: string
-    operator: string
-    not: boolean
-  },
-  {
-    type: agency
-    key: control | obey | notControl | notObey
-    levels: number[]
-    filter: [ ... ]
-    confidence: {
-      min: number
-      max: number
-    }
-  },
-  {
-    type: compare,
-    key: in, not, and, or
-    filter: [ ... ]
-  },
-]
-
-*/
-
-const readAgents = async (module, filter, sort = { key: "upn", direction: "ASC"}) => {
+/**
+ * Filter and sort agents from the persona graph database
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {object} filter - OPTIONAL, a filter object
+ * @param {object} sort - OPTIONAL, a sort object
+ */
+const readAgents = async (module, filter, sort) => {
   const results = await graphFilter(filter, sort);
 
   return results;
 }
 
-const readPersonas = async (module, filter, sort = { key: "upn", direction: "ASC"}) => {
+/**
+ * Filter and sort personas from the persona graph database
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {object} filter - OPTIONAL, a filter object
+ * @param {object} sort - OPTIONAL, a sort object
+ */
+const readPersonas = async (module, filter, sort) => {
   const results = await graphFilter(filter, sort);
 
   return results;
