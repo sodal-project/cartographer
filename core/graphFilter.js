@@ -2,7 +2,7 @@ const connector = require('./graphNeo4jConnector');
 
 /* 
 sort: {
-  key: string
+  field: string
   direction: ASC | DESC
 }
 
