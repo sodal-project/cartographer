@@ -20,15 +20,16 @@ async function index() {
 
 async function runFilter(formData) {
   let results = null;
+  const filter = JSON.parse(formData.filter);
 
   try {
-    results = await core.graph.readPersonas(formData.filter);
+    results = await core.graph.readPersonas(filter);
   } catch (error) {
     results = error;
   }
 
   return redraw({ 
-    filter: formData.filter,
+    filter: JSON.stringify(filter),
     results, 
   });
 }
