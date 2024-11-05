@@ -203,8 +203,12 @@ async function getUpnsByAgency (agency, upns) {
   const confidence = agency.confidence;
   const filterUpns = await getUpnsFromFilter(filter);
 
-  confidence.min = parseFloat(confidence.min);
-  confidence.max = parseFloat(confidence.max);
+  if(!confidence){
+    confidence = { min: 0, max: 1 };
+  } else {
+    confidence.min = parseFloat(confidence.min);
+    confidence.max = parseFloat(confidence.max);
+  }
   if(confidence.min > confidence.max || confidence.min < 0 || confidence.max > 1) {
     throw new Error('Invalid confidence range');
   }
