@@ -3,3 +3,43 @@
   font-weight: 400;
   font-style: normal;
 }
+
+table.hide-col-1 th:nth-child(1),
+table.hide-col-1 td:nth-child(1),
+table.hide-col-2 th:nth-child(2),
+table.hide-col-2 td:nth-child(2),
+table.hide-col-3 th:nth-child(3),
+table.hide-col-3 td:nth-child(3),
+table.hide-col-4 th:nth-child(4),
+table.hide-col-4 td:nth-child(4),
+table.hide-col-5 th:nth-child(5),
+table.hide-col-5 td:nth-child(5),
+table.hide-col-6 th:nth-child(6),
+table.hide-col-6 td:nth-child(6),
+table.hide-col-7 th:nth-child(7),
+table.hide-col-7 td:nth-child(7),
+table.hide-col-8 th:nth-child(8),
+table.hide-col-8 td:nth-child(8),
+table.hide-col-9 th:nth-child(9),
+table.hide-col-9 td:nth-child(9),
+table.hide-col-10 th:nth-child(10),
+table.hide-col-10 td:nth-child(10),
+table.hide-col-11 th:nth-child(11),
+table.hide-col-11 td:nth-child(11),
+table.hide-col-12 th:nth-child(12),
+table.hide-col-12 td:nth-child(12) {
+  display: none;
+}
+
+.visibility-ui input[type="checkbox"] ~ .checked-icon {
+  display: none;
+}
+.visibility-ui input[type="checkbox"] ~ .unchecked-icon {
+  display: inline;
+}
+.visibility-ui input[type="checkbox"]:checked ~ .checked-icon {
+  display: inline;
+}
+.visibility-ui input[type="checkbox"]:checked ~ .unchecked-icon {
+  display: none;
+}

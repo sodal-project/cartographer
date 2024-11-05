@@ -31,6 +31,12 @@ The processes will run in a single terminal window (they are color coded). You c
 
 The open-source "Core" system offers fundamental tools for working with a graph database and includes MongoDB for handling additional data. It supports creating modules that ingest, format, store, and display graph data.
 
+## Components
+
+- The components folder contains handlebars partials
+- There is a folder called icons that contains SVG icons
+- Partials should not contain a script tag with javascript as that will load multiple times, instead functions needed by components should be placed in the main.js file.
+
 ## Auth
 
 - Using JWT
