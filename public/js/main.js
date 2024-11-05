@@ -14,3 +14,57 @@ document.body.addEventListener('htmx:afterRequest', (event) => {
   document.getElementById('spinner').style.visibility = 'hidden';
   document.getElementById('main').style.visibility = 'visible';
 });
+
+/**
+ * Manages selection of checkboxes in a table component, including functionality to select all, none, or individual rows.
+ *
+ * @returns {Object} - An object containing properties and methods for checkbox management in a table.
+ * @property {boolean} selectAll - A boolean indicating whether all checkboxes should be selected.
+ * @property {Array<string>} selected - An array of selected row indices as strings.
+ * @property {number} totalCheckboxes - The total number of checkboxes in the table.
+ * @property {Function} initializeTotalCheckboxes - Initializes the total number of checkboxes based on the rows in the table body.
+ * @property {Function} toggleSelectAll - Toggles the selection of all checkboxes in the table.
+ * @property {Function} updateSelectAllState - Updates the `selectAll` state and manages the indeterminate state of the header checkbox.
+ */
+function tableCheckbox() {
+  return {
+    selectAll: false,
+    selected: [],
+    totalCheckboxes: 0,
+
+    initializeTotalCheckboxes() {
+      // Set `totalCheckboxes` based on the number of rows in the tbody
+      this.totalCheckboxes = document.querySelectorAll('tbody tr').length;
+    },
+
+    toggleSelectAll() {
+      this.selected = this.selectAll ? [] : Array.from({ length: this.totalCheckboxes }, (_, i) => (i + 1).toString());
+      this.updateSelectAllState();
+    },
+
+    updateSelectAllState() {
+      const checkedCount = this.selected.length;
+      this.selectAll = checkedCount === this.totalCheckboxes;
+      
+      // Set the `indeterminate` property directly on the checkbox
+      this.$refs.headerCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.totalCheckboxes;
+    }
+  }
+}
+
+/**
+ * Manages column visibility in a table based on a list of pre-checked columns.
+ *
+ * @param {Array<number>} preCheckedColumns - An array of column indices that should initially be hidden.
+ * @returns {Object} - An object containing methods to manage column visibility.
+ * @property {Array<number>} hiddenColumns - The indices of columns currently set to be hidden.
+ * @property {Function} getColumnClasses - A function that returns a string of CSS class names for hiding columns, formatted as "hide-col-x".
+ */
+function columnVisibility(preCheckedColumns = []) {
+  return {
+    hiddenColumns: preCheckedColumns,
+    getColumnClasses() {
+      return this.hiddenColumns.map(col => `hide-col-${col}`).join(' ');
+    }
+  };
+}

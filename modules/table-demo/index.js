@@ -165,7 +165,7 @@ async function filter(formData) {
  * Initialize the module
  */
 async function init() {
-  console.log('table demo initialized');
+  // nothing to do
 }
 
 module.exports = {

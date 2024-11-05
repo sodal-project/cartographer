@@ -216,39 +216,3 @@
     </tbody>
   </table>
 </div>
-
-<script>
-function tableCheckbox() {
-  return {
-    selectAll: false,
-    selected: [],
-    totalCheckboxes: 0,
-
-    initializeTotalCheckboxes() {
-      // Set `totalCheckboxes` based on the number of rows in the tbody
-      this.totalCheckboxes = document.querySelectorAll('tbody tr').length;
-    },
-
-    toggleSelectAll() {
-      this.selected = this.selectAll ? [] : Array.from({ length: this.totalCheckboxes }, (_, i) => (i + 1).toString());
-      this.updateSelectAllState();
-    },
-
-    updateSelectAllState() {
-      const checkedCount = this.selected.length;
-      this.selectAll = checkedCount === this.totalCheckboxes;
-      
-      // Set the `indeterminate` property directly on the checkbox
-      this.$refs.headerCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.totalCheckboxes;
-    }
-  }
-}
-function columnVisibility(preCheckedColumns = []) {
-  return {
-    hiddenColumns: preCheckedColumns,
-    getColumnClasses() {
-      return this.hiddenColumns.map(col => `hide-col-${col}`).join(' ');
-    }
-  };
-}
-</script>
