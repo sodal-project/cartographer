@@ -30,3 +30,16 @@ table.hide-col-12 th:nth-child(12),
 table.hide-col-12 td:nth-child(12) {
   display: none;
 }
+
+.visibility-ui input[type="checkbox"] ~ .checked-icon {
+  display: none;
+}
+.visibility-ui input[type="checkbox"] ~ .unchecked-icon {
+  display: inline;
+}
+.visibility-ui input[type="checkbox"]:checked ~ .checked-icon {
+  display: inline;
+}
+.visibility-ui input[type="checkbox"]:checked ~ .unchecked-icon {
+  display: none;
+}

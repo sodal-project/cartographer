@@ -39,9 +39,34 @@
           <div
             class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
           >
-            <div class="flex gap-3 items-center w-full">
-              {{> FormSelect name="sortProperty" options=data.properties selected=data.sortProperty }}
-              {{> FormSelect name="sortDirection" options=data.sortDirections selected=data.sortDirection }}
+            <div>
+              <div class="flex gap-3 items-center w-full">
+                {{> FormSelect name="sortProperty" options=data.properties selected=data.sortProperty }}
+                {{> FormSelect name="sortDirection" options=data.sortDirections selected=data.sortDirection }}
+              </div>
+
+              <!-- Add Sort -->
+              <div x-data="{ open: false }">
+                <div class="mt-3" x-show="open">
+                  <div class="flex gap-3 items-center w-full">
+                    {{> FormSelect name="sortNewProperty" options=data.properties }}
+                    {{> FormSelect name="sortNewDirection" options=data.sortDirections }}
+                    <button type="button" @click="open = false" class="text-gray-400 text-sm">
+                      <span class="inline-block w-4 h-4">{{> icons/Trash }}</span>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  @click="open = !open"
+                  x-show="!open"
+                  class="text-gray-400 text-sm flex items-center mt-3"
+                >
+                  <span class="inline-block w-5 h-5 mr-1">{{> icons/Plus }}</span>
+                  Add Sort
+                </button>
+              </div>
+              
             </div>
             {{> FormSubmit label="Save" }}
           </div>
@@ -87,7 +112,7 @@
               {{> FormSelect name="filterNewProperty" options=data.properties }}
               {{> FormSelect name="filterNewCondition" options=data.filterConditions }}
             </div>
-            <input type="text" name="filterNewTerm" class="text-white bg-gray-900 border border-gray-700 rounded-md p-1 px-3 w-full" />
+            <input type="text" name="filterNewTerm" class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
             {{> FormSubmit label="Save" }}
           </div>
         </div>
@@ -113,51 +138,25 @@
           x-show="open"
         >
           <div
-            class="w-48 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+            class="w-48 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-3"
           >
-            <p class="text-gray-300 mb-4">Shown in table...</p>
-            <ul class="text-white">
+            <ul class="text-white visibility-ui flex flex-col gap-2">
               {{#each data.properties}}
-              <li>
-                <label class="flex items-center cursor-pointer">
-
-                  
-
-                  <!-- Unchecked Icon -->
-                  <svg 
-                      class="w-6 h-6 text-gray-400 hover:text-gray-600 peer-checked:hidden" 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke-width="2" 
-                      stroke="currentColor"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7 12a5 5 0 1010 0 5 5 0 00-10 0z" />
-                  </svg>
-
-                  <!-- Checked Icon -->
-                  <svg 
-                      class="w-6 h-6 text-blue-500 hover:text-blue-700 hidden peer-checked:inline" 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke-width="2" 
-                      stroke="currentColor"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />  
-                  </svg>
-
-                  <!-- Hidden Checkbox -->
+                <label class="flex items-center justify-between pr-2 cursor-pointer rounded-md w-full rounded hover:bg-gray-700">
                   <input 
+                      class="hidden"
                       name="visibility" 
                       type="checkbox" 
                       value="{{add @index 2}}" 
                       x-model="hiddenColumns" 
-                      class=""
                   />
-
-                  <!-- Label Text -->
                   <span class="ml-2">{{this.label}}</span>
+                  <div class="checked-icon w-5 h-5 text-gray-500">
+                    {{> icons/EyeSlash }}
+                  </div>
+                  <div class="unchecked-icon w-5 h-5">
+                    {{> icons/Eye }}
+                  </div>  
                 </label>
               </li>
               {{/each}}
@@ -205,9 +204,7 @@
             <input type="checkbox"  value={{this.id}} x-model="selected" @change="updateSelectAllState()">
           </td>
           {{#each this}}
-            <td
-              class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white"
-            >
+            <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
               {{this}}
             </td>
           {{/each}}
