@@ -168,50 +168,52 @@
   </form>
 
   <div class="overflow-scroll">
-    <table class="min-w-full" :class="getColumnClasses()" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
-      <thead class="sticky top-0">
-        <tr>
-          <th
-            class="sticky top-0 p-4 bg-gray-900 text-left w-12"
-          >
-            <div
-              class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
-            ></div>
-            <input
-              type="checkbox"
-              x-model="selectAll"
-              @click="toggleSelectAll()"
-              x-ref="headerCheckbox"
-            >
-          </th>
-          {{#each data.properties}}
+    <form id={{tableFormId}}>
+      <table class="min-w-full" :class="getColumnClasses()" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
+        <thead class="sticky top-0">
+          <tr>
             <th
-              class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+              class="sticky top-0 p-4 bg-gray-900 text-left w-12"
             >
               <div
                 class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
               ></div>
-              <span onClick="sort" class="cursor-pointer">
-                {{this.label}}
-              </span>
+              <input
+                type="checkbox"
+                x-model="selectAll"
+                @click="toggleSelectAll()"
+                x-ref="headerCheckbox"
+              >
             </th>
-          {{/each}}
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-800">
-        {{#each data.rows}}
-          <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
-            <td class="p-4">
-              <input type="checkbox"  value={{this.id}} x-model="selected" @change="updateSelectAllState()">
-            </td>
-            {{#each this}}
-              <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
-                {{this}}
-              </td>
+            {{#each data.properties}}
+              <th
+                class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+              >
+                <div
+                  class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+                ></div>
+                <span onClick="sort" class="cursor-pointer">
+                  {{this.label}}
+                </span>
+              </th>
             {{/each}}
           </tr>
-        {{/each}}
-      </tbody>
-    </table>
+        </thead>
+        <tbody class="divide-y divide-gray-800">
+          {{#each data.rows}}
+            <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
+              <td class="p-4">
+                <input type="checkbox" name="upn" value="{{this.upn}}" x-model="selected" @change="updateSelectAllState()">
+              </td>
+              {{#each this}}
+                <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
+                  {{this}}
+                </td>
+              {{/each}}
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </form>
   </div>
 </div>

@@ -1,16 +1,43 @@
-<div class="p-8">
+<div class="p-8" x-data="formHandler">
   <div class="flex justify-between">
     {{> Headline title="Directory Module" }}
-    <button class="bg-indigo-600 text-white px-4">Link</button>
+    <button 
+      class="bg-indigo-600 text-white px-4"
+      @click="linkData()"
+    >
+      Link
+    </button>
   </div>
   <div class="relative">
     <div class="absolute top-0 left-0 right-1/2 pr-4">
       <h2 class="text-white text-lg mb-4">Directory</h2>
-      {{> Table data=directory.tableData filterEndpoint="/mod/directory/filterdirectory/"}}
+      {{> Table data=directory.tableData filterEndpoint="/mod/directory/filterdirectory/" tableFormId="directory-table-form"}}
     </div>
     <div class="absolute top-0 left-1/2 right-0 pl-4">
       <h2 class="text-white text-lg mb-4">Personas</h2>
-      {{> Table data=personas.tableData filterEndpoint="/mod/directory/filterpersonas/"}}
+      {{> Table data=personas.tableData filterEndpoint="/mod/directory/filterpersonas/" tableFormId="persona-table-form"}}
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  Alpine.data('formHandler', () => ({
+    linkData() {
+      const directoryTableForm = document.getElementById('directory-table-form');
+      const personaTableForm = document.getElementById('persona-table-form');
+
+      if (!directoryTableForm || !personaTableForm) {
+        console.error('One or both forms are missing.');
+        return;
+      }
+
+      const directoryTableData = new FormData(directoryTableForm);
+      const personaTableData = new FormData(personaTableForm);
+
+      console.log('Directory Table Data:', [...directoryTableData.entries()]);
+      console.log('Persona Table Data:', [...personaTableData.entries()]);
+    }
+  }));
+});
+</script>
