@@ -1,0 +1,24 @@
+<div class="p-8" style="max-width: 640px">
+  {{> Headline title="Test Filter" }}
+
+  <!-- Post data to the config database, redraw module on completion -->
+  {{#> Card }}
+    <form
+      class="gap-6 mb-0"
+      hx-post="/mod/test-filter/runFilter/"
+      hx-target="closest #main"
+      hx-swap="innerHTML"
+    >
+      {{> FormTextarea label="Filter" name="filter" data=this.filter }}
+      {{> FormSubmit label="Run" }}
+    </form>
+  {{/Card}}
+
+  <!-- List all data stored in the module namespace of the config database -->
+  <div class="p-8 mb-6 text-gray-400">
+    {{#each this.results}}
+      <li class="list-none">{{this}}</li>
+    {{/each}}
+  </div>
+
+</div>

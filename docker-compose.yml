@@ -42,7 +42,7 @@ services:
   mongo-db:
     image: mongo
     hostname: mongo-db
-    entrypoint: bash -c "docker-entrypoint.sh mongod --quiet --port 28000 | jq --unbuffered -r '.msg, (.attr?.message?.msg? // .attr?) // \" \" '" # Change internal port to 28000
+    command: mongod --port 28000 --quiet --logpath /tmp/mongo.log --setParameter logLevel=0 > /dev/null 2>&1 # Change internal port to 28000
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME} # Set MongoDB username
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD} # Set MongoDB password

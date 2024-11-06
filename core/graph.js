@@ -2,6 +2,7 @@ const check = require('./check');
 const connector = require('./graphNeo4jConnector');
 const sourceUtils = require('./source');
 const sourceStore = require('./sourceStore');
+const graphFilter = require('./graphFilter');
 
 /* TODO: enable pagination
 
@@ -197,37 +198,17 @@ const mergeSource = async (module, source, querySetOnly) => {
   return graphSource[0];
 }
 
-// TODO: persona filter list query
-/*
-filter: {
-  props: {
-    ids: [],
-    upns: [],
-    platforms: [],
-    types: [],
-  }
-  obey: {
-    levels: [],
-    sources: [],
-    min-confidence: 0,
-    max-confidence: 1,
-  }
-  control: {
-    levels: [],
-    sources: [],
-    min-confidence: 0,
-    max-confidence: 1,
-  }
-  source: {
-    ids: [],
-    min-confidence: 0,
-    max-confidence: 1,
-  }
-}
+/**
+ * Filter and sort agents from the persona graph database
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {object} filter - OPTIONAL, a filter object
+ * @param {object} sort - OPTIONAL, a sort object
+ */
+const readAgents = async (module, filter, sort, asUpnArray) => {
+  const results = await graphFilter(filter, sort, asUpnArray);
 
-*/
-const readFilter = async (module, filter, upnArray, upnArrayOnly) => {
-
+  return results;
 }
 
 /**
@@ -471,7 +452,7 @@ module.exports = {
   deleteSource,
   mergePersona,
   mergeSource,
-  readFilter,
+  readAgents,
   readOrphanedPersonas,
   readPersonaObject,
   readSource,
