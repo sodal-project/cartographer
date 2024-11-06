@@ -58,11 +58,14 @@ const operators = {
   "≠": "<>",
   "ne": "<>",
   "<>": "<>",
+  "is": "=",
   "equals": "=",
   "contains": "CONTAINS",
   "starts": "STARTS WITH",
+  "startswith": "STARTS WITH",
   "startsWith": "STARTS WITH",
   "ends": "ENDS WITH",
+  "endswith": "ENDS WITH",
   "endsWith": "ENDS WITH",
 }
 
