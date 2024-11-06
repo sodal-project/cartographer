@@ -1,14 +1,14 @@
-<div x-data="columnVisibility([{{data.visibility}}])">
+<div class="table-wrap" x-data="columnVisibility([{{data.visibility}}])">
   <form
-    hx-post="/mod/table-demo/filter/"
-    hx-target="closest #main"
+    hx-post={{filterEndpoint}}
+    hx-target="closest .table-wrap"
     hx-swap="innerHTML"
   >
     <div class="relative flex mb-4">
 
       <!-- Sort -->
       <div
-        class="relative border-r border-gray-700 pr-4 mr-4"
+        class="relative border-r border-gray-700 pr-4"
         x-data="{ open: false }"
         @click.away="open = false"
       >
@@ -74,7 +74,7 @@
       </div>
 
       <!-- Active Filters -->
-      <div class="flex gap-3 mr-2">
+      <div class="flex">
         {{#each data.filters}}
           {{> TableFilter
             property=this.property
@@ -88,7 +88,7 @@
 
       <!-- New Filter -->
       <div 
-        class="relative"
+        class="relative ml-2"
         x-data="{ open: false }"
         @click.away="open = false"
       >
@@ -167,49 +167,53 @@
     </div>
   </form>
 
-  <table class="min-w-full" :class="getColumnClasses()" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
-    <thead class="sticky top-0">
-      <tr>
-        <th
-          class="sticky top-0 p-4 bg-gray-900 text-left w-12"
-        >
-          <div
-            class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
-          ></div>
-          <input
-            type="checkbox"
-            x-model="selectAll"
-            @click="toggleSelectAll()"
-            x-ref="headerCheckbox"
-          >
-        </th>
-        {{#each data.properties}}
-          <th
-            class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
-          >
-            <div
-              class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
-            ></div>
-            <span onClick="sort" class="cursor-pointer">
-              {{this.label}}
-            </span>
-          </th>
-        {{/each}}
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-800">
-      {{#each data.rows}}
-        <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
-          <td class="p-4">
-            <input type="checkbox"  value={{this.id}} x-model="selected" @change="updateSelectAllState()">
-          </td>
-          {{#each this}}
-            <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
-              {{this}}
-            </td>
+  <div class="overflow-scroll">
+    <form id={{tableFormId}}>
+      <table class="min-w-full" :class="getColumnClasses()" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
+        <thead class="sticky top-0">
+          <tr>
+            <th
+              class="sticky top-0 p-4 bg-gray-900 text-left w-12"
+            >
+              <div
+                class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+              ></div>
+              <input
+                type="checkbox"
+                x-model="selectAll"
+                @click="toggleSelectAll()"
+                x-ref="headerCheckbox"
+              >
+            </th>
+            {{#each data.properties}}
+              <th
+                class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+              >
+                <div
+                  class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+                ></div>
+                <span onClick="sort" class="cursor-pointer">
+                  {{this.label}}
+                </span>
+              </th>
+            {{/each}}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800">
+          {{#each data.rows}}
+            <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
+              <td class="p-4">
+                <input type="checkbox" name="upn" value="{{this.upn}}" x-model="selected" @change="updateSelectAllState()">
+              </td>
+              {{#each this}}
+                <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
+                  {{this}}
+                </td>
+              {{/each}}
+            </tr>
           {{/each}}
-        </tr>
-      {{/each}}
-    </tbody>
-  </table>
+        </tbody>
+      </table>
+    </form>
+  </div>
 </div>
