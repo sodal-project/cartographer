@@ -58,6 +58,10 @@ const coreData = {
     {
       folder: "test-filter",
       label: "Test Filter",
+    },
+    {
+      folder: "table-demo",
+      label: "Table Demo",
     }
   ]
 }
