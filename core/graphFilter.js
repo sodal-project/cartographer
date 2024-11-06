@@ -1,4 +1,5 @@
 const connector = require('./graphNeo4jConnector');
+const CC = require('./constants');
 
 /* 
 sort: {
@@ -73,7 +74,7 @@ const operators = {
  * 
  * @param {object} filter - The filter object
  * @param {object} sort - The sort object
- * @returns {object[]} - An array of agent personas
+ * @returns {object[]} - The query results
  */
 async function graphFilter (filter, sort = { field: "upn", direction: "ASC"}) {
 
@@ -199,18 +200,18 @@ async function getUpnsByAgency (agency, upns) {
 
   const direction = agency.key;
   const filter = agency.filter;
-  const levels = agency.levels;
-  const confidence = agency.confidence;
+  const levels = [];
+  const confidence = agency.confidence || { min: 0, max: 1 };
   const filterUpns = await getUpnsFromFilter(filter);
 
-  if(!confidence){
-    confidence = { min: 0, max: 1 };
-  } else {
-    confidence.min = parseFloat(confidence.min);
-    confidence.max = parseFloat(confidence.max);
-  }
+  confidence.min = parseFloat(confidence.min);
+  confidence.max = parseFloat(confidence.max);
   if(confidence.min > confidence.max || confidence.min < 0 || confidence.max > 1) {
     throw new Error('Invalid confidence range');
+  }
+
+  for(const level of agency.levels) {
+    levels.push(CC.LEVEL[level]);
   }
 
   let indexUpnString = "";
@@ -298,8 +299,7 @@ async function sortResults (upns, sort) {
   query += `RETURN DISTINCT agent ORDER BY agent.${sort.field} ${sort.direction}`;
 
   const results = await connector.runRawQuery(query, { upns });
-  const sortedUpns = results.records.map(node => node._fields[0]);
-  return sortedUpns;
+  return results;
 }
 
 module.exports = graphFilter;

@@ -16,7 +16,9 @@
 
   <!-- List all data stored in the module namespace of the config database -->
   <div class="p-8 mb-6 text-gray-400">
-    {{this.results}}
+    {{#each this.results}}
+      <li class="list-none">{{this}}</li>
+    {{/each}}
   </div>
 
 </div>

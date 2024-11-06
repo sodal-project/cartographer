@@ -23,13 +23,15 @@ async function runFilter(formData) {
   const filter = JSON.parse(formData.filter);
 
   try {
-    results = await core.graph.readPersonas(filter);
+    response = await core.graph.readAgents(filter);
+    const sortedUpns = response.records.map(node => node._fields[0].properties.upn);
+    results = sortedUpns;
   } catch (error) {
     results = error;
   }
 
   return redraw({ 
-    filter: JSON.stringify(filter),
+    filter: formData.filter, // JSON.stringify(filter),
     results, 
   });
 }
