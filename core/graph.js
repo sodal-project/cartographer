@@ -205,21 +205,8 @@ const mergeSource = async (module, source, querySetOnly) => {
  * @param {object} filter - OPTIONAL, a filter object
  * @param {object} sort - OPTIONAL, a sort object
  */
-const readAgents = async (module, filter, sort) => {
-  const results = await graphFilter(filter, sort);
-
-  return results;
-}
-
-/**
- * Filter and sort personas from the persona graph database
- * 
- * @param {string} module - automatically passed by core
- * @param {object} filter - OPTIONAL, a filter object
- * @param {object} sort - OPTIONAL, a sort object
- */
-const readPersonas = async (module, filter, sort) => {
-  const results = await graphFilter(filter, sort);
+const readAgents = async (module, filter, sort, asUpnArray) => {
+  const results = await graphFilter(filter, sort, asUpnArray);
 
   return results;
 }
@@ -468,7 +455,6 @@ module.exports = {
   readAgents,
   readOrphanedPersonas,
   readPersonaObject,
-  readPersonas,
   readSource,
   readSourcePersonas,
   readSourceRelationships,
