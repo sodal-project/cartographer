@@ -34,7 +34,17 @@ async function index() {
  * @returns {string} - Compiled HTML content
  */
 async function filter(formData) {
-  return redraw(formData);
+  const rows = [
+    { id: 1, name: 'John Doe', phone: '555-555-5555', street: '123 Main St', city: 'Anytown', state: 'CA', zip: '12345' },
+    { id: 2, name: 'Jane Doe', phone: '555-555-5555', street: '123 Main St', city: 'Anytown', state: 'CA', zip: '12345' },
+    { id: 3, name: 'John Smith', phone: '555-555-5555', street: '123 Main St', city: 'Anytown', state: 'CA', zip: '12345' },
+    { id: 4, name: 'Jane Smith', phone: '555-555-5555', street: '123 Main St', city: 'Anytown', state: 'CA', zip: '12345' },
+  ];
+
+  const data = tableDataPrep(rows, formData);
+  data.endpoint = '/mod/table-demo/filter/'
+
+  return core.client.render('table.hbs', data);
 }
 
 /**
