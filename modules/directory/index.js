@@ -64,8 +64,6 @@ async function index() {
  */
 async function filterdirectory(formData) {
 
-  console.log('formData', formData)
-
   const data = {
     tableData: await core.personaTable.fromTableForm(formData, directoryPreFilter),
     endpoint: '/mod/directory/filterdirectory/'
@@ -79,8 +77,6 @@ async function filterdirectory(formData) {
  * @returns {string} - Compiled HTML content
  */
 async function filterpersonas(formData) {
-
-  console.log('formData', formData)
 
   const data = {
     tableData: await core.personaTable.fromTableForm(formData, personaPreFilter),
