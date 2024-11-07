@@ -31,11 +31,11 @@
         </div>
         <input type="text" name="filterTerm" value={{value}} class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
       </div>
-      <div class="flex justify-between w-full">
+      <div class="flex justify-between w-full mt-4">
         {{> FormSubmit label="Save" }}
         <button
           type="button"
-          class="p-1 px-6 mt-4 rounded text-white text-sm bg-gray-600"
+          class="p-1 px-6 rounded text-white text-sm bg-gray-600"
           @click="$refs.filterFields.remove(); $refs.submitButton.click();"
         >
           Remove

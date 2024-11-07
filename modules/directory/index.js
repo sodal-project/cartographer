@@ -27,9 +27,7 @@ async function redraw(formData) {
     directory: directory,
     personas: personas,
   };
-
-  console.log('data', data)
-
+  
   // Render the index.hbs template
   return core.client.render('index.hbs', data);
 }
@@ -55,9 +53,8 @@ async function filterdirectory(formData) {
   ];
 
   const data = tableDataPrep(directoryRows, formData);
-  data.endpoint = '/mod/directory/filterdirectory/'
-
-  return core.client.render('table-directory.hbs', data);
+  data.filterEndpoint = '/mod/directory/filterdirectory/'
+  return core.client.render('table.hbs', data);
 }
 
 /**
@@ -73,9 +70,49 @@ async function filterpersonas(formData) {
   ];
 
   const data = tableDataPrep(personaRows, formData);
-  data.endpoint = '/mod/directory/filterpersonas/'
+  data.filterEndpoint = '/mod/directory/filterpersonas/'
+  return core.client.render('table.hbs', data);
+}
 
-  return core.client.render('table-personas.hbs', data);
+/**
+ * Add a persona to the graph
+ * @param {object} formData - The data from the form
+ * @returns {string} - Compiled HTML content
+ */
+async function addPersona(formData) {
+  const persona = { 
+    firstName: formData.firstName,
+    lastName: formData.lastName,
+    handle: formData.handle,
+  };
+  console.log('add persona', persona);
+
+  return redraw();
+}
+
+/**
+ * Add an activity to the graph
+ * @param {object} formData - The data from the form
+ * @returns {string} - Compiled HTML content
+ */
+async function addActivity(formData) {
+  const activity = { 
+    name: formData.name,
+  };
+  console.log('add activity', activity);
+
+  return redraw();
+}
+
+/**
+ * Add a persona to the graph
+ * @param {object} formData - The data from the form
+ * @returns {string} - Compiled HTML content
+ */
+async function deletePersonas(formData) {
+  console.log('delete persona', formData);
+
+  return redraw();
 }
 
 /**
@@ -89,5 +126,8 @@ module.exports = {
   index,
   filterdirectory,
   filterpersonas,
+  addPersona,
+  addActivity,
+  deletePersonas,
   init,
 };

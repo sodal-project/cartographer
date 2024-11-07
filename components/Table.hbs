@@ -1,4 +1,4 @@
-<div class="table-wrap" x-data="columnVisibility([{{data.visibility}}])">
+<div class="relative table-wrap" x-data="columnVisibility([{{data.visibility}}])">
   <form
     hx-post={{filterEndpoint}}
     hx-target="closest .table-wrap"
@@ -68,7 +68,9 @@
               </div>
               
             </div>
-            {{> FormSubmit label="Save" }}
+            <div class="mt-4">
+              {{> FormSubmit label="Save" }}
+            </div>
           </div>
         </div>
       </div>
@@ -113,7 +115,9 @@
               {{> FormSelect name="filterNewCondition" options=data.filterConditions }}
             </div>
             <input type="text" name="filterNewTerm" class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
-            {{> FormSubmit label="Save" }}
+            <div class="mt-4">
+              {{> FormSubmit label="Save" }}
+            </div>
           </div>
         </div>
 
@@ -167,53 +171,71 @@
     </div>
   </form>
 
-  <div class="overflow-scroll">
-    <form id={{tableFormId}}>
-      <table class="min-w-full" :class="getColumnClasses()" x-data="tableCheckbox()" x-init="initializeTotalCheckboxes()">
-        <thead class="sticky top-0">
-          <tr>
-            <th
-              class="sticky top-0 p-4 bg-gray-900 text-left w-12"
-            >
-              <div
-                class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
-              ></div>
-              <input
-                type="checkbox"
-                x-model="selectAll"
-                @click="toggleSelectAll()"
-                x-ref="headerCheckbox"
-              >
-            </th>
-            {{#each data.properties}}
+  <div class="relative" x-data="tableCheckbox()" >
+    <form
+      id={{tableFormId}}
+      hx-post="/mod/directory/deletePersonas/"
+      hx-target="closest #main"
+      hx-swap="innerHTML"
+      @keydown.enter.prevent
+    >
+      <!-- Delete Selected --> 
+      <div 
+        class="absolute z-50 -top-14 left-0 right-12 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
+        x-show="selected.length > 0"
+      >
+        {{> FormSubmit label="Delete" }}
+        <span class="text-sm">{{ selected }} selected items</span>
+      </div>
+      
+      <!-- Table -->
+      <div class="overflow-scroll">
+        <table class="min-w-full" :class="getColumnClasses()" x-init="initializeTotalCheckboxes()">
+          <thead class="sticky top-0">
+            <tr>
               <th
-                class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+                class="sticky top-0 p-4 bg-gray-900 text-left w-12"
               >
                 <div
                   class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
                 ></div>
-                <span onClick="sort" class="cursor-pointer">
-                  {{this.label}}
-                </span>
+                <input
+                  type="checkbox"
+                  x-model="selectAll"
+                  @click="toggleSelectAll()"
+                  x-ref="headerCheckbox"
+                >
               </th>
-            {{/each}}
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-800">
-          {{#each data.rows}}
-            <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
-              <td class="p-4">
-                <input type="checkbox" name="upn" value="{{this.upn}}" x-model="selected" @change="updateSelectAllState()">
-              </td>
-              {{#each this}}
-                <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
-                  {{this}}
-                </td>
+              {{#each data.properties}}
+                <th
+                  class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+                >
+                  <div
+                    class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+                  ></div>
+                  <span onClick="sort" class="cursor-pointer">
+                    {{this.label}}
+                  </span>
+                </th>
               {{/each}}
             </tr>
-          {{/each}}
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-gray-800">
+            {{#each data.rows}}
+              <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
+                <td class="p-4">
+                  <input type="checkbox" name="upn" value="{{this.upn}}" x-model="selected" @change="updateSelectAllState()">
+                </td>
+                {{#each this}}
+                  <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
+                    {{this}}
+                  </td>
+                {{/each}}
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
     </form>
   </div>
 </div>

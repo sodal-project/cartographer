@@ -1,12 +1,43 @@
 <div class="p-8" x-data="formHandler">
-  <div class="flex justify-between">
+  <div class="flex justify-between items-center mb-6">
     {{> Headline title="Directory Module" }}
-    <button 
-      class="bg-indigo-600 text-white px-4"
-      @click="linkData()"
-    >
-      Link
-    </button>
+    <div class="flex gap-3">
+
+      <!-- Add Activity Modal -->
+      {{#> ModalButton label="Add Activity" }}
+        <div x-ref="filterFields">
+          <h2 class="text-white text-lg mb-4">Add Activity</h2>
+          <form
+            hx-post="/mod/directory/addActivity/"
+            hx-target="closest #main"
+            hx-swap="innerHTML"
+          >
+            {{> FormText label="Name" name="name" value="" }}
+            {{> FormSubmit label="Add Activity" }}
+          </form>
+        </div>
+      {{/ModalButton}}
+
+      <!-- Add Persona Modal -->
+      {{#> ModalButton label="Add Persona" }}
+        <div x-ref="filterFields">
+          <h2 class="text-white text-lg mb-4">Add Persona</h2>
+          <form
+            hx-post="/mod/directory/addPersona/"
+            hx-target="closest #main"
+            hx-swap="innerHTML"
+          >
+            {{> FormText label="First Name" name="firstName" value="" }}
+            {{> FormText label="Last Name" name="lastName" value="" }}
+            {{> FormText label="Handle" name="handle" value="" }}
+            {{> FormSubmit label="Add Persona" }}
+          </form>
+        </div>
+      {{/ModalButton}}
+      
+      <!-- Link -->
+      {{> Button click="linkData()" label="Link" }}
+    </div>
   </div>
   <div class="relative">
     <div class="absolute top-0 left-0 right-1/2 pr-4">
