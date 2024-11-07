@@ -79,6 +79,36 @@ async function filterpersonas(formData) {
 }
 
 /**
+ * Add a persona to the graph
+ * @param {object} formData - The data from the form
+ * @returns {string} - Compiled HTML content
+ */
+async function addPersona(formData) {
+  const persona = { 
+    firstName: formData.firstName,
+    lastName: formData.lastName,
+    handle: formData.handle,
+  };
+  console.log('add persona', persona);
+
+  return redraw();
+}
+
+/**
+ * Add an activity to the graph
+ * @param {object} formData - The data from the form
+ * @returns {string} - Compiled HTML content
+ */
+async function addActivity(formData) {
+  const activity = { 
+    name: formData.name,
+  };
+  console.log('add activity', activity);
+
+  return redraw();
+}
+
+/**
  * Initialize the module
  */
 async function init() {
@@ -89,5 +119,7 @@ module.exports = {
   index,
   filterdirectory,
   filterpersonas,
+  addPersona,
+  addActivity,
   init,
 };
