@@ -44,9 +44,19 @@ const filterConditions = [
   },
 ];
 
-async function fromTableForm(tableForm = {}, preFilters = []) {
+/*   
+const exampleTableConfig = {
+  sortProperty: "upn",
+  sortDirection: "ASC",
+  filterNewProperty: "platform",
+  filterNewTerm: "directory",
+  filterNewCondition: "is",
+}
+*/
 
-  const graphSort = {
+async function read(tableForm = {}, preFilters = [], preSort = null) {
+
+  const graphSort = preSort ? preSort : {
     field: tableForm?.sortProperty ? tableForm.sortProperty : "upn",
     direction: tableForm?.sortDirection ? tableForm.sortDirection : "ASC",
   }
@@ -135,7 +145,8 @@ function dataPrep(tableRows, tableForm) {
     sortProperty: tableForm?.sortProperty || keys[0] || '',
     sortDirection: tableForm?.sortDirection || sortDirections[0].value,
     filters: getTableFilterArray(tableForm),
-    visibility: visibility
+    visibility: visibility,
+    endpoint: tableForm?.endpoint || '',
   };
 
   return tableData;
@@ -175,5 +186,5 @@ function getTableFilterArray(tableForm) {
 }
 
 module.exports = {
-  fromTableForm,
+  read,
 };

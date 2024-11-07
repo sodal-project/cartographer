@@ -22,24 +22,8 @@ const personaPreFilter = [{
  */
 async function redraw(formData) {
 
-/*   const directoryTableConfig = {
-    sortProperty: "upn",
-    sortDirection: "ASC",
-    filterNewProperty: "platform",
-    filterNewTerm: "directory",
-    filterNewCondition: "is",
-  }
-
-  const personaTableConfig = {
-    sortProperty: "upn",
-    sortDirection: "ASC",
-    filterNewProperty: "type",
-    filterNewTerm: "participant",
-    filterNewCondition: "is-not",
-  } */
-
-  const directory = await core.personaTable.fromTableForm(null, directoryPreFilter);
-  const personas = await core.personaTable.fromTableForm(null, personaPreFilter);
+  const directory = await core.personaTable.read(null, directoryPreFilter);
+  const personas = await core.personaTable.read(null, personaPreFilter);
 
   const data = {
     directory: { tableData: directory },
@@ -65,7 +49,7 @@ async function index() {
 async function filterdirectory(formData) {
 
   const data = {
-    tableData: await core.personaTable.fromTableForm(formData, directoryPreFilter),
+    tableData: await core.personaTable.read(formData, directoryPreFilter),
     endpoint: '/mod/directory/filterdirectory/'
   }
 
@@ -79,7 +63,7 @@ async function filterdirectory(formData) {
 async function filterpersonas(formData) {
 
   const data = {
-    tableData: await core.personaTable.fromTableForm(formData, personaPreFilter),
+    tableData: await core.personaTable.read(formData, personaPreFilter),
     endpoint: '/mod/directory/filterpersonas/'
   }
 
