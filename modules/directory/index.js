@@ -55,9 +55,8 @@ async function filterdirectory(formData) {
   ];
 
   const data = tableDataPrep(directoryRows, formData);
-  data.endpoint = '/mod/directory/filterdirectory/'
-
-  return core.client.render('table-directory.hbs', data);
+  data.filterEndpoint = '/mod/directory/filterdirectory/'
+  return core.client.render('table.hbs', data);
 }
 
 /**
@@ -73,9 +72,8 @@ async function filterpersonas(formData) {
   ];
 
   const data = tableDataPrep(personaRows, formData);
-  data.endpoint = '/mod/directory/filterpersonas/'
-
-  return core.client.render('table-personas.hbs', data);
+  data.filterEndpoint = '/mod/directory/filterpersonas/'
+  return core.client.render('table.hbs', data);
 }
 
 /**
