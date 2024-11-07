@@ -38,7 +38,10 @@ function tableCheckbox() {
     },
 
     toggleSelectAll() {
-      this.selected = this.selectAll ? [] : Array.from({ length: this.totalCheckboxes }, (_, i) => (i + 1).toString());
+      this.selectAll = !this.selectAll;
+      this.selected = this.selectAll
+        ? Array.from(document.querySelectorAll('tbody input[type="checkbox"]')).map(cb => cb.value)
+        : [];
       this.updateSelectAllState();
     },
 
@@ -46,11 +49,12 @@ function tableCheckbox() {
       const checkedCount = this.selected.length;
       this.selectAll = checkedCount === this.totalCheckboxes;
       
-      // Set the `indeterminate` property directly on the checkbox
+      // Set the `indeterminate` property directly on the header checkbox
       this.$refs.headerCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.totalCheckboxes;
     }
   }
 }
+
 
 /**
  * Manages column visibility in a table based on a list of pre-checked columns.

@@ -27,9 +27,7 @@ async function redraw(formData) {
     directory: directory,
     personas: personas,
   };
-
-  console.log('data', data)
-
+  
   // Render the index.hbs template
   return core.client.render('index.hbs', data);
 }
@@ -107,6 +105,17 @@ async function addActivity(formData) {
 }
 
 /**
+ * Add a persona to the graph
+ * @param {object} formData - The data from the form
+ * @returns {string} - Compiled HTML content
+ */
+async function deletePersonas(formData) {
+  console.log('delete persona', formData);
+
+  return redraw();
+}
+
+/**
  * Initialize the module
  */
 async function init() {
@@ -119,5 +128,6 @@ module.exports = {
   filterpersonas,
   addPersona,
   addActivity,
+  deletePersonas,
   init,
 };
