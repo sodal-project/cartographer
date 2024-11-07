@@ -1,31 +1,33 @@
 const core = require('../../core/core.js');
-const { tableDataPrep } = require('../../core/utilities.js');
+
+const directoryPreFilter = [{
+  type: "field",
+  key: "platform",
+  value: "directory",
+  operator: "=",
+  not: false
+}]
+
+const personaPreFilter = [{
+  type: "field",
+  key: "type",
+  value: "participant",
+  operator: "=",
+  not: true
+}]
 
 /**
  * @description Fetch data from the config database namespace and render the index.hbs template
  * @returns {string} - Compiled HTML content
  */
 async function redraw(formData) {
-  const directoryRows = [
-    { upn: 1, name: 'John Doe', platform: 'Slack', type: 'Directory' },
-    { upn: 2, name: 'Jane Doe', platform: 'Slack', type: 'Directory' },
-    { upn: 3, name: 'John Smith', platform: 'Slack', type: 'Directory' },
-    { upn: 4, name: 'Jane Smith', platform: 'Slack', type: 'Directory' },
-  ];
-  const personaRows = [
-    { upn: 1, name: 'John Doe', platform: 'Slack', type: 'Persona' },
-    { upn: 2, name: 'Jane Doe', platform: 'Slack', type: 'Persona' },
-    { upn: 3, name: 'John Smith', platform: 'Slack', type: 'Persona' },
-    { upn: 4, name: 'Jane Smith', platform: 'Slack', type: 'Persona' },
-  ];
 
-  // Prepare the data for the table component
-  // TODO: Is there a better place to store this function or way to do this?
-  const directory = tableDataPrep(directoryRows, formData);
-  const personas = tableDataPrep(personaRows, formData);
+  const directory = await core.personaTable.read(null, directoryPreFilter);
+  const personas = await core.personaTable.read(null, personaPreFilter);
+
   const data = {
-    directory: directory,
-    personas: personas,
+    directory: { tableData: directory },
+    personas: { tableData: personas },
   };
   
   // Render the index.hbs template
@@ -45,15 +47,12 @@ async function index() {
  * @returns {string} - Compiled HTML content
  */
 async function filterdirectory(formData) {
-  const directoryRows = [
-    { upn: 1, name: 'John Doe', platform: 'Slack', type: 'Directory' },
-    { upn: 2, name: 'Jane Doe', platform: 'Slack', type: 'Directory' },
-    { upn: 3, name: 'John Smith', platform: 'Slack', type: 'Directory' },
-    { upn: 4, name: 'Jane Smith', platform: 'Slack', type: 'Directory' },
-  ];
 
-  const data = tableDataPrep(directoryRows, formData);
-  data.filterEndpoint = '/mod/directory/filterdirectory/'
+  const data = {
+    tableData: await core.personaTable.read(formData, directoryPreFilter),
+    filterEndpoint: '/mod/directory/filterdirectory/'
+  }
+
   return core.client.render('table.hbs', data);
 }
 
@@ -62,15 +61,12 @@ async function filterdirectory(formData) {
  * @returns {string} - Compiled HTML content
  */
 async function filterpersonas(formData) {
-  const personaRows = [
-    { upn: 1, name: 'John Doe', platform: 'Slack', type: 'Persona' },
-    { upn: 2, name: 'Jane Doe', platform: 'Slack', type: 'Persona' },
-    { upn: 3, name: 'John Smith', platform: 'Slack', type: 'Persona' },
-    { upn: 4, name: 'Jane Smith', platform: 'Slack', type: 'Persona' },
-  ];
 
-  const data = tableDataPrep(personaRows, formData);
-  data.filterEndpoint = '/mod/directory/filterpersonas/'
+  const data = {
+    tableData: await core.personaTable.read(formData, personaPreFilter),
+    filterEndpoint: '/mod/directory/filterpersonas/'
+  }
+
   return core.client.render('table.hbs', data);
 }
 
@@ -115,19 +111,11 @@ async function deletePersonas(formData) {
   return redraw();
 }
 
-/**
- * Initialize the module
- */
-async function init() {
-  // nothing to do
-}
-
 module.exports = {
   index,
   filterdirectory,
   filterpersonas,
   addPersona,
   addActivity,
-  deletePersonas,
-  init,
+  deletePersonas
 };

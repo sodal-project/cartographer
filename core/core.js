@@ -8,7 +8,9 @@ const crypto = require('./crypto.js')
 const constants = require('./constants.js')
 const graph = require('./graph.js')
 const persona = require('./persona.js')
+const personaTable = require('./personaTable.js')
 const source = require('./source.js')
+
 
 const namespaces = {
   cache,
@@ -19,6 +21,7 @@ const namespaces = {
   crypto,
   graph,
   persona,
+  personaTable,
   source,
 };
 
@@ -36,16 +39,8 @@ const coreData = {
   currentModule: 'none',
   modules: [
     {
-      folder: "module1",
-      label: "Module 1",
-    },
-    {
-      folder: "module2",
-      label: "Module 2",
-    },
-    {
-      folder: "long-process",
-      label: "Long Process",
+      folder: "directory",
+      label: "Directory",
     },
     {
       folder: "slack",
@@ -61,16 +56,24 @@ const coreData = {
     },
     {
       folder: "table-demo",
-      label: "Table Demo",
-    },
-    {
-      folder: "directory",
-      label: "Directory",
+      label: "Test Table",
     },
     {
       folder: "test-filter",
       label: "Test Filter",
-    }
+    },
+    {
+      folder: "module1",
+      label: "Test Module 1",
+    },
+    {
+      folder: "module2",
+      label: "Test Module 2",
+    },
+    {
+      folder: "long-process",
+      label: "Test Long Process",
+    },
   ]
 }
 

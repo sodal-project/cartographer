@@ -47,3 +47,19 @@ table.hide-col-12 td:nth-child(12) {
 .visibility-ui input[type="checkbox"]:checked ~ .unchecked-icon {
   display: none;
 }
+
+::-webkit-scrollbar {
+  color: gray;
+  background-color: black;
+  /* Customize the scrollbar width */
+}
+
+::-webkit-scrollbar-track {
+  background: black;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  /* Customize the scrollbar thumb */
+  background: gray;
+}
