@@ -45,15 +45,17 @@ table.hide-col-12 td:nth-child(12) {
 }
 
 ::-webkit-scrollbar {
+  color: gray;
+  background-color: black;
   /* Customize the scrollbar width */
 }
 
 ::-webkit-scrollbar-track {
-  background: gray !important;
+  background: black !important;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
   /* Customize the scrollbar thumb */
-  background: black !important;
+  background: gray !important;
 }
