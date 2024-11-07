@@ -51,11 +51,11 @@ table.hide-col-12 td:nth-child(12) {
 }
 
 ::-webkit-scrollbar-track {
-  background: black !important;
+  background: black;
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
   /* Customize the scrollbar thumb */
-  background: gray !important;
+  background: gray;
 }
