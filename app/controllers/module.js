@@ -23,7 +23,6 @@ const handleModuleFunction = async (req, res) => {
   }
 };
 
-
 module.exports = {
   handleModuleFunction
 };
