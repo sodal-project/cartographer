@@ -12,7 +12,7 @@ const authenticateToken = (req, res, next) => {
   // Verify the token
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
     if (err) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
+      return res.redirect('/login');
     }
     
     // We have a valid token
