@@ -7,7 +7,7 @@ const {
   handleRegister,
   refreshToken,
   handleLogout,
-} = require('../controllers/auth');
+} = require('../controllers/authController');
 
 router.get("/login", renderLoginPage);
 router.post("/login", handleLogin);
