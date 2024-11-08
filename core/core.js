@@ -32,10 +32,6 @@ const { writeLog } = require('./log.js');
 // Core Data
 // TODO: move this to config database
 const coreData = {
-  user: {
-    name: "Dade Murphy",
-  },
-  main: '',
   currentModule: 'none',
   modules: [
     {
@@ -49,10 +45,6 @@ const coreData = {
     {
       folder: "csv",
       label: "CSV Integration",
-    },
-    {
-      folder: "test-filter",
-      label: "Test Filter",
     },
     {
       folder: "table-demo",
