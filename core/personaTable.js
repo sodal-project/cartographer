@@ -107,7 +107,7 @@ function rowsFromRawQuery(rawPersonas) {
 
   const data = rawPersonas.records.map(node => node._fields[0].properties);
 
-  const defaultFields = ["upn", "platform", "type", "id"]
+  const defaultFields = ["upn", "platform", "type", "id", "friendlyName"]
   const actualFields = data.map(row => Object.keys(row)).flat().sort();
   const fields = new Set([...defaultFields, ...actualFields]);
 

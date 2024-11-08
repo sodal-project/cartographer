@@ -22,8 +22,11 @@ const personaPreFilter = [{
  */
 async function redraw(formData) {
 
-  const directory = await core.personaTable.read(null, directoryPreFilter);
-  const personas = await core.personaTable.read(null, personaPreFilter);
+  const directoryFilter = await core.config.readConfig('directoryFilter');
+  const personaFilter = await core.config.readConfig('personaFilter');
+
+  const directory = await core.personaTable.read(directoryFilter, directoryPreFilter);
+  const personas = await core.personaTable.read(personaFilter, personaPreFilter);
 
   const data = {
     directory: { tableData: directory },
@@ -48,6 +51,8 @@ async function index() {
  */
 async function filterdirectory(formData) {
 
+  await core.config.writeConfig({ directoryFilter: formData });
+
   const data = {
     tableData: await core.personaTable.read(formData, directoryPreFilter),
     filterEndpoint: '/mod/directory/filterdirectory/'
@@ -62,6 +67,8 @@ async function filterdirectory(formData) {
  */
 async function filterpersonas(formData) {
 
+  await core.config.writeConfig({ personaFilter: formData });
+
   const data = {
     tableData: await core.personaTable.read(formData, personaPreFilter),
     filterEndpoint: '/mod/directory/filterpersonas/'
@@ -75,13 +82,32 @@ async function filterpersonas(formData) {
  * @param {object} formData - The data from the form
  * @returns {string} - Compiled HTML content
  */
-async function addPersona(formData) {
-  const persona = { 
+async function addParticipant(formData) {
+  const data = { 
     firstName: formData.firstName,
     lastName: formData.lastName,
     handle: formData.handle,
   };
-  console.log('add persona', persona);
+
+  const id = "p" + await nextParticipantId();
+  let friendlyName = (data.firstName ? `${data.firstName}` : "");
+  friendlyName += (data.lastName ? ` ${data.lastName}` : "");
+  friendlyName += (data.handle ? ` (${data.handle})` : "");
+
+  const personaObject = {
+    upn: "upn:directory:participant:" + id,
+    type: "participant",
+    platform: "directory",
+    id: id,
+    friendlyName: friendlyName,
+    ...data
+  }
+
+  core.check.personaObject(personaObject);
+
+  console.log(`Adding participant: ${JSON.stringify(personaObject)}`);
+
+  await core.graph.mergePersona(personaObject);
 
   return redraw();
 }
@@ -92,10 +118,25 @@ async function addPersona(formData) {
  * @returns {string} - Compiled HTML content
  */
 async function addActivity(formData) {
-  const activity = { 
-    name: formData.name,
+  const data = { 
+    friendlyName: formData.name,
   };
-  console.log('add activity', activity);
+
+  const id = "a" + await nextActivityId();
+
+  const activityObject = {
+    upn: "upn:directory:activity:" + id,
+    type: "activity",
+    platform: "directory",
+    id: id,
+    ...data
+  }
+
+  core.check.personaObject(activityObject);
+
+  console.log(`Adding activity: ${JSON.stringify(activityObject)}`);
+
+  await core.graph.mergePersona(activityObject);
 
   return redraw();
 }
@@ -106,16 +147,52 @@ async function addActivity(formData) {
  * @returns {string} - Compiled HTML content
  */
 async function deletePersonas(formData) {
-  console.log('delete persona', formData);
+
+  const upns = Array.isArray(formData.upn) ? formData.upn : [formData.upn];
+
+  console.log(`Deleting personas`, upns);
+
+  for(const upn of upns) {
+    await core.graph.deletePersona(upn);
+  }
+  return redraw();
+}
+
+async function link(formData) {
+
+  console.log(`Linking personas`, formData);
 
   return redraw();
+}
+
+async function nextParticipantId() {
+  const nextParticipantId = await core.config.readConfig('nextParticipantId');
+  if(nextParticipantId) {
+    await core.config.writeConfig({ nextParticipantId: nextParticipantId + 1 });
+    return nextParticipantId;
+  } else {
+    await core.config.writeConfig({ nextParticipantId: 2 });
+    return 1;
+  }
+}
+
+async function nextActivityId() {
+  const nextActivityId = await core.config.readConfig('nextActivityId');
+  if(nextActivityId) {
+    await core.config.writeConfig({ nextActivityId: nextActivityId + 1 });
+    return nextActivityId;
+  } else {
+    await core.config.writeConfig({ nextActivityId: 2 });
+    return 1;
+  }
 }
 
 module.exports = {
   index,
   filterdirectory,
   filterpersonas,
-  addPersona,
+  addParticipant,
   addActivity,
-  deletePersonas
+  deletePersonas,
+  link,
 };
