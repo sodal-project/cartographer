@@ -1,20 +1,34 @@
 const core = require('../../core/core.js');
 
-const directoryPreFilter = [{
-  type: "field",
-  key: "platform",
-  value: "directory",
-  operator: "=",
-  not: false
-}]
+const directoryTableConfig = {
+  tableFormId: "directory-table-form",
+  action: {
+    label: "Delete",
+    endpoint: "/mod/directory/deletePersonas",
+  },
+  forceFilters: [
+    {
+      type: "field",
+      key: "platform",
+      value: "directory",
+      operator: "=",
+      not: false
+    }
+  ]
+}
 
-const personaPreFilter = [{
-  type: "field",
-  key: "type",
-  value: "participant",
-  operator: "=",
-  not: true
-}]
+const personaTableConfig = {
+  tableFormId: "persona-table-form",
+  forceFilters: [
+    {
+      type: "field",
+      key: "platform",
+      value: "directory",
+      operator: "=",
+      not: false
+    }
+  ]
+}
 
 /**
  * @description Fetch data from the config database namespace and render the index.hbs template
@@ -22,11 +36,8 @@ const personaPreFilter = [{
  */
 async function redraw(formData) {
 
-  const directoryFilter = await core.config.readConfig('directoryFilter');
-  const personaFilter = await core.config.readConfig('personaFilter');
-
-  const directory = await core.personaTable.read(directoryFilter, directoryPreFilter);
-  const personas = await core.personaTable.read(personaFilter, personaPreFilter);
+  const directory = await core.mod.personaTable.build(directoryTableConfig, formData);
+  const personas = await core.mod.personaTable.build(personaTableConfig, formData);
 
   const data = {
     directory: { tableData: directory },
@@ -56,22 +67,6 @@ async function filterdirectory(formData) {
   const data = {
     tableData: await core.personaTable.read(formData, directoryPreFilter),
     filterEndpoint: '/mod/directory/filterdirectory/'
-  }
-
-  return core.client.render('table.hbs', data);
-}
-
-/**
- * @description The main interface for the module.
- * @returns {string} - Compiled HTML content
- */
-async function filterpersonas(formData) {
-
-  await core.config.writeConfig({ personaFilter: formData });
-
-  const data = {
-    tableData: await core.personaTable.read(formData, personaPreFilter),
-    filterEndpoint: '/mod/directory/filterpersonas/'
   }
 
   return core.client.render('table.hbs', data);
@@ -190,7 +185,6 @@ async function nextActivityId() {
 module.exports = {
   index,
   filterdirectory,
-  filterpersonas,
   addParticipant,
   addActivity,
   deletePersonas,

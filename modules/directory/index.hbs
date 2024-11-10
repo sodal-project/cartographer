@@ -42,11 +42,11 @@
   <div class="relative">
     <div class="absolute top-0 left-0 right-1/2 pr-4">
       <h2 class="text-white text-lg mb-4">Directory</h2>
-      {{> Table data=directory.tableData filterEndpoint="/mod/directory/filterdirectory/" tableFormId="directory-table-form"}}
+      {{> PersonaTable data=directory.tableData tableFormId="directory-table-form"}}
     </div>
     <div class="absolute top-0 left-1/2 right-0 pl-4">
       <h2 class="text-white text-lg mb-4">Personas</h2>
-      {{> Table data=personas.tableData filterEndpoint="/mod/directory/filterpersonas/" tableFormId="persona-table-form"}}
+      {{> PersonaTable data=personas.tableData tableFormId="persona-table-form"}}
     </div>
   </div>
 </div>
