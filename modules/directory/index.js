@@ -14,7 +14,7 @@ const directoryTableConfig = {
       operator: "=",
       not: false
     }
-  ]
+  ],
 }
 
 const personaTableConfig = {
@@ -22,11 +22,20 @@ const personaTableConfig = {
   forceFilters: [
     {
       type: "field",
-      key: "platform",
-      value: "directory",
-      operator: "=",
+      key: "type",
+      value: "participant",
+      operator: "<>",
       not: false
     }
+  ],
+  forceVisibility: [
+    "upn",
+    "type",
+    "platform",
+    "friendlyName",
+    "firstName",
+    "lastName",
+    "handle",
   ]
 }
 

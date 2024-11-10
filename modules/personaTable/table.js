@@ -84,29 +84,54 @@ async function update(tableForm) {
 
 async function read(tableConfig, tableForm) {
   
-  const forceFilters = tableConfig.forceFilters || [];
-  const forceVisibility = tableConfig.forceVisibility || null;
-  const forceSort = tableConfig.forceSort || null;
-  
   tableForm.action = tableConfig.action;
 
-  const graphSort = forceSort ? forceSort : {
+  const graphSort = tableConfig.forceSort || {
     field: tableForm?.sortField ? tableForm.sortField : "upn",
     direction: tableForm?.sortDirection ? tableForm.sortDirection : "ASC",
   }
-  const graphFilters = graphFiltersFromTableForm(tableForm);
-
-  console.log('Graph Filters:', graphFilters)
   console.log('Graph Sort:', graphSort)
+
+  const graphFilters = graphFiltersFromTableForm(tableForm);
+  console.log('Graph Filters:', graphFilters)
+
+  const forceFilters = tableConfig.forceFilters || [];
 
   const allGraphFilters = [...graphFilters, ...forceFilters]
 
   const rawPersonas = await core.graph.readAgents(allGraphFilters, graphSort);
-  const tableRows = rowsFromRawQuery(rawPersonas);
+  const tableRows = rowsFromRawQuery(rawPersonas, tableConfig.forceVisibility);
 
-  const data = dataPrep(tableRows, tableForm);
-  
-  return data;
+  // Get the properties from the table rows
+  let keys = Object.keys(tableRows[0]);
+
+  // If config forces visibility, retain only the forced visible fields
+  if (tableConfig.forceVisibility && tableConfig.forceVisibility.length > 0) {
+    keys = keys.filter(key => tableConfig.forceVisibility.includes(key));
+  }
+
+  const fields = keys?.map(key => ({
+    label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
+    value: key,
+  }));
+
+  // Get a list of hidden table columns
+  const visibility = tableForm.visibility || '';
+
+  const tableData = {
+    tableFormId: tableForm.tableFormId,
+    sortDirections: sortDirections,
+    filterOperators: filterOperators,
+    fields: fields || [],
+    action: tableForm.action,
+    rows: tableRows || [],
+    sortField: tableForm.sortField || keys[0] || '',
+    sortDirection: tableForm.sortDirection || sortDirections[0].value,
+    filters: getTableFilterArray(tableForm),
+    visibility: visibility,
+  };
+
+  return tableData;
 }
 
 function graphFiltersFromTableForm(tableForm) {
@@ -140,13 +165,13 @@ function graphFiltersFromTableForm(tableForm) {
   return graphFilters;
 }
 
-function rowsFromRawQuery(rawPersonas) {
+function rowsFromRawQuery(rawPersonas, forceVisibility) {
 
   const data = rawPersonas.records.map(node => node._fields[0].properties);
 
   const defaultFields = ["upn", "platform", "type", "id", "friendlyName"]
   const actualFields = data.map(row => Object.keys(row)).flat().sort();
-  const fields = new Set([...defaultFields, ...actualFields]);
+  const fields = forceVisibility || new Set([...defaultFields, ...actualFields]);
 
   const prepRows = data.map(row => { 
     const newRow = {};
@@ -157,37 +182,6 @@ function rowsFromRawQuery(rawPersonas) {
   })
 
   return prepRows;
-}
-
-/**
- * Table Component Data Preparation
- */
-function dataPrep(tableRows, tableForm) {
-
-  // Get the properties from the table rows
-  const keys = Object.keys(tableRows[0]);
-  const fields = keys?.map(key => ({
-    label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize the first letter
-    value: key,
-  }));
-
-  // Get a list of hidden table columns
-  const visibility = tableForm.visibility || '';
-
-  const tableData = {
-    tableFormId: tableForm.tableFormId,
-    sortDirections: sortDirections,
-    filterOperators: filterOperators,
-    fields: fields || [],
-    action: tableForm.action,
-    rows: tableRows || [],
-    sortField: tableForm.sortField || keys[0] || '',
-    sortDirection: tableForm.sortDirection || sortDirections[0].value,
-    filters: getTableFilterArray(tableForm),
-    visibility: visibility,
-  };
-
-  return tableData;
 }
 
 function getTableFilterArray(tableForm) {
