@@ -66,22 +66,6 @@ async function index() {
 }
 
 /**
- * @description The main interface for the module.
- * @returns {string} - Compiled HTML content
- */
-async function filterdirectory(formData) {
-
-  await core.config.writeConfig({ directoryFilter: formData });
-
-  const data = {
-    tableData: await core.personaTable.read(formData, directoryPreFilter),
-    filterEndpoint: '/mod/directory/filterdirectory/'
-  }
-
-  return core.client.render('table.hbs', data);
-}
-
-/**
  * Add a persona to the graph
  * @param {object} formData - The data from the form
  * @returns {string} - Compiled HTML content
@@ -193,7 +177,6 @@ async function nextActivityId() {
 
 module.exports = {
   index,
-  filterdirectory,
   addParticipant,
   addActivity,
   deletePersonas,
