@@ -90,10 +90,10 @@ async function read(tableConfig, tableForm) {
     field: tableForm?.sortField ? tableForm.sortField : "upn",
     direction: tableForm?.sortDirection ? tableForm.sortDirection : "ASC",
   }
-  console.log('Graph Sort:', graphSort)
+  // console.log('Graph Sort:', graphSort)
 
   const graphFilters = graphFiltersFromTableForm(tableForm);
-  console.log('Graph Filters:', graphFilters)
+  // console.log('Graph Filters:', graphFilters)
 
   const forceFilters = tableConfig.forceFilters || [];
 
@@ -137,7 +137,7 @@ async function read(tableConfig, tableForm) {
 function graphFiltersFromTableForm(tableForm) {
   const tableFilters = getTableFilterArray(tableForm);
 
-  console.log('Table Filters:', tableFilters)
+  // console.log('Table Filters:', tableFilters)
 
   const graphFilters = tableFilters.map(filter => {
     const type = "field";

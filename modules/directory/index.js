@@ -150,6 +150,20 @@ async function link(formData) {
 
   console.log(`Linking personas`, formData);
 
+  if(!formData.directory || !formData.persona) {
+    throw new Error("Both directory and persona must be selected");
+  }
+
+  const level = 9 // ADMIN
+  const confidence = .5;
+  const directoryUpns = Array.isArray(formData.directory) ? formData.directory : [formData.directory];
+  const personaUpns = Array.isArray(formData.persona) ? formData.persona : [formData.persona];
+  const queries = [];
+
+  for(const directoryUpn of directoryUpns) {
+    queries.push(await core.graph.linkPersona(directoryUpn, personaUpns, level, confidence, null, true));
+  }
+
   return redraw();
 }
 

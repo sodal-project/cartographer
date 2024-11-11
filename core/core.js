@@ -93,7 +93,7 @@ function initNamespaces() {
     calls[namespace] = namespaces[namespace]
     core[namespace] = {};
 
-    console.log("Core: loading internal module: ", namespace)
+    // console.log("Core: loading internal module: ", namespace)
 
     // For each exported function in the namespace, add it to the core object
     for(const call in calls[namespace]) {
@@ -240,7 +240,6 @@ async function init() {
   // finalize core and freeze it
   core.ready = true;
   Object.freeze(core);
-  console.log(`Core frozen status: ${Object.isFrozen(core)}`)
   console.log("Core: initialized")
   return core;
 }

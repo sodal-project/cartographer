@@ -63,9 +63,6 @@ const mapCsvRelationships = (data) => {
     const rel = data[i];
     rel.level = parseInt(rel.level);
     rel.confidence = parseFloat(rel.confidence);
-    if(rel.authorizationMin){
-      rel.authorizationMin = parseInt(rel.authorizationMin);
-    }
     relationships.push(data[i]);
   }
   return relationships;
