@@ -18,19 +18,19 @@
         </div>
       {{/ModalButton}}
 
-      <!-- Add Persona Modal -->
-      {{#> ModalButton label="Add Persona" }}
+      <!-- Add Participant Modal -->
+      {{#> ModalButton label="Add Participant" }}
         <div x-ref="filterFields">
-          <h2 class="text-white text-lg mb-4">Add Persona</h2>
+          <h2 class="text-white text-lg mb-4">Add Participant</h2>
           <form
-            hx-post="/mod/directory/addPersona/"
+            hx-post="/mod/directory/addParticipant/"
             hx-target="closest #main"
             hx-swap="innerHTML"
           >
             {{> FormText label="First Name" name="firstName" value="" }}
             {{> FormText label="Last Name" name="lastName" value="" }}
             {{> FormText label="Handle" name="handle" value="" }}
-            {{> FormSubmit label="Add Persona" }}
+            {{> FormSubmit label="Add Participant" }}
           </form>
         </div>
       {{/ModalButton}}
@@ -42,11 +42,11 @@
   <div class="relative">
     <div class="absolute top-0 left-0 right-1/2 pr-4">
       <h2 class="text-white text-lg mb-4">Directory</h2>
-      {{> Table data=directory.tableData filterEndpoint="/mod/directory/filterdirectory/" tableFormId="directory-table-form"}}
+      {{> PersonaTable data=directory.tableData }}
     </div>
     <div class="absolute top-0 left-1/2 right-0 pl-4">
       <h2 class="text-white text-lg mb-4">Personas</h2>
-      {{> Table data=personas.tableData filterEndpoint="/mod/directory/filterpersonas/" tableFormId="persona-table-form"}}
+      {{> PersonaTable data=personas.tableData }}
     </div>
   </div>
 </div>
@@ -66,8 +66,16 @@ document.addEventListener('alpine:init', () => {
       const directoryTableData = new FormData(directoryTableForm);
       const personaTableData = new FormData(personaTableForm);
 
-      console.log('Directory Table Data:', [...directoryTableData.entries()]);
-      console.log('Persona Table Data:', [...personaTableData.entries()]);
+      const combinedData = {
+        directory: [...directoryTableData.values()],
+        persona: [...personaTableData.values()],
+      }
+
+      htmx.ajax('POST', '/mod/directory/link/', {
+        target: '#main',
+        swap: 'innerHTML',
+        values: combinedData,
+      });
     }
   }));
 });

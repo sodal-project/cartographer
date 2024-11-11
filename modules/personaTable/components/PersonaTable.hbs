@@ -1,8 +1,11 @@
 <div class="relative table-wrap" x-data="columnVisibility([{{data.visibility}}])">
   <form
-    hx-post={{filterEndpoint}}
+    hx-post="/mod/personaTable/update/"
     hx-target="closest .table-wrap"
     hx-swap="innerHTML"
+    hx-vals='{
+      "tableFormId": "{{data.tableFormId}}"
+    }'
   >
     <div class="relative flex mb-4">
 
@@ -25,7 +28,7 @@
               {{> icons/ArrowDown }}
             {{/if}}
           </span>
-          <span class="text-sm capitalize">{{data.sortProperty}}</span>
+          <span class="text-sm capitalize">{{data.sortField}}</span>
           <span class="relative w-3.5 h-3.5 text-indigo-400 inline-block">
             {{> icons/AngleDown }}
           </span>
@@ -41,7 +44,7 @@
           >
             <div>
               <div class="flex gap-3 items-center w-full">
-                {{> FormSelect name="sortProperty" options=data.properties selected=data.sortProperty }}
+                {{> FormSelect name="sortField" options=data.fields selected=data.sortField }}
                 {{> FormSelect name="sortDirection" options=data.sortDirections selected=data.sortDirection }}
               </div>
 
@@ -49,7 +52,7 @@
               <div class="hidden" x-data="{ open: false }">
                 <div class="mt-3" x-show="open">
                   <div class="flex gap-3 items-center w-full">
-                    {{> FormSelect name="sortNewProperty" options=data.properties }}
+                    {{> FormSelect name="sortNewField" options=data.fields }}
                     {{> FormSelect name="sortNewDirection" options=data.sortDirections }}
                     <button type="button" @click="open = false" class="text-gray-400 text-sm">
                       <span class="inline-block w-4 h-4">{{> icons/Trash }}</span>
@@ -78,12 +81,12 @@
       <!-- Active Filters -->
       <div class="flex">
         {{#each data.filters}}
-          {{> TableFilter
-            property=this.property
-            condition=this.condition
+          {{> PersonaTableFilter
+            field=this.field
+            operator=this.operator
             value=this.value
-            properties=../data.properties
-            filterConditions=../data.filterConditions
+            fields=../data.fields
+            filterOperators=../data.filterOperators
           }}
         {{/each}}
       </div>
@@ -111,10 +114,10 @@
             class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
           >
             <div class="flex gap-3 items-center w-full mb-3">
-              {{> FormSelect name="filterNewProperty" options=data.properties }}
-              {{> FormSelect name="filterNewCondition" options=data.filterConditions }}
+              {{> FormSelect name="filterNewField" options=data.fields }}
+              {{> FormSelect name="filterNewOperator" options=data.filterOperators }}
             </div>
-            <input type="text" name="filterNewTerm" class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
+            <input type="text" name="filterNewValue" class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
             <div class="mt-4">
               {{> FormSubmit label="Save" }}
             </div>
@@ -145,7 +148,7 @@
             class="w-48 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-3"
           >
             <ul class="text-white visibility-ui flex flex-col gap-2">
-              {{#each data.properties}}
+              {{#each data.fields}}
                 <label class="flex items-center justify-between pr-2 cursor-pointer rounded-md w-full rounded hover:bg-gray-700">
                   <input 
                       class="hidden"
@@ -173,21 +176,23 @@
 
   <div class="relative" x-data="tableCheckbox()" >
     <form
-      id={{tableFormId}}
-      hx-post="/mod/directory/deletePersonas/"
+      id="{{data.tableFormId}}"
+      hx-post="{{data.action.endpoint}}"
       hx-target="closest #main"
       hx-swap="innerHTML"
       @keydown.enter.prevent
     >
-      <!-- Delete Selected --> 
-      <div 
-        class="absolute z-50 -top-14 left-0 right-12 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
-        x-show="selected.length > 0"
-      >
-        {{> FormSubmit label="Delete" }}
-        <span class="text-sm">{{ selected }} selected items</span>
-      </div>
-      
+      <!-- Delete Selected -->
+      {{#if data.action }}
+        <div 
+          class="absolute z-50 -top-14 left-0 right-12 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
+          x-show="selected.length > 0"
+        >
+          {{> FormSubmit label=data.action.label }}
+          <span class="text-sm">{{ selected }} selected items</span>
+        </div>
+      {{/if}}
+
       <!-- Table -->
       <div class="overflow-scroll">
         <table class="min-w-full" :class="getColumnClasses()" x-init="initializeTotalCheckboxes()">
@@ -206,7 +211,7 @@
                   x-ref="headerCheckbox"
                 >
               </th>
-              {{#each data.properties}}
+              {{#each data.fields}}
                 <th
                   class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
                 >

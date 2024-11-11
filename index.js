@@ -40,36 +40,6 @@ Handlebars.registerHelper('add', function(a, b) {
   return a + b;
 });
 
-// Register Partials Manually
-const registerPartials = () => {
-  const partialsDir = path.join(__dirname, 'components');
-
-  // Clear previously cached partials if necessary
-  Handlebars.partials = {};
-
-  const readPartials = (dir) => {
-    fs.readdirSync(dir).forEach((file) => {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
-
-      if (stat.isDirectory()) {
-        // Recursively read subdirectory
-        readPartials(filePath);
-      } else if (file.endsWith('.hbs')) {
-        const name = path.relative(partialsDir, filePath).replace(/\\/g, '/').replace('.hbs', '');
-        const template = fs.readFileSync(filePath, 'utf8');
-
-        // Register the partial with the relative path name
-        Handlebars.registerPartial(name, template);
-      }
-    });
-  };
-
-  // Start reading partials from the root directory
-  readPartials(partialsDir);
-};
-
-
 // Middleware to parse URL-encoded bodies (form data)
 app.use(express.urlencoded({ extended: true }));
 
@@ -117,7 +87,6 @@ function generateAccessToken(user) {
  */ 
 app.get("/", authenticateToken, async (req, res) => {
   const data = {...core.coreData, user: req.user};
-  registerPartials();
   res.render("core/index", data); 
 });
 
@@ -125,7 +94,6 @@ app.get("/", authenticateToken, async (req, res) => {
  * Login Forn
  */ 
 app.get("/login", async (req, res) => {
-  registerPartials();
   res.render("core/login"); 
 });
 
@@ -236,7 +204,6 @@ app.post("/token", async (req, res) => {
  * Register Form
  */ 
 app.get("/register", async (req, res) => {
-  registerPartials();
   res.render("core/register"); 
 });
 
@@ -352,7 +319,6 @@ app.post('/mod/:moduleName/:command/upload', upload.single('file'), async (req, 
 app.get("/:moduleName/:command", authenticateToken, async (req, res) => {
   const { moduleName, command } = req.params;
   const data = {...core.coreData, user: req.user, currentModule: moduleName };  
-  registerPartials();
 
   // Call the module function and set the response in the main attribute
   if (moduleName && command) {
