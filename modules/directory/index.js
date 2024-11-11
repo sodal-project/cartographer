@@ -45,8 +45,8 @@ const personaTableConfig = {
  */
 async function redraw(formData) {
 
-  const directory = await core.mod.personaTable.build(directoryTableConfig, formData);
-  const personas = await core.mod.personaTable.build(personaTableConfig, formData);
+  const directory = await core.mod.personaTable.build(directoryTableConfig);
+  const personas = await core.mod.personaTable.build(personaTableConfig);
 
   const data = {
     directory: { tableData: directory },
