@@ -8,9 +8,9 @@ const config = require('./config');
 const core = require('./core/core.js');
 
 // Import middlewares and helpers
-const cookieParser = require('cookie-parser');
-const registerPartials = require('./app/middlewares/registerPartials');
-const handlebarsHelpers = require('./app/helpers/handlebarsHelpers');
+const cookieParser = require('cookie-parser'); // Parse cookies
+const registerPartials = require('./app/middlewares/registerPartials'); // Register the comoponents
+const handlebarsHelpers = require('./app/helpers/handlebarsHelpers'); // Register the handlebars helpers
 
 // Import routes
 const authRoutes = require("./app/routes/authRoutes");
