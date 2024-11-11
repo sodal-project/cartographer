@@ -58,12 +58,12 @@ const removePersona = async (module, upn, sourceId, querySetOnly) => {
   const queries = [];
   
   queries.push({
-    query: `MATCH (persona:Persona {upn: $upn})-[r {sourceId: $sourceId }]-()
+    query: `MATCH (persona:Persona { upn: $upn })-[r {sourceId: $sourceId }]-()
     DELETE r`,
     values: { upn, sourceId }
   })
   queries.push({
-    query: `MATCH (source:Source { $sourceId })-[r:DECLARE]->(persona:Persona {upn: $upn})
+    query: `MATCH (source:Source { id: $sourceId })-[r:DECLARE]->(persona:Persona {upn: $upn})
     DELETE r`,
     values: { upn, sourceId }
   })
@@ -75,6 +75,37 @@ const removePersona = async (module, upn, sourceId, querySetOnly) => {
   const response = await connector.runRawQueryArray(queries);
 
   console.log('Removed persona:', upn);
+  return response;
+}
+
+/**
+ * Completely remove a persona from the persona graph database
+ * 
+ * WARNING: this may impact other sources that reference 
+ * this persona. Other sources that declare this persona may 
+ * redeclare it when next synced
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {string} upn - the upn of the persona to delete
+ * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
+ * @returns {object} - The response from the database, or the query set object
+ */
+const deletePersona = async (module, upn, querySetOnly) => {
+  const queries = [];
+  
+  queries.push({
+    query: `MATCH (persona:Persona { upn: $upn })
+    DETACH DELETE persona`,
+    values: { upn }
+  })
+
+  if(querySetOnly) {
+    return queries;
+  }
+
+  const response = await connector.runRawQueryArray(queries);
+
+  console.log('Deleted persona:', upn);
   return response;
 }
 
@@ -141,18 +172,12 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
   const queries = [];
 
   queries.push({
-    query: `MERGE (persona:Persona {upn: $upn})
-    SET persona += $persona`,
-    values: { upn, persona }
-  })
-  queries.push({
     query: `MERGE (source:Source {id: $source.id})
+    MERGE (persona:Persona {upn: $upn})
+    MERGE (source)-[:DECLARE]->(persona)
+    SET persona += $persona
     SET source.name = $source.name, source.lastUpdate = $source.lastUpdate`,
-    values: { source }
-  })
-  queries.push({
-    query: `MERGE (source:Source {id: $source.id })-[:DECLARE]->(persona:Personas {upn: $upn})`,
-    values: { source, upn }
+    values: { source, persona, upn }
   })
 
   if(querySetOnly) {
@@ -448,6 +473,7 @@ const readSourceStore = async (module, sourceId) => {
 
 module.exports = {
   deleteOrphanedPersonas,
+  deletePersona,
   removePersona,
   deleteSource,
   mergePersona,

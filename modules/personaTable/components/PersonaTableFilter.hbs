@@ -8,7 +8,7 @@
     type="button"
     @click="open = !open"
   >
-    <span class="capitalize">{{property}}</span>
+    <span class="capitalize">{{field}}</span>
 
     <!-- Angle Down -->
     <span class="relative w-3.5 h-3.5 text-gray-500 inline-block">
@@ -26,10 +26,10 @@
     >
       <div x-ref="filterFields">
         <div class="flex gap-3 items-center w-full mb-3">
-          {{> FormSelect name="filterProperty" options=properties selected=property }}
-          {{> FormSelect name="filterCondition" options=filterConditions selected=condition }}
+          {{> FormSelect name="filterField" options=fields selected=field }}
+          {{> FormSelect name="filterOperator" options=filterOperators selected=operator }}
         </div>
-        <input type="text" name="filterTerm" value={{value}} class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
+        <input type="text" name="filterValue" value={{value}} class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
       </div>
       <div class="flex justify-between w-full mt-4">
         {{> FormSubmit label="Save" }}

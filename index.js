@@ -9,7 +9,6 @@ const core = require('./core/core.js');
 
 // Import middlewares and helpers
 const cookieParser = require('cookie-parser'); // Parse cookies
-const registerPartials = require('./app/middlewares/registerPartials'); // Register the comoponents
 const handlebarsHelpers = require('./app/helpers/handlebarsHelpers'); // Register the handlebars helpers
 
 // Import routes
@@ -34,7 +33,6 @@ Object.keys(handlebarsHelpers).forEach((helperName) => {
 });
 
 // Middleware configuration
-app.use(registerPartials); // Register Handlebars partials
 app.use(express.urlencoded({ extended: true })); // Parse form data
 app.use(express.json()); // Parse JSON bodies
 app.use(cookieParser()); // Access cookies

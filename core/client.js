@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const Handlebars = require('handlebars');
 const sanitize = require('sanitize-filename');
 
@@ -38,6 +39,39 @@ function render(moduleName, templateName, data) {
   return html;
 }
 
+// Register Partials Manually
+const registerPartials = (moduleName) => {
+
+  const corePartialsDir = `/app/components`;
+  const modulePartialsDir = `/app/modules/${moduleName}/components`;
+
+  const partialsDir = moduleName? modulePartialsDir : corePartialsDir;
+
+  const readPartials = (dir) => {
+    fs.readdirSync(dir).forEach((file) => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+
+      if (stat.isDirectory()) {
+        // Recursively read subdirectory
+        readPartials(filePath);
+      } else if (file.endsWith('.hbs')) {
+        const name = path.relative(partialsDir, filePath).replace(/\\/g, '/').replace('.hbs', '');
+        const template = fs.readFileSync(filePath, 'utf8');
+
+        console.log('Registering partial:', name);
+
+        // Register the partial with the relative path name
+        Handlebars.registerPartial(name, template);
+      }
+    });
+  };
+
+  // Start reading partials from the root directory
+  readPartials(partialsDir);
+};
+
 module.exports = {
   render,
+  registerPartials,
 }

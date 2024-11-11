@@ -8,9 +8,7 @@ const crypto = require('./crypto.js')
 const constants = require('./constants.js')
 const graph = require('./graph.js')
 const persona = require('./persona.js')
-const personaTable = require('./personaTable.js')
 const source = require('./source.js')
-
 
 const namespaces = {
   cache,
@@ -21,7 +19,6 @@ const namespaces = {
   crypto,
   graph,
   persona,
-  personaTable,
   source,
 };
 
@@ -47,8 +44,8 @@ const coreData = {
       label: "CSV Integration",
     },
     {
-      folder: "table-demo",
-      label: "Test Table",
+      folder: "personaTable",
+      label: "Persona Table",
     },
     {
       folder: "test-filter",
@@ -156,19 +153,20 @@ async function initModules(moduleArray) {
 
   // Generate Core External Module Calls
   core.mod = {};
+  calls.mod = {};
 
   // load external module calls to core.mod.<module>.<call>
   for(const item in moduleArray) {
     const module = moduleArray[item].folder;
 
     // load the module
-    calls[module] = await require(`../modules/${module}/index.js`);
+    calls.mod[module] = await require(`../modules/${module}/index.js`);
     core.mod[module] = {};
 
     console.log("Core: loading external module: ", module)
 
     // for each exported function in the module, add it to the core object
-    for(const call in calls[module]) {
+    for(const call in calls.mod[module]) {
 
       // if this is the default export, skip it
       if(call === 'default') { 
@@ -182,20 +180,20 @@ async function initModules(moduleArray) {
        * setup itself prior to being called by other modules
        */
       else if(call === 'init') {
-        await calls[module][call]();
+        await calls.mod[module][call]();
         continue;
       } 
       
       else {
         counter++;
         // if this is a function, add it to the core object
-        if(typeof calls[module][call] === 'function') {
+        if(typeof calls.mod[module][call] === 'function') {
 
           // add the function to the core object
           core.mod[module][call] = (...params) => {
             const callingModule = getCallingFolder(new Error().stack);
             console.log(`Calling core.mod.${module}.${call} from ${callingModule}`)
-            return calls[module][call](...params);
+            return calls.mod[module][call](...params);
           }
 
           // set the function name to the full path to improve error reporting
@@ -204,7 +202,7 @@ async function initModules(moduleArray) {
         } else {
 
           // if this is an object instead of a function, add it to core as is
-          core.mod[module][call] = calls[module][call];
+          core.mod[module][call] = calls.mod[module][call];
         }
       }
     }
@@ -230,6 +228,8 @@ async function init() {
     console.log("Core: already initialized")
     return core;
   }
+
+  client.registerPartials();
 
   // Initialize core's namespaced internal calls
   initNamespaces();
