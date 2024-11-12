@@ -103,7 +103,10 @@ async function read(tableConfig, tableForm) {
   const tableRows = rowsFromRawQuery(rawPersonas, tableConfig.forceVisibility);
 
   // Get the properties from the table rows
-  let keys = Object.keys(tableRows[0]);
+  let keys = [];
+  if(tableRows[0]) {
+    keys = Object.keys(tableRows[0])
+  }
 
   // If config forces visibility, retain only the forced visible fields
   if (tableConfig.forceVisibility && tableConfig.forceVisibility.length > 0) {

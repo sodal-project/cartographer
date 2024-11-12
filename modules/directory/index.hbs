@@ -34,6 +34,18 @@
           </form>
         </div>
       {{/ModalButton}}
+
+      {{#> ModalButtonPane label="Manage CSVs" }}
+        <div 
+          id="directoryCsvPane" 
+          class="p-8"
+          hx-post="/mod/directory/csvIndex/"
+          hx-target="#directoryCsvPane"
+          hx-swap="innerHTML"
+          hx-trigger="load"
+        >
+        </div>
+      {{/ModalButtonPane}}
       
       <!-- Link -->
       {{> Button click="linkData()" label="Link" }}
@@ -71,7 +83,7 @@ document.addEventListener('alpine:init', () => {
         persona: [...personaTableData.values()],
       }
 
-      htmx.ajax('POST', '/mod/directory/link/', {
+      htmx.ajax('POST', '/mod/directory/linkPersonas/', {
         target: '#main',
         swap: 'innerHTML',
         values: combinedData,

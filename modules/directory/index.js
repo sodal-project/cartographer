@@ -1,4 +1,7 @@
 const core = require('../../core/core.js');
+const csv = require('./csv.js');
+
+const directorySource = core.source.getSourceObject('directory', 'v1', 'Directory V1');
 
 const directoryTableConfig = {
   tableFormId: "directory-table-form",
@@ -77,7 +80,8 @@ async function addParticipant(formData) {
     handle: formData.handle,
   };
 
-  const id = "p" + await nextParticipantId();
+  const id = await nextId("Participant");
+
   let friendlyName = (data.firstName ? `${data.firstName}` : "");
   friendlyName += (data.lastName ? ` ${data.lastName}` : "");
   friendlyName += (data.handle ? ` (${data.handle})` : "");
@@ -86,7 +90,7 @@ async function addParticipant(formData) {
     upn: "upn:directory:participant:" + id,
     type: "participant",
     platform: "directory",
-    id: id,
+    id: id.toString(),
     friendlyName: friendlyName,
     ...data
   }
@@ -95,7 +99,7 @@ async function addParticipant(formData) {
 
   console.log(`Adding participant: ${JSON.stringify(personaObject)}`);
 
-  await core.graph.mergePersona(personaObject);
+  await core.graph.mergePersona(personaObject, directorySource);
 
   return redraw();
 }
@@ -110,13 +114,13 @@ async function addActivity(formData) {
     friendlyName: formData.name,
   };
 
-  const id = "a" + await nextActivityId();
+  const id = await nextId("Activity");
 
   const activityObject = {
     upn: "upn:directory:activity:" + id,
     type: "activity",
     platform: "directory",
-    id: id,
+    id: id.toString(),
     ...data
   }
 
@@ -124,7 +128,7 @@ async function addActivity(formData) {
 
   console.log(`Adding activity: ${JSON.stringify(activityObject)}`);
 
-  await core.graph.mergePersona(activityObject);
+  await core.graph.mergePersona(activityObject, directorySource);
 
   return redraw();
 }
@@ -146,7 +150,7 @@ async function deletePersonas(formData) {
   return redraw();
 }
 
-async function link(formData) {
+async function linkPersonas(formData) {
 
   console.log(`Linking personas`, formData);
 
@@ -158,11 +162,12 @@ async function link(formData) {
   const confidence = .5;
   const directoryUpns = Array.isArray(formData.directory) ? formData.directory : [formData.directory];
   const personaUpns = Array.isArray(formData.persona) ? formData.persona : [formData.persona];
+  const sourceId = directorySource.id;
   const queries = [];
 
   for(const directoryUpn of directoryUpns) {
     for(const personaUpn of personaUpns) {
-      queries.push(await core.graph.linkPersona(directoryUpn, personaUpn, level, confidence, null, true));
+      queries.push(await core.graph.linkPersona(directoryUpn, personaUpn, level, confidence, sourceId, true));
     }
   }
 
@@ -173,32 +178,60 @@ async function link(formData) {
   return redraw();
 }
 
-async function nextParticipantId() {
-  const nextParticipantId = await core.config.readConfig('nextParticipantId');
-  if(nextParticipantId) {
-    await core.config.writeConfig({ nextParticipantId: nextParticipantId + 1 });
-    return nextParticipantId;
-  } else {
-    await core.config.writeConfig({ nextParticipantId: 2 });
-    return 1;
+async function nextId(type) {
+  let nextId = await core.config.readConfig(`next${type}Id`) || 10000; 
+
+  const rawPersonas = await core.graph.readAgents([{ 
+    type: "field",
+    key: "platform",
+    value: "directory",
+    operator: "=",
+    not: false
+  },{
+    type: "field",
+    key: "type",
+    value: type,
+    operator: "=",
+    not: false
+  }]);
+
+  const personas = rawPersonas.records.map(node => node._fields[0].properties);
+
+  for(const persona of personas) {
+    const id = parseInt(persona.id);
+    if(id > nextId) {
+      nextId = id + 1;
+    }
   }
+
+  await core.config.writeConfig({ [`next${type}Id`]: nextId + 1 });
+  return nextId;
 }
 
-async function nextActivityId() {
-  const nextActivityId = await core.config.readConfig('nextActivityId');
-  if(nextActivityId) {
-    await core.config.writeConfig({ nextActivityId: nextActivityId + 1 });
-    return nextActivityId;
-  } else {
-    await core.config.writeConfig({ nextActivityId: 2 });
-    return 1;
-  }
+async function csvIndex() {
+  return csv.csvIndex();
+}
+
+async function csvAddFile(formData) {
+  return csv.csvAddFile(formData);
+}
+
+async function csvDeleteFile(formData) {
+  return csv.csvDeleteFile(formData);
+}
+
+async function csvMerge(formData) {
+  return csv.csvMerge(formData, directorySource);
 }
 
 module.exports = {
   index,
+  csvIndex,
+  csvAddFile,
+  csvDeleteFile,
+  csvMerge,
   addParticipant,
   addActivity,
   deletePersonas,
-  link,
+  linkPersonas,
 };

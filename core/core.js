@@ -40,10 +40,6 @@ const coreData = {
       label: "Slack Integration",
     },
     {
-      folder: "csv",
-      label: "CSV Integration",
-    },
-    {
       folder: "personaTable",
       label: "Persona Table",
     },
@@ -52,15 +48,11 @@ const coreData = {
       label: "Test Filter",
     },
     {
-      folder: "module1",
-      label: "Test Module 1",
+      folder: "test-config",
+      label: "Test Config",
     },
     {
-      folder: "module2",
-      label: "Test Module 2",
-    },
-    {
-      folder: "long-process",
+      folder: "test-long-process",
       label: "Test Long Process",
     },
   ]
