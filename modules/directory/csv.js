@@ -19,7 +19,7 @@ async function getNextFileId() {
 }
 
 /**
- * @description Fetch data from the config database namespace and render the index.hbs template
+ * @description Render the CSV main page
  * @returns {string} - Compiled HTML content
  */
 async function redraw() {
@@ -29,6 +29,9 @@ async function redraw() {
 
 /**
  * @description The main interface for the module.
+ * 
+ * This content must be rendered as innerHTML in the #directoryCsvPane element
+ * 
  * @returns {string} - Compiled HTML content
  */
 async function csvIndex() {
@@ -36,8 +39,12 @@ async function csvIndex() {
 }
 
 /**
- * @description Handle adding a new Slack integration instance
- * @param {object} formData - The form data
+ * @description Add a CSV file for processing
+ * 
+ * This module requires a file passed by the /upload path middleware
+ * 
+ * @param {object} formData - Data from the CSV form submission
+ * @returns {string} - Compiled HTML content
  */
 async function csvAddFile(formData) {
   const files = await core.config.readConfig("files") || {};
@@ -60,13 +67,20 @@ async function csvAddFile(formData) {
   return redraw();
 }
 
+/**
+ * @description Delete a CSV file from the system
+ * 
+ * Note that deleting a CSV file does not remove the data from the graph
+ * 
+ * @param {object} formData - Data from the CSV form submission
+ * @returns {string} - Compiled HTML content
+ */
 async function csvDeleteFile(formData) {
   const files = await core.config.readConfig("files")
   const fileId = formData.fileId;
 
   if(files[fileId]) {
     console.log('Deleting file:', files[fileId].fileName);
-    // await core.graph.deleteSource(`source:csv:${fileId}`);
     await core.config.deleteConfig(`files.${fileId}`);
   } 
 
@@ -74,22 +88,35 @@ async function csvDeleteFile(formData) {
 }
 
 /**
+ * @description Merge a CSV file into the graph
  * 
- * @param {object} instance 
+ * A merge is additive; existing data may be overwritten, but no data is deleted.
+ * 
+ * CSV files must be in a specific format:
+ * 
+ * Personas:
+ * id,type,platform,name,description,{...}
+ * 
+ * Relationships:
+ * controlUpn,obeyUpn,level,confidence,{...}
+ * 
+ * @param {object} formData - Data from the CSV form submission
+ * @param {object} source - The source object associated with the data
+ * @returns {string} - Compiled HTML content
  */
 const csvMerge = async (formData, source) => {
 
   core.check.sourceObject(source);
 
+  // get the file data
   const files = await core.config.readConfig("files")
+  const fileId = formData.fileId;
 
-  const file = files[formData.fileId];
-
-  console.log('Merging file:', file.fileName);
-
-  const fileId = file.fileId;
+  const file = files[fileId];
   const fileName = file.fileName;
   const fileData = file.fileData;
+
+  console.log('Merging file:', fileName);
 
   try {
     source.lastUpdate = new Date().toISOString();
@@ -124,6 +151,12 @@ const csvMerge = async (formData, source) => {
   return redraw();
 }
 
+/**
+ * @description Map JSON data from a CSV import to persona objects
+ * 
+ * @param {array} data - The data to map
+ * @returns {array} - An array of persona objects
+ */
 const mapCsvPersonas = (data) => {
   const personas = [];
   for(const i in data) {
@@ -138,6 +171,12 @@ const mapCsvPersonas = (data) => {
   return personas;
 }
 
+/**
+ * @description Map JSON data from a CSV import to relationship objects
+ * 
+ * @param {array} data - The data to map
+ * @returns {array} - An array of relationship objects
+ */
 const mapCsvRelationships = (data) => {
   const relationships = [];
   for(const i in data) {

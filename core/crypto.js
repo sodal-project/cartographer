@@ -10,6 +10,9 @@ const algorithm = "aes-256-gcm";
 
 /**
  * Encrypt a string
+ * 
+ * @param {string} module - Passed by core, used to generate a unique key
+ * @param {string} text - The string to encrypt
  */
 async function encrypt(module, text) {
   const iv = crypto.randomBytes(12).toString('base64');
