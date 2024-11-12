@@ -161,8 +161,14 @@ async function link(formData) {
   const queries = [];
 
   for(const directoryUpn of directoryUpns) {
-    queries.push(await core.graph.linkPersona(directoryUpn, personaUpns, level, confidence, null, true));
+    for(const personaUpn of personaUpns) {
+      queries.push(await core.graph.linkPersona(directoryUpn, personaUpn, level, confidence, null, true));
+    }
   }
+
+  await core.graph.runRawQueryArray(queries);
+
+  console.log(`Processed ${queries.length} link queries`);
 
   return redraw();
 }

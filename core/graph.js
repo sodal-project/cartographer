@@ -154,30 +154,29 @@ const deleteSource = async (module, sourceId, querySetOnly) => {
  * @param {string} sourceId - OPTIONAL, the source id to link the personas with
  * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
  */
-const linkPersonas = async (module, controlUpn, obeyUpn, level, confidence, sourceId, querySetOnly) => {
+const linkPersona = async (module, controlUpn, obeyUpn, level, confidence, sourceId, querySetOnly) => {
   if(!sourceId) {
     sourceId = sourceUtils.getSourceObject(module).id;
-  } else {
-    check.sourceId(sourceId);
   }
+
+  check.sourceId(sourceId);
   check.levelNumber(level);
   check.confidenceNumber(confidence);
   check.upnString(controlUpn);
   check.upnString(obeyUpn);
 
-  const queries = [];
-  queries.push({
+  const query = {
     query: `MATCH (control:Persona { upn: $controlUpn }), (obey:Persona { upn: $obeyUpn }) 
     MERGE (control)-[r:CONTROL { level: $level, confidence: $confidence, sourceId: $sourceId }]->(obey)
     RETURN r`,
     values: { controlUpn, obeyUpn, level, confidence, sourceId }
-  })
-
-  if(querySetOnly) {
-    return queries;
   }
 
-  const response = await connector.runRawQueryArray(queries);
+  if(querySetOnly) {
+    return query;
+  }
+
+  const response = await connector.runRawQueryArray([query]);
 
   console.log('Linked personas:', controlUpn, obeyUpn);
   return response;
@@ -517,7 +516,7 @@ module.exports = {
   deletePersona,
   removePersona,
   deleteSource,
-  linkPersonas,
+  linkPersona,
   mergePersona,
   mergeSource,
   readAgents,
