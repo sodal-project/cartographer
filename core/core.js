@@ -152,7 +152,7 @@ async function initModules(moduleArray) {
     const module = moduleArray[item].folder;
 
     // load the module
-    calls.mod[module] = await require(`../modules/${module}/index.js`);
+    calls.mod[module] = await require(`../modules/${module}/mainPane.js`);
     core.mod[module] = {};
 
     console.log("Core: loading external module: ", module)

@@ -1,5 +1,5 @@
 const core = require('../../core/core.js');
-const csv = require('./csv.js');
+const csv = require('./csvPane.js');
 
 // Default Configuration
 // TODO: move this to config database
@@ -66,15 +66,15 @@ async function redraw(formData) {
     personas: { tableData: personas },
   };
   
-  // Render the index.hbs template
-  return core.client.render('index.hbs', data);
+  // Render the mainPane.hbs template
+  return core.client.render('mainPane.hbs', data);
 }
 
 /**
  * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
-async function index() {
+async function mainPane() {
   return redraw();
 }
 
@@ -249,8 +249,8 @@ async function nextId(type) {
  * 
  * @returns {string} - Compiled HTML content for the CSV pane
  */
-async function csvIndex() {
-  return csv.csvIndex();
+async function csvPane() {
+  return csv.csvPane();
 }
 
 /**
@@ -284,8 +284,8 @@ async function csvMerge(formData) {
 }
 
 module.exports = {
-  index,
-  csvIndex,
+  mainPane,
+  csvPane,
   csvAddFile,
   csvDeleteFile,
   csvMerge,

@@ -1,8 +1,8 @@
 const core = require('../../core/core.js');
-const table = require('./table.js');
+const table = require('./personaTable.js');
 
 /**
- * @description Render the Persona Table index page
+ * @description Render the Persona Table main pane
  * 
  * @param {object} formData - Form data from a Persona Table
  * @returns {string} - Compiled HTML content
@@ -14,7 +14,7 @@ async function redraw(formData) {
     tableFormId: 'personaTable',
     action: {
       label: "Reload",
-      endpoint: "/mod/personaTable/index",
+      endpoint: "/mod/personaTable/mainPane",
     }
   }
 
@@ -22,15 +22,15 @@ async function redraw(formData) {
     tableData: await table.build(tableConfig),
   }
 
-  // Render the index.hbs template
-  return core.client.render('index.hbs', data);
+  // Render the main template
+  return core.client.render('mainPane.hbs', data);
 }
 
 /**
  * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
-async function index() {
+async function mainPane() {
   return redraw();
 }
 
@@ -66,7 +66,7 @@ async function init(){
 }
 
 module.exports = {
-  index,
+  mainPane,
   build,
   update,
   init,

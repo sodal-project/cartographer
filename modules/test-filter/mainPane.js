@@ -1,11 +1,11 @@
 const core = require('../../core/core.js');
 
 /**
- * @description Fetch data from the config database namespace and render the index.hbs template
+ * @description 
  * @returns {string} - Compiled HTML content
  */
 async function redraw(data) {
-  return core.client.render('index.hbs', data);
+  return core.client.render('mainPane.hbs', data);
 }
 
 // PUBLIC
@@ -14,7 +14,7 @@ async function redraw(data) {
  * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
-async function index() {
+async function mainPane() {
   return redraw();
 }
 
@@ -37,6 +37,6 @@ async function runFilter(formData) {
 }
 
 module.exports = {
-  index,
+  mainPane,
   runFilter,
 };

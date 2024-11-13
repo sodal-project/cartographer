@@ -2,19 +2,19 @@ const core = require('../../core/core.js');
 const slack = require('./slack.js');
 
 /**
- * @description Fetch data from the config database namespace and render the index.hbs template
+ * @description 
  * @returns {string} - Compiled HTML content
  */
 async function redraw() {
   const data = await core.config.readConfig();
-  return core.client.render('index.hbs', data);
+  return core.client.render('mainPane.hbs', data);
 }
 
 /**
  * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
-async function index() {
+async function mainPane() {
   return redraw();
 }
 
@@ -78,7 +78,6 @@ async function sync(formData) {
 
     slack.sync(instance).then(async () => {
       instance.ready = true;
-      console.log(new Error().stack);
       console.log(`Instance ${instance.name} is ready`);
       await core.config.writeConfig({ instances });
     });
@@ -88,7 +87,7 @@ async function sync(formData) {
 }
 
 module.exports = {
-  index,
+  mainPane,
   addInstance,
   deleteInstance,
   sync,

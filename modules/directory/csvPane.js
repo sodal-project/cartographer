@@ -24,7 +24,7 @@ async function getNextFileId() {
  */
 async function redraw() {
   const data = await core.config.readConfig();
-  return core.client.render('csv.hbs', data);
+  return core.client.render('csvPane.hbs', data);
 }
 
 /**
@@ -34,7 +34,7 @@ async function redraw() {
  * 
  * @returns {string} - Compiled HTML content
  */
-async function csvIndex() {
+async function csvPane() {
   return redraw();
 }
 
@@ -190,7 +190,7 @@ const mapCsvRelationships = (data) => {
 }
 
 module.exports = {
-  csvIndex,
+  csvPane,
   csvAddFile,
   csvDeleteFile,
   csvMerge,

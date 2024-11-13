@@ -105,7 +105,7 @@ async function update(tableForm) {
   // generate table data required to render the table
   const data = await read(tableConfig, tableForm);
 
-  return await core.client.render('table.hbs', { tableData: data } );
+  return await core.client.render('personaTable.hbs', { tableData: data } );
 }
 /**
  * @description Read a table from a TableConfig object
