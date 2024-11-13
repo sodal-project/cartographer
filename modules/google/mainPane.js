@@ -1,5 +1,7 @@
 const core = require('../../core/core.js');
 const google = require('./google.js');
+const crypto = require('crypto');
+const { Readable } = require('stream');
 
 /**
  * @description Fetch data from the config database namespace and render the index.hbs template
@@ -23,22 +25,33 @@ async function mainPane() {
  * @param {object} formData - The form data
  */
 async function addInstance(formData) {
-  if(!formData.name || !formData.teamId || !formData.token) {
+  if(
+    !formData.name || 
+    !formData.file || 
+    !formData.subjectEmail || 
+    !formData.customerId 
+  ) {
     throw new Error('Missing required fields');
   }
 
-  const configData = await core.config.readConfig();
-  const instances = configData?.instances || {};
-  const secret = await core.crypto.encrypt(formData.token);
+  const id = crypto.randomBytes(10).toString('hex');
+  const name = formData.name;
+  const subjectEmail = formData.subjectEmail;
+  const customerId = formData.customerId;
+  const encryptedFile = await core.crypto.encrypt(formData.file.buffer.toString());
 
   const instance = {
-    name: formData.name,
-    teamId: formData.teamId,
-    secret: secret,
+    id,
+    name,
+    subjectEmail,
+    customerId,
+    encryptedFile,
+    lastSync: null,
     ready: true,
   }
-  instances[formData.teamId] = instance;
 
+  const instances = await core.config.readConfig("instances") || {};
+  instances[id] = instance;
   await core.config.writeConfig({ instances });
 
   return redraw();
@@ -46,14 +59,14 @@ async function addInstance(formData) {
 
 async function deleteInstance(formData) {
   const instances = await core.config.readConfig("instances");
-  const teamId = formData.teamId;
+  const id = formData.id;
 
-  if(instances[teamId]) {
-    console.log('Deleting Google Instance: ', instances[teamId].name);
-    await core.graph.deleteSource(`source:google:${teamId}`);
-    await core.config.deleteConfig(`instances.${teamId}`);
+  if(instances[id]) {
+    console.log('Deleting Google Instance: ', instances[id].name);
+    await core.graph.deleteSource(`source:google:${id}`);
+    await core.config.deleteConfig(`instances.${id}`);
   } else {
-    console.log(`Instance ${teamId} not found`);
+    console.log(`Instance ${id} not found`);
   }
 
   return redraw();
@@ -61,8 +74,7 @@ async function deleteInstance(formData) {
 
 async function sync(formData) {
   const instances = await core.config.readConfig("instances");
-  const teamId = formData.teamId;
-  const instance = instances[teamId];
+  const instance = instances[formData.id];
 
   if(!instance) {
     throw new Error('Instance not found');
@@ -74,11 +86,9 @@ async function sync(formData) {
     instance.ready = false;
     await core.config.writeConfig({ instances });
 
-    console.log(new Error().stack);
-
     google.sync(instance).then(async () => {
       instance.ready = true;
-      console.log(new Error().stack);
+      instance.lastSync = new Date();
       console.log(`Instance ${instance.name} is ready`);
       await core.config.writeConfig({ instances });
     });

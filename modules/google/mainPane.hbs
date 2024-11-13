@@ -5,16 +5,21 @@
   <div class="p-8 mb-6">
     <ul class="text-white border-t border-gray-700">
       <li class="group relative border-b border-gray-800 py-2 flex items-center">
+        <span class="flex-grow text-white-200">ID</span>
         <span class="flex-grow text-white-200">Name</span>
-        <span class="flex-grow text-white-200">Team ID</span>
-        <span class="flex-grow text-white-200">Token</span>
+        <span class="flex-grow text-white-200">Email</span>
+        <span class="flex-grow text-white-200">Customer</span>
+        <span class="flex-grow text-white-200">Last Synced</span>
         <span class="flex-grow text-white-200">Status</span>
+        <span class="flex-grow text-white-200">Actions</span>
       </li> 
       {{#each this.instances }}
         <li class="group relative border-b border-gray-800 py-2 flex items-center">
           <span class="flex-grow text-gray-400">{{this.name}}</span>
-          <span class="flex-grow text-gray-400">{{this.teamId}}</span>
-          <span class="flex-grow text-gray-400">******</span>
+          <span class="flex-grow text-gray-400">{{this.id}}</span>
+          <span class="flex-grow text-gray-400">{{this.subjectEmail}}</span>
+          <span class="flex-grow text-gray-400">{{this.customer}}</span>
+          <span class="flex-grow text-gray-400">{{this.lastSynced}}</span>
           <span class="flex-grow text-gray-400">{{#if this.ready}}Ready{{else}}Processing{{/if}}</span>
 
           <!-- Form to run a sync for this instance -->
@@ -27,7 +32,7 @@
               hx-post="/mod/google/sync/"
               hx-target="closest #main"
               hx-swap="innerHTML"
-              hx-vals='{"teamId": "{{this.teamId}}"}'
+              hx-vals='{"id": "{{this.id}}"}'
             >
               <button
                 class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
@@ -46,7 +51,7 @@
               hx-post="/mod/google/deleteInstance/"
               hx-target="closest #main"
               hx-swap="innerHTML"
-              hx-vals='{"teamId": "{{this.teamId}}"}'
+              hx-vals='{"id": "{{this.id}}"}'
             >
               <button
                 class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
@@ -71,13 +76,15 @@
   {{#> Card }}
     <form
       class="mb-0"
-      hx-post="/mod/google/addInstance/"
+      hx-encoding="multipart/form-data"
+      hx-post="/mod/google/addInstance/upload"
       hx-target="closest #main"
       hx-swap="innerHTML"
     >
       <div class="mb-4">{{> FormText label="Instance Name" name="name" }}</div>
-      <div class="mb-4">{{> FormText label="Google Team ID" name="teamId" }}</div>
-      <div class="mb-4">{{> FormText label="Google Token" name="token" }}</div>
+      <div class="mb-4">{{> FormText label="Subject Email" name="subjectEmail" }}</div>
+      <div class="mb-4">{{> FormText label="Customer ID" name="customerId" }}</div>
+      <div class="mb-4">{{> FormFilePicker label="Auth File" name="file" }}</div>
       {{> FormSubmit label="Add" }}
     </form>
   {{/Card}}
