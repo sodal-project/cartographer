@@ -144,13 +144,53 @@ const deleteSource = async (module, sourceId, querySetOnly) => {
 }
 
 /**
+ * Link two personas with a control relationship
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {string} controlUpn - the upn of the controlling persona
+ * @param {string} obeyUpn - the upn of the obeying persona
+ * @param {number} level - the level of control
+ * @param {number} confidence - the confidence of the relationship
+ * @param {string} sourceId - OPTIONAL, the source id to link the personas with
+ * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
+ */
+const linkPersona = async (module, controlUpn, obeyUpn, level, confidence, sourceId, querySetOnly) => {
+  if(!sourceId) {
+    sourceId = sourceUtils.getSourceObject(module).id;
+  }
+
+  check.sourceId(sourceId);
+  check.levelNumber(level);
+  check.confidenceNumber(confidence);
+  check.upnString(controlUpn);
+  check.upnString(obeyUpn);
+
+  const query = {
+    query: `MATCH (control:Persona { upn: $controlUpn }), (obey:Persona { upn: $obeyUpn }) 
+    MERGE (control)-[r:CONTROL { level: $level, confidence: $confidence, sourceId: $sourceId }]->(obey)
+    RETURN r`,
+    values: { controlUpn, obeyUpn, level, confidence, sourceId }
+  }
+
+  if(querySetOnly) {
+    return query;
+  }
+
+  const response = await connector.runRawQueryArray([query]);
+
+  console.log('Linked personas:', controlUpn, obeyUpn);
+  return response;
+
+}
+
+/**
  * Merge a persona with the persona graph database
  * 
  * @param {string} module - automatically passed by core
  * @param {object} persona - a valid persona object
  * @param {object} source - OPTIONAL, a valid source object
  * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
- * @returns {object} - The response from the database, or the query set object
+ * @returns {Array} - The response from the database, or the query set array object
  */
 const mergePersona = async (module, persona, source, querySetOnly) => {
   if(!persona) {
@@ -159,17 +199,21 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
     check.personaObject(persona);
   }
 
-  const upn = persona.upn;
-  
-  // remove upn from persona object
-  delete persona.upn;
-
   if(!source) {
     source = sourceUtils.getSourceObject(module);
   }
   check.sourceObject(source);
 
-  const queries = [];
+  const upn = persona.upn;
+  const controls = persona.control || [];
+  const obeys = persona.obey || [];
+
+  delete persona.upn;
+  delete persona.control;
+  delete persona.obey;
+
+  const queries = []
+  const relationships = [];
 
   queries.push({
     query: `MERGE (source:Source {id: $source.id})
@@ -180,6 +224,48 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
     values: { source, persona, upn }
   })
 
+  for(const control of controls) {
+    const rel = control;
+    rel.controlUpn = upn;
+    rel.obeyUpn = control.upn;
+    delete rel.upn;
+
+    rel.level = parseInt(rel.level);
+    rel.confidence = parseFloat(rel.confidence);
+    rel.sourceId = source.id;
+
+    relationships.push(rel);
+  }
+
+  for(const obey of obeys) {
+    const rel = obey;
+    rel.obeyUpn = upn;
+    rel.controlUpn = obey.upn;
+    delete rel.upn;
+
+    rel.level = parseInt(rel.level);
+    rel.confidence = parseFloat(rel.confidence);
+    rel.sourceId = source.id;
+
+    relationships.push(rel);
+  }
+
+  for(const rel of relationships) {
+    const obeyUpn = rel.obeyUpn;
+    const controlUpn = rel.controlUpn;
+    delete rel.obeyUpn;
+    delete rel.controlUpn;
+
+    queries.push({
+      query: `MERGE (control:Persona { upn: $controlUpn }) 
+      MERGE (obey:Persona { upn: $obeyUpn }) 
+      MERGE (control)-[r:CONTROL]->(obey)
+      SET r += $rel
+      RETURN r`,
+      values: { obeyUpn, controlUpn, rel }
+    })
+  }
+
   if(querySetOnly) {
     return queries;
   }
@@ -188,6 +274,28 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
 
   console.log('Merged persona:', upn);
   return response;
+}
+
+/**
+ * Merge an array of personas with the persona graph database
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {object} personaArray - an array of persona objects
+ * @param {object} source - OPTIONAL, a valid source object
+ * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
+ * @returns {Array} - The response from the database, or the query set array object
+ */
+const mergePersonas = async (module, personaArray, source, querySetOnly) => {
+  let queries = [];
+  for(const persona of personaArray) {
+    queries = queries.concat(await mergePersona(module, persona, source, true));
+  }
+
+  if(querySetOnly) {
+    return queries;
+  }
+
+  return await connector.runRawQueryArray(queries);
 }
 
 /**
@@ -476,7 +584,9 @@ module.exports = {
   deletePersona,
   removePersona,
   deleteSource,
+  linkPersona,
   mergePersona,
+  mergePersonas,
   mergeSource,
   readAgents,
   readOrphanedPersonas,

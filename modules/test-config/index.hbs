@@ -1,16 +1,16 @@
 <div class="p-8" style="max-width: 640px">
-  {{> Headline title="Module 2" }}
+  {{> Headline title="Test Config" }}
 
   <!-- List all data stored in the module namespace of the config database -->
   <div class="p-8 mb-6">
-    {{> KeyValueTable name="module2" data=this}}
+    {{> KeyValueTable name="test-config" data=this}}
   </div>
 
   <!-- Post data to the config database, redraw module on completion -->
   {{#> Card }}
     <form
       class="flex items-end gap-6 mb-0"
-      hx-post="/mod/module2/writeConfig/"
+      hx-post="/mod/test-config/writeConfig/"
       hx-target="closest #main"
       hx-swap="innerHTML"
     >

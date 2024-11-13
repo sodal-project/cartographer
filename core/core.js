@@ -40,10 +40,6 @@ const coreData = {
       label: "Slack Integration",
     },
     {
-      folder: "csv",
-      label: "CSV Integration",
-    },
-    {
       folder: "personaTable",
       label: "Persona Table",
     },
@@ -52,15 +48,11 @@ const coreData = {
       label: "Test Filter",
     },
     {
-      folder: "module1",
-      label: "Test Module 1",
+      folder: "test-config",
+      label: "Test Config",
     },
     {
-      folder: "module2",
-      label: "Test Module 2",
-    },
-    {
-      folder: "long-process",
+      folder: "test-long-process",
       label: "Test Long Process",
     },
   ]
@@ -93,7 +85,7 @@ function initNamespaces() {
     calls[namespace] = namespaces[namespace]
     core[namespace] = {};
 
-    console.log("Core: loading internal module: ", namespace)
+    // console.log("Core: loading internal module: ", namespace)
 
     // For each exported function in the namespace, add it to the core object
     for(const call in calls[namespace]) {
@@ -240,7 +232,6 @@ async function init() {
   // finalize core and freeze it
   core.ready = true;
   Object.freeze(core);
-  console.log(`Core frozen status: ${Object.isFrozen(core)}`)
   console.log("Core: initialized")
   return core;
 }

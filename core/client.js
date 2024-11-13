@@ -59,7 +59,7 @@ const registerPartials = (moduleName) => {
         const name = path.relative(partialsDir, filePath).replace(/\\/g, '/').replace('.hbs', '');
         const template = fs.readFileSync(filePath, 'utf8');
 
-        console.log('Registering partial:', name);
+        if(moduleName) { console.log('Registering partial:', name); }
 
         // Register the partial with the relative path name
         Handlebars.registerPartial(name, template);
