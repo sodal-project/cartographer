@@ -40,6 +40,10 @@ const coreData = {
       label: "Slack Integration",
     },
     {
+      folder: "google",
+      label: "Google Integration",
+    },
+    {
       folder: "personaTable",
       label: "Persona Table",
     },

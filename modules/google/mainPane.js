@@ -1,5 +1,5 @@
 const core = require('../../core/core.js');
-const slack = require('./slack.js');
+const google = require('./google.js');
 
 /**
  * @description Fetch data from the config database namespace and render the index.hbs template
@@ -19,7 +19,7 @@ async function mainPane() {
 }
 
 /**
- * @description Handle adding a new Slack integration instance
+ * @description Handle adding a new Google integration instance
  * @param {object} formData - The form data
  */
 async function addInstance(formData) {
@@ -49,8 +49,8 @@ async function deleteInstance(formData) {
   const teamId = formData.teamId;
 
   if(instances[teamId]) {
-    console.log('Deleting Slack Instance: ', instances[teamId].name);
-    await core.graph.deleteSource(`source:slack:${teamId}`);
+    console.log('Deleting Google Instance: ', instances[teamId].name);
+    await core.graph.deleteSource(`source:google:${teamId}`);
     await core.config.deleteConfig(`instances.${teamId}`);
   } else {
     console.log(`Instance ${teamId} not found`);
@@ -76,7 +76,7 @@ async function sync(formData) {
 
     console.log(new Error().stack);
 
-    slack.sync(instance).then(async () => {
+    google.sync(instance).then(async () => {
       instance.ready = true;
       console.log(new Error().stack);
       console.log(`Instance ${instance.name} is ready`);

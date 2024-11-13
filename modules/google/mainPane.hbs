@@ -24,7 +24,7 @@
           >
             <form
               class="absolute left-1/2 top-1/2 transform -translate-y-1/2"
-              hx-post="/mod/slack/sync/"
+              hx-post="/mod/google/sync/"
               hx-target="closest #main"
               hx-swap="innerHTML"
               hx-vals='{"teamId": "{{this.teamId}}"}'
@@ -76,8 +76,8 @@
       hx-swap="innerHTML"
     >
       <div class="mb-4">{{> FormText label="Instance Name" name="name" }}</div>
-      <div class="mb-4">{{> FormText label="Slack Team ID" name="teamId" }}</div>
-      <div class="mb-4">{{> FormText label="Slack Token" name="token" }}</div>
+      <div class="mb-4">{{> FormText label="Google Team ID" name="teamId" }}</div>
+      <div class="mb-4">{{> FormText label="Google Token" name="token" }}</div>
       {{> FormSubmit label="Add" }}
     </form>
   {{/Card}}
