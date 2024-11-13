@@ -1,3 +1,5 @@
+const Handlebars = require('handlebars');
+
 /**
  * Add custom Handlebars helpers here.
  */
@@ -44,7 +46,42 @@ const eq = (a, b) => a === b;
  */
 const add = (a, b) => a + b;
 
+/**
+ * Include a partial inside of another partial
+ * 
+ * @param {*} partialName - The name of the partial to include
+ * @param {*} data - The data to pass to the partial
+ * @returns - A rendred version of the partial
+ * 
+ * @example
+ * // Handlebars template:
+ * <div>{{dynamicPartial this.component this.data }}</div>
+ * 
+ * // Data:
+ * { component: 'subpane', data: { key: 'value' }}
+ * 
+ * // Rendered output:
+ * <div>Subpane content with value</div>
+ */
+const dynamicPartial = (partialName, data) => {
+  // Look up the partial
+  let partial = Handlebars.partials[partialName];
+
+  // Check if the partial is a string (not compiled)
+  if (typeof partial === 'string') {
+    partial = Handlebars.compile(partial);
+  }
+
+  if (typeof partial === 'function') {
+    return new Handlebars.SafeString(partial(data));
+  }
+
+  return ''; // Return an empty string if the partial isn't found or valid
+};
+
+
 module.exports = {
   eq,
   add,
+  dynamicPartial,
 };
