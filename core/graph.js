@@ -2,6 +2,7 @@ const check = require('./check');
 const connector = require('./graphNeo4jConnector');
 const sourceUtils = require('./source');
 const sourceStore = require('./sourceStore');
+const personaUtil = require('./persona');
 const graphFilter = require('./graphFilter');
 
 /* TODO: enable pagination
@@ -251,18 +252,24 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
   }
 
   for(const rel of relationships) {
-    const obeyUpn = rel.obeyUpn;
-    const controlUpn = rel.controlUpn;
+    const obeyPersona = personaUtil.newFromUpn(rel.obeyUpn);
+    const controlPersona = personaUtil.newFromUpn(rel.controlUpn);
     delete rel.obeyUpn;
     delete rel.controlUpn;
+    delete obeyPersona.control;
+    delete obeyPersona.obey;
+    delete controlPersona.control;
+    delete controlPersona.obey;
 
     queries.push({
-      query: `MERGE (control:Persona { upn: $controlUpn }) 
-      MERGE (obey:Persona { upn: $obeyUpn }) 
+      query: `MERGE (control:Persona { upn: $controlPersona.upn }) 
+      MERGE (obey:Persona { upn: $obeyPersona.upn }) 
       MERGE (control)-[r:CONTROL]->(obey)
+      SET obey += $obeyPersona
+      SET control += $controlPersona
       SET r += $rel
       RETURN r`,
-      values: { obeyUpn, controlUpn, rel }
+      values: { obeyPersona, controlPersona, rel }
     })
   }
 
