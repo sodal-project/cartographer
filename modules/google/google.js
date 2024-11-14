@@ -68,7 +68,9 @@ const mapAuthTokenPersonas = (authTokens) => {
 // 
 
 const loadCached = async(func, client, sourceId, itemId) => {
-  const cacheName = `google-${sourceId}-${itemId}`
+  const cacheName = `google-${sourceId}-${func.name}` + (itemId ? `-${itemId}` : '');
+
+
   const cache = await core.cache.readCache(`google-${sourceId}-${itemId}`);
   if(itemId){
     cache
