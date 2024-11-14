@@ -36,6 +36,10 @@ const coreData = {
       label: "Directory",
     },
     {
+      folder: "detail-pane",
+      label: "Detail Pane",
+    },
+    {
       folder: "slack",
       label: "Slack Integration",
     },

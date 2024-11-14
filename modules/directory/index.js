@@ -283,6 +283,76 @@ async function csvMerge(formData) {
   return csv.csvMerge(formData, directorySource);
 }
 
+/**
+ * @description Provide a detail subpane for a persona
+ * @param {string} upn 
+ * @returns {object} - The subpane object
+ */
+async function getDetailSubpane(upn = "upn:directory:participant:p0001") {
+  // TODO: Check if we have a UPN
+
+  // Get Persona Data
+  const persona = await core.graph.readPersonaObject(upn);
+  console.log('Persona from directory', persona);
+  
+  // TODO: Get data for tables
+  const aliasTable = {
+    tableFormId: "tbd",
+    forceFilters: [
+      {
+        "type":"field",
+        "key":"upn",
+        "value":upn,
+        "operator":"=",
+      },
+      {
+        "type":"agency",
+        "key":"control",
+        "levels": ["ALIAS"],
+      }
+    ]
+  };
+  const controlsTable = {
+    tableFormId: "directory-detailsubpane-control",
+    // forceFilters: [
+    //   {
+    //     "type":"field",
+    //     "key":"upn",
+    //     "value":upn,
+    //     "operator":"=",
+    //   },
+    //   {
+    //     "type":"agency",
+    //     "key":"control",
+    //     "levels": ["ADMIN", "MANAGE", "ACT_AS"],
+    //     "filter": [],
+    //   }
+    // ]
+  }
+
+  const aliasTableData = await core.mod.personaTable.build(aliasTable)
+  const controlsTableData = await core.mod.personaTable.build(controlsTable)
+
+  console.log('controlsTableData', controlsTableData)
+
+  return {
+    component: "DirectoryDetailSubpane",
+    data: {
+      aliasTable: aliasTableData,
+      controlsTable: controlsTableData,
+      label: "some data"
+    }
+  }
+}
+
+/**
+ * @description Initialize the module and register partials
+ * @returns {void}
+ */
+async function init(){
+  await core.client.registerPartials();
+}
+
 module.exports = {
   index,
   csvIndex,
@@ -293,4 +363,6 @@ module.exports = {
   addActivity,
   deletePersonas,
   linkPersonas,
+  getDetailSubpane,
+  init,
 };
