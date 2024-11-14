@@ -48,18 +48,21 @@ table.hide-col-12 td:nth-child(12) {
   display: none;
 }
 
+/* Scrollbar Styling */
 ::-webkit-scrollbar {
-  color: gray;
-  background-color: black;
-  /* Customize the scrollbar width */
+  color: #374151;
+  background-color: #080c15;
+  width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
-  background: black;
-  border-radius: 5px;
+  background: #080c15;
+  border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb {
-  /* Customize the scrollbar thumb */
-  background: gray;
+  background: #374151;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-corner {
+  background-color: #080c15;
 }
