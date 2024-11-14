@@ -38,7 +38,8 @@ async function addInstance(formData) {
   const name = formData.name;
   const subjectEmail = formData.subjectEmail;
   const customerId = formData.customerId;
-  const encryptedFile = await core.crypto.encrypt(formData.file.buffer.toString());
+  const fileString = formData.file.buffer.toString()
+  const encryptedFile = await core.crypto.encrypt(fileString);
 
   const instance = {
     id,
@@ -83,7 +84,7 @@ async function sync(formData) {
     return redraw();
   } else {
     console.log('Syncing instance:', instance.name);
-    instance.ready = false;
+    // instance.ready = false;
     await core.config.writeConfig({ instances });
 
     google.sync(instance).then(async () => {

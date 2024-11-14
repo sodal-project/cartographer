@@ -500,8 +500,8 @@ const readSourceRelationships = async (module, sourceId) => {
  * @param {object} optionalParams - The parameters for the query
  * @returns {object} - The response from the database
  */
-const runRawQuery = async (module, query, optionalParams) => {
-  return await connector.runRawQuery (query, optionalParams);
+const runRawQuery = async (module, query, optionalParams, doCache) => {
+  return await connector.runRawQuery (query, optionalParams, doCache);
 }
 
 /**
@@ -510,8 +510,8 @@ const runRawQuery = async (module, query, optionalParams) => {
  * @param {object[]} queryArray - An array of query objects
  * @returns {object} - The response from the database
  */
-const runRawQueryArray = async (module, queryArray) => {
-  return await connector.runRawQueryArray(queryArray);
+const runRawQueryArray = async (module, queryArray, doCache) => {
+  return await connector.runRawQueryArray(queryArray, doCache);
 }
 
 const syncPersonas = async (module, personaArray, customSource) => {

@@ -70,8 +70,10 @@ const healthCheck = async () => {
  * @param {object} optionalParams 
  * @returns {object} - The response from the database
  */
-const runRawQuery = async (query, optionalParams) => {
-  await saveCache('querySingle', {query, optionalParams});
+const runRawQuery = async (query, optionalParams, doCache) => {
+  if(doCache){
+    await saveCache('querySingle', {query, optionalParams});
+  }
 
   if(!(await healthCheck())) {
     console.error('Health Check failed, unable to process raw query.');
@@ -91,7 +93,9 @@ const runRawQuery = async (query, optionalParams) => {
       console.log('Notifications:', result.summary.notifications);
     }
 
-    saveCache('singleResponse', result);
+    if(doCache){
+      await saveCache('singleResponse', result);
+    }
 
     return result;
   } catch (error) {
@@ -128,8 +132,10 @@ const runRawQuery = async (query, optionalParams) => {
  * @param {array} queryArray 
  * @returns {object} - The aggregate response from the database
  */
-const runRawQueryArray = async (queryArray) => {
-  await saveCache('queryArray', queryArray);
+const runRawQueryArray = async (queryArray, doCache) => {
+  if(doCache){
+    await saveCache('queryArray', queryArray);
+  }
 
   if(!(await healthCheck())) {
     console.error('Health Check failed, unable to process query array.');
@@ -173,7 +179,9 @@ const runRawQueryArray = async (queryArray) => {
     } else {
       console.log('No notifications to display.');
     }
-    await saveCache('arrayResponse', response);
+    if(doCache){
+      await saveCache('arrayResponse', response);
+    }
 
   } catch (error) {
     console.error(`Error processing query array: ${error}`);
