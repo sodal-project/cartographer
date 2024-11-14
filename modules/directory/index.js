@@ -297,49 +297,52 @@ async function getDetailSubpane(upn = "upn:directory:participant:p0001") {
   
   // TODO: Get data for tables
   const aliasTable = {
-    tableFormId: "tbd",
+    tableFormId: "directory-subpane-alias",
     forceFilters: [
       {
-        "type":"field",
-        "key":"upn",
-        "value":upn,
-        "operator":"=",
-      },
-      {
         "type":"agency",
-        "key":"control",
+        "key":"obey",
         "levels": ["ALIAS"],
+        "filter": [
+          {
+            "type":"field",
+            "key":"upn",
+            "value":upn,
+            "operator":"=",
+          }
+        ],
       }
     ]
   };
-  const controlsTable = {
-    tableFormId: "directory-detailsubpane-control",
-    // forceFilters: [
-    //   {
-    //     "type":"field",
-    //     "key":"upn",
-    //     "value":upn,
-    //     "operator":"=",
-    //   },
-    //   {
-    //     "type":"agency",
-    //     "key":"control",
-    //     "levels": ["ADMIN", "MANAGE", "ACT_AS"],
-    //     "filter": [],
-    //   }
-    // ]
+  const controlTable = {
+    tableFormId: "directory-subpane-control",
+    forceFilters: [
+      {
+        "type":"agency",
+        "key":"obey",
+        "levels": ["ADMIN", "MANAGE", "ACT_AS"],
+        "filter": [
+          {
+            "type":"field",
+            "key":"upn",
+            "value":upn,
+            "operator":"=",
+          },
+        ],
+      }
+    ]
   }
 
   const aliasTableData = await core.mod.personaTable.build(aliasTable)
-  const controlsTableData = await core.mod.personaTable.build(controlsTable)
+  const controlTableData = await core.mod.personaTable.build(controlTable)
 
-  console.log('controlsTableData', controlsTableData)
+  console.log('controlsTableData', controlTableData)
 
   return {
     component: "DirectoryDetailSubpane",
     data: {
-      aliasTable: aliasTableData,
-      controlsTable: controlsTableData,
+      aliasTableData,
+      controlTableData,
       label: "some data"
     }
   }
