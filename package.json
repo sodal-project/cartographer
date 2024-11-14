@@ -4,7 +4,7 @@
   "description": "Cartographer Core Server facilitates communication between modules and provides data and interface strings to the client.",
   "main": "index.js",
   "scripts": {
-    "start": "if [ \"$ENV\" = \"DEV\" ]; then ./setup.sh && nodemon index.js; else node index.js; fi"
+    "start": "if [ \"$ENV\" = \"DEV\" ]; then ./setup.sh && nodemon --ext js,hbs index.js; else node index.js; fi"
   },
   "author": "Sodal",
   "license": "MIT",
