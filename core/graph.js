@@ -385,6 +385,10 @@ const readPersonaObject = async (module, upn) => {
   })
   const persona = personaResponse[0];
 
+  if(!persona) {
+    return null;
+  }
+
   // get all personas that this perona controls
   const controlQuery = `MATCH (persona:Persona {upn: $upn})-[relationship:CONTROL]->(relation:Persona)
   RETURN relation, relationship`
