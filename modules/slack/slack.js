@@ -5,7 +5,7 @@ async function sync(instance){
   try {
 
     const source = {
-      id: `source:slack:${instance.teamId}`,
+      sid: `source:slack:${instance.teamId}`,
       name: instance.name,
       lastUpdate: new Date().toISOString(),
     }

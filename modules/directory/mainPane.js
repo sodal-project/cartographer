@@ -187,19 +187,24 @@ async function linkPersonas(formData) {
   const confidence = .5;
   const directoryUpns = Array.isArray(formData.directory) ? formData.directory : [formData.directory];
   const personaUpns = Array.isArray(formData.persona) ? formData.persona : [formData.persona];
-  const sourceId = directorySource.id;
-  const queries = [];
+  const personas = [];
 
   // Generate link queries; all selected directory upns will be linked to all selected personas
   for(const directoryUpn of directoryUpns) {
     for(const personaUpn of personaUpns) {
-      queries.push(await core.graph.linkPersona(directoryUpn, personaUpn, level, confidence, sourceId, true));
+      const persona = core.persona.newFromUpn(personaUpn);
+      persona.control.push({
+        upn: directoryUpn,
+        level: level,
+        confidence: confidence,
+      })
+      personas.push(persona);
     }
   }
 
-  await core.graph.runRawQueryArray(queries);
+  await core.graph.mergePersonas(personas);
 
-  console.log(`Processed ${queries.length} link queries`);
+  console.log(`Processed ${personas.length} persona links`);
 
   return redraw();
 }

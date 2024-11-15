@@ -12,9 +12,10 @@ const Config = {
 const HealthQueries = {
   "getCount": "MATCH (n) RETURN count(n) as count",
   "setConstraintUPN": "CREATE CONSTRAINT constraint_upn IF NOT EXISTS FOR (p:Persona) REQUIRE p.upn IS UNIQUE",
-  "setConstraintSource": "CREATE CONSTRAINT constraint_source IF NOT EXISTS FOR (s:Source) REQUIRE s.id IS UNIQUE",
+  "setConstraintSource": "CREATE CONSTRAINT constraint_source IF NOT EXISTS FOR (s:Source) REQUIRE s.sid IS UNIQUE",
   "setIndexType": "CREATE INDEX index_persona_type IF NOT EXISTS FOR (n:Persona) ON (n.type)",
   "setIndexPlatform": "CREATE INDEX index_persona_platform IF NOT EXISTS FOR (n:Persona) ON (n.platform)",
+  "setIndexRelationship": "CREATE INDEX index_relationship_id IF NOT EXISTS FOR ()-[r:CONTROL]->() ON (r.sid)",
 }
 
 /**
@@ -48,6 +49,7 @@ const healthCheck = async () => {
       await session.run(HealthQueries.setConstraintSource);
       await session.run(HealthQueries.setIndexType);
       await session.run(HealthQueries.setIndexPlatform);
+      await session.run(HealthQueries.setIndexRelationship);
       console.log('Health Check: OK - Constraints and Indexes are set on the database');
 
       // return true if all checks pass
