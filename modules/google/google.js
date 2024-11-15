@@ -9,6 +9,8 @@ const sync = async (instance) => {
   // Extract the instance properties
   const instanceId = instance.id
   const name = instance.name
+  const source = core.source.getSourceObject('google', instanceId, name);
+
   const subjectEmail = instance.subjectEmail
   const customerId = instance.customerId
   const encryptedFile = instance.encryptedFile
@@ -62,7 +64,7 @@ const sync = async (instance) => {
 
   await core.cache.save(`allPersonas-${instanceId}`, personas);
   // Save the personas to the graph
-  await core.graph.syncPersonas(personas);
+  await core.graph.syncPersonas(personas, source);
 }
 
 //

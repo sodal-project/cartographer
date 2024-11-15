@@ -84,7 +84,7 @@ async function sync(formData) {
     return redraw();
   } else {
     console.log('Syncing instance:', instance.name);
-    // instance.ready = false;
+    instance.ready = false;
     await core.config.writeConfig({ instances });
 
     google.sync(instance).then(async () => {
