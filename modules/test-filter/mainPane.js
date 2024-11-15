@@ -23,7 +23,7 @@ async function runFilter(formData) {
   const filter = JSON.parse(formData.filter);
 
   try {
-    response = await core.graph.readAgents(filter);
+    response = await core.graph.readPersonas(filter);
     const sortedUpns = response.records.map(node => node._fields[0].properties.upn);
     results = sortedUpns;
   } catch (error) {

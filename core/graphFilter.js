@@ -73,7 +73,7 @@ const operators = {
  * @description Filter the graph database based on the provided filter object
  * 
  * This is the entry point for the graph filter. 
- * It takes a filter object and returns an array of agent personas that match the filter.
+ * It takes a filter object and returns an array of personas that match the filter.
  * 
  * @param {object} filter - The filter object
  * @param {object} sort - The sort object
@@ -136,13 +136,18 @@ async function getUpnsFromFilter (filter) {
 }
 
 async function getUpnsByFieldArray (fieldArray) {
-  let query = getStartString();
+  let query = `MATCH (persona:Persona)\n`
+  let firstQuery = true;
 
   for(const field in fieldArray) {
+    if(firstQuery) {
+      firstQuery = false;
+      query += `WHERE `;
+    } else {
+      query += `AND `;
+    }
+
     const filter = fieldArray[field];
-
-    query += `AND `;
-
     const operator = operators[filter.operator];
     const fieldKey = filter.key;
     const fieldValue = filter.value;
@@ -152,14 +157,9 @@ async function getUpnsByFieldArray (fieldArray) {
       throw new Error('Invalid filter');
     }
 
-    let personaToFilterOn = "agent";
-    if(fieldKey === "id") {
-      personaToFilterOn = "alias";
-    }
-
-    query += `${modifier}${personaToFilterOn}.${fieldKey} ${operator} "${fieldValue}"\n`;
+    query += `${modifier}persona.${fieldKey} ${operator} "${fieldValue}"\n`;
   }
-  query += getEndString();
+  query += `RETURN DISTINCT persona.upn`;
   return await readSingleArray(query);
 }
 
@@ -173,9 +173,8 @@ async function getUpnsBySetArray (setArray, upns) {
 }
 
 async function getUpnsBySourceArray (sourceArray, upns) {
-  let query = `MATCH (source:Source)-[:DECLARE]->(agent:Persona)
-  WHERE NOT (agent)<-[:CONTROL { level: 5 }]-(:Persona)
-  AND agent.upn IN $upns\n`;
+  let query = `MATCH (source:Source)-[:DECLARE]->(persona:Persona)
+  WHERE persona.upn IN $upns\n`;
 
   for(const source in sourceArray) {
     const filter = sourceArray[source];
@@ -195,7 +194,7 @@ async function getUpnsBySourceArray (sourceArray, upns) {
 
     query += `${modifier}source.${fieldKey} ${operator} "${fieldValue}"\n`;
   }
-  query += getEndString();
+  query += `RETURN DISTINCT persona.upn`;
   return await readSingleArray(query, { upns });
 }
 
@@ -244,14 +243,7 @@ async function getUpnsByAgency (agency, upns) {
   if(confidence.min > 0 || confidence.max < 1) {
     query += `AND ALL(confidence IN relConfidences WHERE confidence >= $confidence.min AND confidence <= $confidence.max)\n`;
   }
-  // query += `RETURN DISTINCT ${indexUpnString}`;
-
-  // return the upns for associated agents
-  query += `WITH COLLECT(DISTINCT ${indexUpnString}) AS upns
-  MATCH (agent:Persona) (()-[:CONTROL { level: 5 }]->()){,1} (alias:Persona)
-  WHERE NOT (agent)<-[:CONTROL { level: 5 }]-(:Persona)
-  AND alias.upn IN upns
-  RETURN DISTINCT agent.upn`;
+  query += `RETURN DISTINCT ${indexUpnString}`;
 
   const params = {
     upns,
@@ -280,15 +272,6 @@ async function getUpnsByCompare (compare, upns) {
   return upns;
 }
 
-function getStartString () {
-  return `MATCH (agent:Persona) (()-[:CONTROL { level: 5 }]->()){,1} (alias:Persona)
-  WHERE NOT (agent)<-[:CONTROL { level: 5 }]-(:Persona)\n`;
-}
-
-function getEndString () {
-  return `RETURN DISTINCT agent.upn`;
-}
-
 async function readSingleArray (query, params) {
   // console.log(`--- Running query:\n ${query}`);
   const results = await connector.runRawQuery(query, params);
@@ -298,8 +281,8 @@ async function readSingleArray (query, params) {
 }
 
 async function sortResults (upns, sort) {
-  let query = `MATCH (agent:Persona) WHERE agent.upn IN $upns\n`;
-  query += `RETURN DISTINCT agent ORDER BY agent.${sort.field} ${sort.direction}`;
+  let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
+  query += `RETURN DISTINCT persona ORDER BY persona.${sort.field} ${sort.direction}`;
 
   const results = await connector.runRawQuery(query, { upns });
   return results;

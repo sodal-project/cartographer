@@ -332,19 +332,6 @@ const mergeSource = async (module, source, querySetOnly) => {
 }
 
 /**
- * Filter and sort agents from the persona graph database
- * 
- * @param {string} module - automatically passed by core
- * @param {object} filter - OPTIONAL, a filter object
- * @param {object} sort - OPTIONAL, a sort object
- */
-const readAgents = async (module, filter, sort, asUpnArray) => {
-  const results = await graphFilter(filter, sort, asUpnArray);
-
-  return results;
-}
-
-/**
  * Read all personas that are not declared by any source
  * 
  * @param {string} module - automatically passed by core
@@ -372,7 +359,7 @@ const readOrphanedPersonas = async (module) => {
  * @param {string} upn - the upn of the persona to read 
  * @returns {object} - The persona object
  */
-const readPersonaObject = async (module, upn) => {
+const readPersona = async (module, upn) => {
 
   // get the persona and its properties
   const query = `MATCH (persona:Persona {upn: $upn})
@@ -419,6 +406,19 @@ const readPersonaObject = async (module, upn) => {
 
   check.personaObject(persona);
   return persona;
+}
+
+/**
+ * Filter and sort personas from the persona graph database
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {object} filter - OPTIONAL, a filter object
+ * @param {object} sort - OPTIONAL, a sort object
+ */
+const readPersonas = async (module, filter, sort, asUpnArray) => {
+  const results = await graphFilter(filter, sort, asUpnArray);
+
+  return results;
 }
 
 /**
@@ -592,9 +592,9 @@ module.exports = {
   mergePersona,
   mergePersonas,
   mergeSource,
-  readAgents,
   readOrphanedPersonas,
-  readPersonaObject,
+  readPersona,
+  readPersonas,
   readSource,
   readSourcePersonas,
   readSourceRelationships,

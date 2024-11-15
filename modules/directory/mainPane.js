@@ -215,7 +215,7 @@ async function nextId(type) {
   let nextId = await core.config.readConfig(`next${type}Id`) || 10000; 
 
   // Verify that graph does not have a lower ID
-  const rawPersonas = await core.graph.readAgents([{ 
+  const rawPersonas = await core.graph.readPersonas([{ 
     type: "field",
     key: "platform",
     value: "directory",
