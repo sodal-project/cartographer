@@ -1,5 +1,6 @@
 const core = require('../../core/core.js');
 const { google } = require('googleapis');
+const tokenMap = require('./googleTokens.js');
 const LEVEL = core.constants.LEVEL;
 
 const sync = async (instance) => {
@@ -35,25 +36,33 @@ const sync = async (instance) => {
   }]
   const users = await loadCached(loadUsers, client, instanceId, customerId);
   const groups = await loadCached(loadGroups, client, instanceId, customerId);
-  const groupMembers = await Promise.all(groups.map(async (group) => {
+  const groupMemberSets = await Promise.all(groups.map(async (group) => {
     return {
       members: await loadCached(loadGroupMembers, client, instanceId, customerId, group.id),
       id: group.id
     }
   }));
+
   const userTokens = await Promise.all(users.map(async (user) => {
-    return await loadCached(loadAuthTokens, client, instanceId, customerId, user.id)
+    const userTokens = await loadCached(loadAuthTokens, client, instanceId, customerId, user.id);
+    return {
+      userTokens: userTokens,
+      userEmail: user.primaryEmail,
+      userId: user.id,
+    }
   }));
 
   // Map the data to persona objects
   let personas = [];
   personas = personas.concat(mapWorkspacePersonas(workspaces));
   personas = personas.concat(mapUserPersonas(users, customerId));
+  personas = personas.concat(mapGroupPersonas(groups, customerId));
+  personas = personas.concat(mapGroupMemberPersonas(groupMemberSets));
+  personas = personas.concat(mapAuthTokenPersonas(userTokens));
 
   await core.cache.save(`allPersonas-${instanceId}`, personas);
   // Save the personas to the graph
-  // await core.graph.syncPersonas(personas);
-
+  await core.graph.syncPersonas(personas);
 }
 
 //
@@ -69,7 +78,6 @@ const mapWorkspacePersonas = (workspaces) => {
       type: 'workspace',
       friendlyName: workspace.name,
     }
-    core.check.personaObject(newWorkspace);
     return newWorkspace;
   })
 }
@@ -117,31 +125,33 @@ const mapUserPersonas = (users, customerId) => {
       confidence: 1
     })
 
-    if(!user.suspended && !user.archived) {
-
-      // Add the workspace control relationship
-      newUser.control.push({
-        upn: workspaceUpn,
-        level: levelMap[level],
-        confidence: 1
-      })
-
-      let allAliases = [user.primaryEmail]
-      if(user.aliases) { allAliases = allAliases.concat(user.aliases) }
-      if(user.nonEditableAliases) { allAliases = allAliases.concat(user.nonEditableAliases) }
-
-      // Add email aliases
-      allAliases.forEach(email => {
-        const rel = {
-          upn: `upn:email:account:${email}`,
-          level: LEVEL["ALIAS"],
-          confidence: 1
-        }
-        newUser.control.push(rel);
-        newUser.obey.push(rel);
-      })
+    // stop processing if the user is suspended or archived
+    if(user.suspended || user.archived) {
+      personas.push(newUser);
+      return;
     }
-    core.check.personaObject(newUser);
+
+    // Add the workspace control relationship
+    newUser.control.push({
+      upn: workspaceUpn,
+      level: levelMap[level],
+      confidence: 1
+    })
+
+    // Add email aliases
+    let allAliases = [user.primaryEmail]
+    if(user.aliases) { allAliases = allAliases.concat(user.aliases) }
+    if(user.nonEditableAliases) { allAliases = allAliases.concat(user.nonEditableAliases) }
+
+    allAliases.forEach(email => {
+      const rel = {
+        upn: `upn:email:account:${email}`,
+        level: LEVEL["ALIAS"],
+        confidence: 1
+      }
+      newUser.control.push(rel);
+      newUser.obey.push(rel);
+    })
     personas.push(newUser);
   });
 
@@ -149,15 +159,156 @@ const mapUserPersonas = (users, customerId) => {
 }
 
 const mapGroupPersonas = (groups, customerId) => {
+  if(!groups) { return [] }
+  if(!customerId) { throw new Error('customerId is required') }
 
+  const workspaceUpn = getWorkspaceUpn(customerId);
+
+  let personas = [];
+
+  groups.forEach(group => {
+    const newGroup = {
+      upn: `upn:google:group:${group.id}`,
+      id: group.id,
+      platform: 'google',
+      type: 'group',
+      friendlyName: `${group.name} (${group.email})`,
+      name: group.name,
+      email: group.email,
+      description: group.description,
+      adminCreated: group.adminCreated,
+      kind: group.kind,
+      control: [],
+      obey: [],
+    }
+
+    newGroup.obey.push({
+      upn: workspaceUpn,
+      level: LEVEL["REALIZE"],
+      confidence: 1
+    })
+
+    newGroup.control.push({
+      upn: workspaceUpn,
+      level: LEVEL["ACT_AS"],
+      confidence: 1
+    })
+
+    let allAliases = [group.email]
+    if(group.aliases) { allAliases = allAliases.concat(group.aliases) }
+
+    allAliases.forEach(email => {
+      const rel = {
+        upn: `upn:email:account:${email}`,
+        level: LEVEL["ALIAS"],
+        confidence: 1
+      }
+      newGroup.control.push(rel);
+      newGroup.obey.push(rel);
+    });
+
+    personas.push(newGroup);
+  });
+
+  return personas;
 }
 
-const mapGroupMemberPersonas = (groupMemberSet) => {
+const mapGroupMemberPersonas = (groupMemberSets) => {
+  if(!groupMemberSets) { return [] }
 
+  let personas = [];
+
+  const levelMap = {
+    "OWNER": LEVEL["ADMIN"],
+    "MANAGER": LEVEL["MANAGE"],
+    "MEMBER": LEVEL["ACT_AS"],
+  }
+
+  const typeMap = {
+    "USER": "account",
+    "GROUP": "group",
+    "CUSTOMER": "workspace",
+  }
+
+  groupMemberSets.forEach(set => {
+    const groupId = set.id;
+    if(!groupId) { throw new Error('groupId is required') }
+
+    const groupUpn = `upn:google:group:${groupId}`;
+
+    set.members.forEach(member => {
+      const type = typeMap[member.type];
+
+      const newMember = {
+        upn: `upn:google:${type}:${member.id}`,
+        id: member.id,
+        platform: 'google',
+        type: type,
+        control: [],
+        obey: [],
+      }
+  
+      if(member.status !== 'SUSPENDED') {
+        newMember.control.push({
+          upn: groupUpn,
+          level: levelMap[member.role],
+          role: member.role,
+          confidence: 1
+        })
+    
+        const alias = {
+          upn: `upn:email:account:${member.email}`,
+          level: LEVEL["ALIAS"],
+          confidence: 1
+        }
+        newMember.control.push(alias);
+        newMember.obey.push(alias);
+      }
+      personas.push(newMember);
+    }); // end groupMembers.forEach
+  }) // end groupMemberSets.forEach
+
+  return personas;
 }
 
-const mapAuthTokenPersonas = (authTokenSet) => {
+const mapAuthTokenPersonas = (authTokenSets) => {
+  if(!authTokenSets) { return [] }
 
+  let personas = [];
+
+  authTokenSets.forEach(set => {
+    const email = set.userEmail;
+    const userId = set.userId;
+    const tokens = set.userTokens;
+
+    tokens.forEach(token => {
+      const name = token.displayText;
+      const platform = tokenMap[name];
+      if(!platform) { 
+        console.log(`No platform found for token: ${name}`);
+        return; 
+      }
+
+      const newToken = {
+        upn: `upn:${platform}:account:${email}`,
+        id: email,
+        platform: platform,
+        type: 'account',
+        googleTokenClientId: token.clientId,
+        control: [],
+        obey: [],
+      }
+
+      newToken.obey.push({
+        upn: `upn:google:account:${userId}`,
+        level: LEVEL["ADMIN"],
+        confidence: 1
+      });
+      personas.push(newToken);
+    });
+  });
+
+  return personas;
 }
 
 //

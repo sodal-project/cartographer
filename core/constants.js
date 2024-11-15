@@ -112,7 +112,6 @@ const TYPE = {
   "RECORD": "record",             // a platform's reference to a human being; records map indirect control to other personas (the record describes but does not grant agency)
   "ACTIVITY": "activity",                     // a group of humans working together
   "ACCOUNT": "account",
-  "AUTH": "auth",
   "WORKSPACE": "workspace",
   "ORGANIZATION": "organization",
   "ORGUNIT": "orgunit",

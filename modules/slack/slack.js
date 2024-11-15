@@ -199,10 +199,10 @@ const mapUserPersonas = (users, slackTeamId) => {
     const email = user.profile.email;
     if(email && status == "active") {
       const authPersona = {
-        upn: "upn:slack:auth:" + email,
+        upn: "upn:slack:account:" + email,
         id: email,
         platform: "slack",
-        type: "auth",
+        type: "account",
         control: [
           {
             upn: "upn:slack:account:" + user.id,
