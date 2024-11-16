@@ -202,7 +202,7 @@ async function linkPersonas(formData) {
     }
   }
 
-  await core.graph.mergePersonas(personas);
+  await core.graph.mergePersonas(personas, directorySource);
 
   console.log(`Processed ${personas.length} persona links`);
 
