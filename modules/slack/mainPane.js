@@ -1,5 +1,6 @@
 const core = require('../../core/core.js');
 const slack = require('./slack.js');
+const crypto = require('crypto');
 
 /**
  * @description 
@@ -27,18 +28,19 @@ async function addInstance(formData) {
     throw new Error('Missing required fields');
   }
 
-  const configData = await core.config.readConfig();
-  const instances = configData?.instances || {};
+  const id = crypto.randomBytes(10).toString('hex');
   const secret = await core.crypto.encrypt(formData.token);
 
   const instance = {
+    id,
     name: formData.name,
     teamId: formData.teamId,
     secret: secret,
     ready: true,
   }
-  instances[formData.teamId] = instance;
 
+  const instances = await core.config.readConfig("instances") || {};
+  instances[id] = instance;
   await core.config.writeConfig({ instances });
 
   return redraw();
@@ -46,14 +48,14 @@ async function addInstance(formData) {
 
 async function deleteInstance(formData) {
   const instances = await core.config.readConfig("instances");
-  const teamId = formData.teamId;
+  const id = formData.id;
 
-  if(instances[teamId]) {
-    console.log('Deleting Slack Instance: ', instances[teamId].name);
-    await core.graph.deleteSource(`source:slack:${teamId}`);
-    await core.config.deleteConfig(`instances.${teamId}`);
+  if(instances[id]) {
+    console.log('Deleting Slack Instance: ', instances[id].name);
+    await core.graph.deleteSource(`source:slack:${id}`);
+    await core.config.deleteConfig(`instances.${id}`);
   } else {
-    console.log(`Instance ${teamId} not found`);
+    console.log(`Slack instance ${id} not found`);
   }
 
   return redraw();
@@ -61,8 +63,8 @@ async function deleteInstance(formData) {
 
 async function sync(formData) {
   const instances = await core.config.readConfig("instances");
-  const teamId = formData.teamId;
-  const instance = instances[teamId];
+  const id = formData.id;
+  const instance = instances[id];
 
   if(!instance) {
     throw new Error('Instance not found');

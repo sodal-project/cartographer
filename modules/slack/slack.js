@@ -5,24 +5,21 @@ async function sync(instance){
   try {
 
     const source = {
-      sid: `source:slack:${instance.teamId}`,
+      sid: `source:slack:${instance.id}`,
       name: instance.name,
       lastUpdate: new Date().toISOString(),
     }
 
-    const slackTeamId = instance.teamId;
-    const slackTeamFriendlyName = instance.name;
-
-    console.log(`Processing ${slackTeamFriendlyName}`);
+    console.log(`Processing ${instance.name}`);
     const personas = await getInstancePersonas(instance);
-    await core.cache.save(`allPersonas-${slackTeamId}`, personas);
+    await core.cache.save(`allPersonas-${instance.id}`, personas);
 
     //
     // update graph from remote store
     //
     await core.graph.syncPersonas(personas, source);
 
-    console.log(`Process Complete for ${slackTeamFriendlyName}`);
+    console.log(`Process Complete for ${instance.name}`);
     
   } catch(e) {
     console.log(e);
