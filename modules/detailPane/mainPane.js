@@ -1,11 +1,11 @@
 const core = require('../../core/core.js');
 
 /**
- * @description Fetch data from the config database namespace and render the index.hbs template
+ * @description Fetch data from the config database namespace and render the mainPane.hbs template
  * @returns {string} - Compiled HTML content
  */
 async function redraw(data = {}) {
-  return core.client.render('index.hbs', data);
+  return core.client.render('mainPane.hbs', data);
 }
 
 async function getNameFromPersona(persona) {
@@ -35,7 +35,7 @@ async function getSubpanesFromUpn(upn) {
 }
 
 async function buildConfig(upn = "upn:directory:participant:p0001") {
-  const persona = await core.graph.readPersonaObject(upn);
+  const persona = await core.graph.readPersona(upn);
 
   // Persona was not found
   if (!persona) {
@@ -62,9 +62,10 @@ async function buildConfig(upn = "upn:directory:participant:p0001") {
  * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
-async function index() {
+async function mainPane() {
   const config = await buildConfig();
-  return redraw(config);
+  // return redraw(config);
+  return core.client.render('mainPane.hbs', {});
 }
 
 async function search(formData) {
@@ -73,6 +74,6 @@ async function search(formData) {
 }
 
 module.exports = {
-  index,
+  mainPane,
   search,
 };

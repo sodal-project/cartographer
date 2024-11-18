@@ -105,7 +105,7 @@ async function update(tableForm) {
   // generate table data required to render the table
   const data = await read(tableConfig, tableForm);
 
-  return await core.client.render('table.hbs', { tableData: data } );
+  return await core.client.render('personaTable.hbs', { tableData: data } );
 }
 /**
  * @description Read a table from a TableConfig object
@@ -135,7 +135,7 @@ async function read(tableConfig, tableForm) {
   const allGraphFilters = [...graphFilters, ...forceFilters]
 
   // Get the personas from the graph based on the current filters and sort
-  const rawPersonas = await core.graph.readAgents(allGraphFilters, graphSort);
+  const rawPersonas = await core.graph.readPersonas(allGraphFilters, graphSort);
 
   // Get table rows based on the returned personas
   const tableRows = rowsFromRawQuery(rawPersonas, tableConfig.forceVisibility);

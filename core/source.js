@@ -1,16 +1,16 @@
 const check = require('./check');
 
 const getSourceObject = (module, type, identifier, name) => {
-  let sourceId = `source:default:${module}`
+  let sid = `source:default:${module}`
   let sourceName = `${module} Default Source`;
 
   if(type && identifier && name) {
-    sourceId = `source:${type}:${identifier}`;
+    sid = `source:${type}:${identifier}`;
     sourceName = name;
   }
 
   const source = {
-    id: sourceId,
+    sid: sid,
     name: sourceName,
   }
 

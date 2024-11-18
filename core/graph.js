@@ -2,7 +2,7 @@ const check = require('./check');
 const connector = require('./graphNeo4jConnector');
 const sourceUtils = require('./source');
 const sourceStore = require('./sourceStore');
-const personaUtil = require('./persona');
+const personaUtils = require('./persona');
 const graphFilter = require('./graphFilter');
 
 /* TODO: enable pagination
@@ -47,26 +47,26 @@ const deleteOrphanedPersonas = async (module) => {
  * 
  * @param {string} module - automatically passed by core
  * @param {string} upn - the upn of the persona to remove
- * @param {string} sourceId - OPTIONAL, the source id to remove the persona from
+ * @param {string} sid - OPTIONAL, the source id to remove the persona from
  * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query 
  * @returns {object} - The response from the database, or the query set object
  */
-const removePersona = async (module, upn, sourceId, querySetOnly) => {
-  if(!sourceId) {
-    sourceId = sourceUtils.getSourceObject(module).id;
+const removePersona = async (module, upn, sid, querySetOnly) => {
+  if(!sid) {
+    sid = sourceUtils.getSourceObject(module).sid;
   }
 
   const queries = [];
   
   queries.push({
-    query: `MATCH (persona:Persona { upn: $upn })-[r {sourceId: $sourceId }]-()
+    query: `MATCH (persona:Persona { upn: $upn })-[r {sid: $sid }]-()
     DELETE r`,
-    values: { upn, sourceId }
+    values: { upn, sid }
   })
   queries.push({
-    query: `MATCH (source:Source { id: $sourceId })-[r:DECLARE]->(persona:Persona {upn: $upn})
+    query: `MATCH (source:Source { sid: $sid })-[r:DECLARE]->(persona:Persona {upn: $upn})
     DELETE r`,
-    values: { upn, sourceId }
+    values: { upn, sid }
   })
 
   if(querySetOnly) {
@@ -114,24 +114,24 @@ const deletePersona = async (module, upn, querySetOnly) => {
  * Delete a source from the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {string} sourceId - OPTIONAL, the source id to delete
+ * @param {string} sid - OPTIONAL, the source id to delete
  * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
  * @returns {object} - The response from the database, or the query set object
  */
-const deleteSource = async (module, sourceId, querySetOnly) => {
-  if(!sourceId) {
-    sourceId = sourceUtils.getSourceObject(module).id;
+const deleteSource = async (module, sid, querySetOnly) => {
+  if(!sid) {
+    sid = sourceUtils.getSourceObject(module).sid;
   }
 
   const queries = [];
   queries.push({
-    query: `MATCH (source:Source {id: $sourceId})
+    query: `MATCH (source:Source {sid: $sid})
     DETACH DELETE source`,
-    values: { sourceId }
+    values: { sid }
   })
   queries.push({
-    query: `MATCH ()-[r:CONTROL]-() WHERE r.sourceId = $sourceId DELETE r`,
-    values: { sourceId }
+    query: `MATCH ()-[r:CONTROL]-() WHERE r.sid = $sid DELETE r`,
+    values: { sid }
   })
 
   if(querySetOnly) {
@@ -140,48 +140,8 @@ const deleteSource = async (module, sourceId, querySetOnly) => {
 
   const response = await connector.runRawQueryArray(queries);
 
-  console.log('Deleted source:', sourceId);
+  console.log('Deleted source:', sid);
   return response
-}
-
-/**
- * Link two personas with a control relationship
- * 
- * @param {string} module - automatically passed by core
- * @param {string} controlUpn - the upn of the controlling persona
- * @param {string} obeyUpn - the upn of the obeying persona
- * @param {number} level - the level of control
- * @param {number} confidence - the confidence of the relationship
- * @param {string} sourceId - OPTIONAL, the source id to link the personas with
- * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
- */
-const linkPersona = async (module, controlUpn, obeyUpn, level, confidence, sourceId, querySetOnly) => {
-  if(!sourceId) {
-    sourceId = sourceUtils.getSourceObject(module).id;
-  }
-
-  check.sourceId(sourceId);
-  check.levelNumber(level);
-  check.confidenceNumber(confidence);
-  check.upnString(controlUpn);
-  check.upnString(obeyUpn);
-
-  const query = {
-    query: `MATCH (control:Persona { upn: $controlUpn }), (obey:Persona { upn: $obeyUpn }) 
-    MERGE (control)-[r:CONTROL { level: $level, confidence: $confidence, sourceId: $sourceId }]->(obey)
-    RETURN r`,
-    values: { controlUpn, obeyUpn, level, confidence, sourceId }
-  }
-
-  if(querySetOnly) {
-    return query;
-  }
-
-  const response = await connector.runRawQueryArray([query]);
-
-  console.log('Linked personas:', controlUpn, obeyUpn);
-  return response;
-
 }
 
 /**
@@ -217,11 +177,11 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
   const relationships = [];
 
   queries.push({
-    query: `MERGE (source:Source {id: $source.id})
+    query: `MERGE (source:Source {sid: $source.sid})
     MERGE (persona:Persona {upn: $upn})
     MERGE (source)-[:DECLARE]->(persona)
     SET persona += $persona
-    SET source.name = $source.name, source.lastUpdate = $source.lastUpdate`,
+    SET source += $source`,
     values: { source, persona, upn }
   })
 
@@ -233,7 +193,6 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
 
     rel.level = parseInt(rel.level);
     rel.confidence = parseFloat(rel.confidence);
-    rel.sourceId = source.id;
 
     relationships.push(rel);
   }
@@ -246,30 +205,34 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
 
     rel.level = parseInt(rel.level);
     rel.confidence = parseFloat(rel.confidence);
-    rel.sourceId = source.id;
 
     relationships.push(rel);
   }
 
   for(const rel of relationships) {
-    const obeyPersona = personaUtil.newFromUpn(rel.obeyUpn);
-    const controlPersona = personaUtil.newFromUpn(rel.controlUpn);
+    const obey = personaUtils.newFromUpn(rel.obeyUpn);
+    const control = personaUtils.newFromUpn(rel.controlUpn);
+    
     delete rel.obeyUpn;
     delete rel.controlUpn;
-    delete obeyPersona.control;
-    delete obeyPersona.obey;
-    delete controlPersona.control;
-    delete controlPersona.obey;
+    delete obey.control;
+    delete obey.obey;
+    delete control.control;
+    delete control.obey;
 
     queries.push({
-      query: `MERGE (control:Persona { upn: $controlPersona.upn }) 
-      MERGE (obey:Persona { upn: $obeyPersona.upn }) 
-      MERGE (control)-[r:CONTROL]->(obey)
-      SET obey += $obeyPersona
-      SET control += $controlPersona
+      query: `MERGE (control:Persona { upn: $control.upn }) 
+      MERGE (obey:Persona { upn: $obey.upn })
+      MERGE (source:Source { sid: $source.sid })
+      MERGE (source)-[:DECLARE]->(control)
+      MERGE (source)-[:DECLARE]->(obey)
+      MERGE (control)-[r:CONTROL { sid: $source.sid }]->(obey)
+      SET source += $source
+      SET control += $control
+      SET obey += $obey
       SET r += $rel
       RETURN r`,
-      values: { obeyPersona, controlPersona, rel }
+      values: { source, obey, control, rel }
     })
   }
 
@@ -319,7 +282,7 @@ const mergeSource = async (module, source, querySetOnly) => {
   }
   check.sourceObject(source);
 
-  const query = `MERGE (source:Source {id: $source.id})
+  const query = `MERGE (source:Source {sid: $source.sid})
   SET source.name = $source.name, source.lastUpdate = $source.lastUpdate
   RETURN source`
 
@@ -336,19 +299,6 @@ const mergeSource = async (module, source, querySetOnly) => {
   });
 
   return graphSource[0];
-}
-
-/**
- * Filter and sort agents from the persona graph database
- * 
- * @param {string} module - automatically passed by core
- * @param {object} filter - OPTIONAL, a filter object
- * @param {object} sort - OPTIONAL, a sort object
- */
-const readAgents = async (module, filter, sort, asUpnArray) => {
-  const results = await graphFilter(filter, sort, asUpnArray);
-
-  return results;
 }
 
 /**
@@ -379,7 +329,7 @@ const readOrphanedPersonas = async (module) => {
  * @param {string} upn - the upn of the persona to read 
  * @returns {object} - The persona object
  */
-const readPersonaObject = async (module, upn) => {
+const readPersona = async (module, upn) => {
 
   // get the persona and its properties
   const query = `MATCH (persona:Persona {upn: $upn})
@@ -392,7 +342,6 @@ const readPersonaObject = async (module, upn) => {
   })
   const persona = personaResponse[0];
 
-  // if the persona doesn't exist return null
   if(!persona) {
     return null;
   }
@@ -430,22 +379,35 @@ const readPersonaObject = async (module, upn) => {
 }
 
 /**
+ * Filter and sort personas from the persona graph database
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {object} filter - OPTIONAL, a filter object
+ * @param {object} sort - OPTIONAL, a sort object
+ */
+const readPersonas = async (module, filter, sort, asUpnArray) => {
+  const results = await graphFilter(filter, sort, asUpnArray);
+
+  return results;
+}
+
+/**
  * Get a source object from the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {string} sourceId - OPTIONAL, the source id to read
+ * @param {string} sid - OPTIONAL, the source id to read
  * @returns {object} - The source object
  */
-const readSource = async (module, sourceId) => {
-  if(!sourceId) {
-    sourceId = sourceUtils.getSourceObject(module).id;
+const readSource = async (module, sid) => {
+  if(!sid) {
+    sid = sourceUtils.getSourceObject(module).id;
   }
-  check.sourceId(sourceId);
+  check.sidString(sid);
 
-  const query = `MATCH (source:Source {id: $sourceId})
+  const query = `MATCH (source:Source {sid: $sid})
   RETURN source`
 
-  const response = await connector.runRawQuery(query, { sourceId });
+  const response = await connector.runRawQuery(query, { sid });
 
   const source = response.records.map(record => {
     return record.get('source').properties;
@@ -458,18 +420,18 @@ const readSource = async (module, sourceId) => {
  * Get all personas declared by a given source
  * 
  * @param {string} module - automatically passed by core
- * @param {string} sourceId - OPTIONAL, the source id to read personas from
+ * @param {string} sid - OPTIONAL, the source id to read personas from
  * @returns {object[]} - An array of persona objects
  */
-const readSourcePersonas = async (module, sourceId) => {
-  if(!sourceId) {
-    sourceId = sourceUtils.getSourceObject(module).id;
+const readSourcePersonas = async (module, sid) => {
+  if(!sid) {
+    sid = sourceUtils.getSourceObject(module).sid;
   }
 
-  const query = `MATCH (source:Source {id: $sourceId})-[:DECLARE]->(persona:Persona)
+  const query = `MATCH (source:Source {sid: $sid})-[:DECLARE]->(persona:Persona)
   RETURN persona`
 
-  const response = await connector.runRawQuery(query, { sourceId });
+  const response = await connector.runRawQuery(query, { sid });
 
   const personas = response.records.map(record => {
     return record.get('persona').properties;
@@ -482,15 +444,15 @@ const readSourcePersonas = async (module, sourceId) => {
  * Get all relationships declared by a given source
  * 
  * @param {string} module - automatically passed by core
- * @param {string} sourceId - The source id to read relationships from
+ * @param {string} sid - The source id to read relationships from
  * @returns {object[]} - An array of relationship objects
  */
-const readSourceRelationships = async (module, sourceId) => {
+const readSourceRelationships = async (module, sid) => {
   const query = `MATCH (persona:Persona)-[rel:CONTROL]->(relation:Persona)
-  WHERE rel.sourceId = $sourceId
+  WHERE rel.sid = $sid
   RETURN DISTINCT persona.upn AS controlUpn, relation.upn AS obeyUpn, properties(rel)`
 
-  const response = await connector.runRawQuery(query, { sourceId });
+  const response = await connector.runRawQuery(query, { sid });
 
   const relationships = response.records.map(record => {
     const controlUpn = record.get('controlUpn');
@@ -508,8 +470,8 @@ const readSourceRelationships = async (module, sourceId) => {
  * @param {object} optionalParams - The parameters for the query
  * @returns {object} - The response from the database
  */
-const runRawQuery = async (module, query, optionalParams) => {
-  return await connector.runRawQuery (query, optionalParams);
+const runRawQuery = async (module, query, optionalParams, doCache) => {
+  return await connector.runRawQuery (query, optionalParams, doCache);
 }
 
 /**
@@ -518,8 +480,8 @@ const runRawQuery = async (module, query, optionalParams) => {
  * @param {object[]} queryArray - An array of query objects
  * @returns {object} - The response from the database
  */
-const runRawQueryArray = async (module, queryArray) => {
-  return await connector.runRawQueryArray(queryArray);
+const runRawQueryArray = async (module, queryArray, doCache) => {
+  return await connector.runRawQueryArray(queryArray, doCache);
 }
 
 const syncPersonas = async (module, personaArray, customSource) => {
@@ -531,7 +493,7 @@ const syncPersonas = async (module, personaArray, customSource) => {
   sourceStore.addPersonas(store, personaArray);
   check.sourceStoreObject(store);
 
-  const oldStore = await readSourceStore(module, source.id); 
+  const oldStore = await readSourceStore(module, source.sid); 
   const queries = sourceStore.getSyncQueries(store, oldStore);
 
   // ensure the source is in the graph
@@ -550,26 +512,26 @@ const syncPersonas = async (module, personaArray, customSource) => {
 /**
  * Get a source store object from the graph
  * 
- * @param {string} sourceId 
+ * @param {string} sid 
  * @returns {object} - A source store object representing the entire
  *  graph associated with this source
  */
-const readSourceStore = async (module, sourceId) => {
+const readSourceStore = async (module, sid) => {
 
   // get the source object
-  const source = await readSource(module, sourceId);
+  const source = await readSource(module, sid);
 
   // if the source doesn't exist, return null
   if(!source) {
-    console.log(`Source ${sourceId} not found`);
+    console.log(`Source ${sid} not found`);
     return null;
   }
 
   // get all personas for this source
-  const graphPersonas = await readSourcePersonas(module, sourceId);
+  const graphPersonas = await readSourcePersonas(module, sid);
 
   // get all relationships for this source
-  const graphRelationships = await readSourceRelationships(module, sourceId);
+  const graphRelationships = await readSourceRelationships(module, sid);
 
   // create a new store object
   let store = sourceStore.newStore(source);
@@ -584,7 +546,7 @@ const readSourceStore = async (module, sourceId) => {
   try {
     check.sourceStoreObject(store);
   } catch (error) {
-    console.error(`Error validating the source store for Source: ${sourceId}`);
+    console.error(`Error validating the source store for Source: ${sid}`);
     throw error;
   }
 
@@ -596,13 +558,12 @@ module.exports = {
   deletePersona,
   removePersona,
   deleteSource,
-  linkPersona,
   mergePersona,
   mergePersonas,
   mergeSource,
-  readAgents,
   readOrphanedPersonas,
-  readPersonaObject,
+  readPersona,
+  readPersonas,
   readSource,
   readSourcePersonas,
   readSourceRelationships,

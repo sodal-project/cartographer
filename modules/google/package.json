@@ -1,0 +1,14 @@
+{
+  "name": "cartographer-google-integration",
+  "version": "1.0.0",
+  "main": "mainPane.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}
