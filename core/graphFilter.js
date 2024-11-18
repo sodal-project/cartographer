@@ -25,9 +25,10 @@ filter: [
   {
     type: agency
     key: control | obey
-    filter: [ ... ]
-    levels: number[]
-    confidence: {
+    filter: [ ... ]                  // if omitted, the filter is applied to the entire graph
+    levels: number[]                 // if omitted, the filter is applied to all levels
+    depth: number || [min, max]      // if omitted, the filter is applied to all depths
+    confidence: {                    // if omitted, the filter is applied to all confidence levels
       min: number
       max: number
     }
@@ -200,25 +201,25 @@ async function getUpnsBySourceArray (sourceArray, upns) {
 
 async function getUpnsByAgency (agency, upns) {
 
-  const direction = agency.key;
-  const filter = agency.filter;
-  const levels = [];
   const confidence = agency.confidence || { min: 0, max: 1 };
-  const filterUpns = await getUpnsFromFilter(filter);
-
   confidence.min = parseFloat(confidence.min);
   confidence.max = parseFloat(confidence.max);
   if(confidence.min > confidence.max || confidence.min < 0 || confidence.max > 1) {
     throw new Error('Invalid confidence range');
   }
 
+  const levels = [];
   for(const level of agency.levels) {
     levels.push(CC.LEVEL[level]);
   }
 
+  const filter = agency.filter;
+  const filterUpns = await getUpnsFromFilter(filter);
+
   let indexUpnString = "";
   let filterUpnString = "";
 
+  const direction = agency.key;
   if(direction === 'control') {
     indexUpnString = "control.upn"
     filterUpnString = "obey.upn"
@@ -229,8 +230,21 @@ async function getUpnsByAgency (agency, upns) {
     throw new Error('Invalid agency direction (must be control or obey)');
   }
 
+  let depthString = "+";  // search all depths by default
+  if(agency.depth && Array.isArray(agency.depth)) {
+    if(agency.depth.length !== 2) {
+      throw new Error('Invalid agency depth array (must be [min, max])');
+    } if(agency.depth[0] > agency.depth[1]) {
+      throw new Error('Invalid agency depth array (min must be less than max)');
+    }
+    depthString = `{${agency.depth[0]},${agency.depth[1]}}`;        // search between the specified depths
+  } else if(agency.depth) {
+    if(agency.depth === 1) { depthString = `{1}` }                // search only immediate relationships
+    if(agency.depth > 1) { depthString = `{1,${agency.depth}}` }  // search up to the specified depth
+  }
+
   // Find all nonredundant paths between the control and obey personas
-  let query = `MATCH SHORTEST 1 ((control:Persona) (()-[rList:CONTROL]->())+ (obey:Persona))\n`;
+  let query = `MATCH SHORTEST 1 ((control:Persona) (()-[rList:CONTROL]->())${depthString} (obey:Persona))\n`;
 
   // Filter control and obey personas based on the control direction
   query += `WHERE ${indexUpnString} IN $upns AND ${filterUpnString} IN $filterUpns\n`;
