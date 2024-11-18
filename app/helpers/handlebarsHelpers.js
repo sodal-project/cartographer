@@ -79,9 +79,46 @@ const dynamicPartial = (partialName, data) => {
   return ''; // Return an empty string if the partial isn't found or valid
 };
 
+/**
+ * Convert a JavaScript object to a JSON string for display in Handlebars templates.
+ * 
+ * @param {*} context - The JavaScript object or value to stringify.
+ * @returns {string} - A JSON string representation of the input, pretty-printed with 2-space indentation.
+ * 
+ * @example
+ * // Handlebars template:
+ * <pre>{{json this}}</pre>
+ * 
+ * // Data:
+ * { 
+ *   user: {
+ *     name: "John Doe",
+ *     age: 30,
+ *     address: { street: "123 Main St", city: "New York" }
+ *   }
+ * }
+ * 
+ * // Rendered output:
+ * <pre>
+ * {
+ *   "user": {
+ *     "name": "John Doe",
+ *     "age": 30,
+ *     "address": {
+ *       "street": "123 Main St",
+ *       "city": "New York"
+ *     }
+ *   }
+ * }
+ * </pre>
+ */
+const json = (context) => {
+  return JSON.stringify(context, null, 2);
+}
 
 module.exports = {
   eq,
   add,
   dynamicPartial,
+  json,
 };
