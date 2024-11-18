@@ -9,6 +9,7 @@ Cartographer is a self-contained application that can run locally or on docker-c
 ## Table of Contents
 
 - [Modules](docs/modules.md) - developing and working with modules
+- [Components](docs/components.md) - developing and working with components
 
 ## Setup
 

@@ -1,3 +1,5 @@
+const Handlebars = require('handlebars');
+
 /**
  * Add custom Handlebars helpers here.
  */
@@ -44,7 +46,79 @@ const eq = (a, b) => a === b;
  */
 const add = (a, b) => a + b;
 
+/**
+ * Include a partial inside of another partial
+ * 
+ * @param {*} partialName - The name of the partial to include
+ * @param {*} data - The data to pass to the partial
+ * @returns - A rendred version of the partial
+ * 
+ * @example
+ * // Handlebars template:
+ * <div>{{dynamicPartial this.component this.data }}</div>
+ * 
+ * // Data:
+ * { component: 'subpane', data: { key: 'value' }}
+ * 
+ * // Rendered output:
+ * <div>Subpane content with value</div>
+ */
+const dynamicPartial = (partialName, data) => {
+  // Look up the partial
+  let partial = Handlebars.partials[partialName];
+
+  // Check if the partial is a string (not compiled)
+  if (typeof partial === 'string') {
+    partial = Handlebars.compile(partial);
+  }
+
+  if (typeof partial === 'function') {
+    return new Handlebars.SafeString(partial(data));
+  }
+
+  return ''; // Return an empty string if the partial isn't found or valid
+};
+
+/**
+ * Convert a JavaScript object to a JSON string for display in Handlebars templates.
+ * 
+ * @param {*} context - The JavaScript object or value to stringify.
+ * @returns {string} - A JSON string representation of the input, pretty-printed with 2-space indentation.
+ * 
+ * @example
+ * // Handlebars template:
+ * <pre>{{json this}}</pre>
+ * 
+ * // Data:
+ * { 
+ *   user: {
+ *     name: "John Doe",
+ *     age: 30,
+ *     address: { street: "123 Main St", city: "New York" }
+ *   }
+ * }
+ * 
+ * // Rendered output:
+ * <pre>
+ * {
+ *   "user": {
+ *     "name": "John Doe",
+ *     "age": 30,
+ *     "address": {
+ *       "street": "123 Main St",
+ *       "city": "New York"
+ *     }
+ *   }
+ * }
+ * </pre>
+ */
+const json = (context) => {
+  return JSON.stringify(context, null, 2);
+}
+
 module.exports = {
   eq,
   add,
+  dynamicPartial,
+  json,
 };
