@@ -70,6 +70,8 @@ const operators = {
   "endsWith": "ENDS WITH",
 }
 
+const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+
 /**
  * @description Filter the graph database based on the provided filter object
  * 
@@ -208,9 +210,16 @@ async function getUpnsByAgency (agency, upns) {
     throw new Error('Invalid confidence range');
   }
 
-  const levels = [];
-  for(const level of agency.levels) {
-    levels.push(CC.LEVEL[level]);
+  let levels = [];
+  if(!agency.levels || agency.levels.length === 0) {
+    levels = allLevels;
+  } else {
+    for(const level of agency.levels) {
+      if(!CC.LEVEL[level]) {
+        throw new Error('Invalid level');
+      }
+      levels.push(CC.LEVEL[level]);
+    }
   }
 
   const filter = agency.filter;
