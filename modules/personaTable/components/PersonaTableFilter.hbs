@@ -32,7 +32,13 @@
         <input type="text" name="filterValue" value={{value}} class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
       </div>
       <div class="flex justify-between w-full mt-4">
-        {{> FormSubmit label="Save" }}
+        <button
+          class="bg-indigo-600 rounded text-white text-sm p-1 px-6"
+          type="submit"
+          x-ref="submitButton"
+        >
+          Save
+        </button>
         <button
           type="button"
           class="p-1 px-6 rounded text-white text-sm bg-gray-600"
