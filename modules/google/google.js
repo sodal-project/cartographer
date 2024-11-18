@@ -141,7 +141,7 @@ const mapUserPersonas = (users, customerId) => {
     })
 
     // Add email aliases
-    let allAliases = [user.primaryEmail]
+    let allAliases = user.primaryEmail ? [user.primaryEmail] : [];
     if(user.aliases) { allAliases = allAliases.concat(user.aliases) }
     if(user.nonEditableAliases) { allAliases = allAliases.concat(user.nonEditableAliases) }
 
@@ -196,7 +196,7 @@ const mapGroupPersonas = (groups, customerId) => {
       confidence: 1
     })
 
-    let allAliases = [group.email]
+    let allAliases = group.email ? [group.email] : [];
     if(group.aliases) { allAliases = allAliases.concat(group.aliases) }
 
     allAliases.forEach(email => {
