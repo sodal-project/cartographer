@@ -5,7 +5,7 @@ async function sync(instance){
   try {
 
     const source = {
-      id: `source:slack:${instance.teamId}`,
+      sid: `source:slack:${instance.teamId}`,
       name: instance.name,
       lastUpdate: new Date().toISOString(),
     }
@@ -199,10 +199,10 @@ const mapUserPersonas = (users, slackTeamId) => {
     const email = user.profile.email;
     if(email && status == "active") {
       const authPersona = {
-        upn: "upn:slack:auth:" + email,
+        upn: "upn:slack:account:" + email,
         id: email,
         platform: "slack",
-        type: "auth",
+        type: "account",
         control: [
           {
             upn: "upn:slack:account:" + user.id,

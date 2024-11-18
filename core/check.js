@@ -93,25 +93,25 @@ const idString = (id) => {
 /**
  * Test if a string is a valid source ID (source:<type>:<instanceId>)
  * 
- * @param {string} id 
+ * @param {string} sid 
  * @throws {Error} - If the source ID string is invalid
  * @returns {boolean} - True if the source ID string is valid
  */
-const sourceId = (id) => {
-  if(!id) {
-    throw Error('ID is empty');
+const sidString = (sid) => {
+  if(!sid) {
+    throw Error('Source ID is empty');
   }
-  const sourceString = id.split(':')[0];
+  const sourceString = sid.split(':')[0];
   if(sourceString !== 'source') {
     throw Error('ID string invalid: Does not start with "source:"');
   }
-  const sourceType = id.split(':')[1];
+  const sourceType = sid.split(':')[1];
   if(!sourceType) {
     throw Error('Source type is empty');
   }
-  const sourceId = id.split(':')[2];
-  if(!sourceId) {
-    throw Error('Source ID is empty');
+  const instanceId = sid.split(':')[2];
+  if(!instanceId) {
+    throw Error('Source Instance ID is empty');
   }
   return true;
 }
@@ -179,7 +179,7 @@ const simpleValue = (property) => {
  *  upn: string,
  *  level: number,
  *  confidence: number,
- *  sourceId: string,
+ *  sid: string,
  * }
  * 
  * @param {string} upn 
@@ -205,8 +205,8 @@ const personaRelsArray = (upn, relArray) => {
           case 'level':
           case 'confidence':
             break;
-          case 'sourceId':
-            sourceId(relationship[prop]);
+          case 'sid':
+            sidString(relationship[prop]);
             break;
           default:
             simpleValue(relationship[prop]);
@@ -405,7 +405,7 @@ const sourceObject = (source) => {
     if(!source) {
       throw Error('Source object is empty');
     }
-    if(!source.id) {
+    if(!source.sid) {
       throw Error('Source ID is not set');
     }
     if(!source.name) {
@@ -414,7 +414,7 @@ const sourceObject = (source) => {
     for(const prop in source) {
       switch(prop) {
         case 'id':
-          sourceId(source[prop]);
+          sidString(source[prop]);
           break;
         default:
           simpleValue(source[prop]);
@@ -467,7 +467,7 @@ module.exports = {
   personaObject,
   upnString,
   idString,
-  sourceId,
+  sidString,
   typeString,
   platformString,
   simpleValue,

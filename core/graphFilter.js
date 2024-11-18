@@ -25,9 +25,10 @@ filter: [
   {
     type: agency
     key: control | obey
-    filter: [ ... ]
-    levels: number[]
-    confidence: {
+    filter: [ ... ]                  // if omitted, the filter is applied to the entire graph
+    levels: number[]                 // if omitted, the filter is applied to all levels
+    depth: number || [min, max]      // if omitted, the filter is applied to all depths
+    confidence: {                    // if omitted, the filter is applied to all confidence levels
       min: number
       max: number
     }
@@ -69,11 +70,13 @@ const operators = {
   "endsWith": "ENDS WITH",
 }
 
+const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+
 /**
  * @description Filter the graph database based on the provided filter object
  * 
  * This is the entry point for the graph filter. 
- * It takes a filter object and returns an array of agent personas that match the filter.
+ * It takes a filter object and returns an array of personas that match the filter.
  * 
  * @param {object} filter - The filter object
  * @param {object} sort - The sort object
@@ -136,13 +139,18 @@ async function getUpnsFromFilter (filter) {
 }
 
 async function getUpnsByFieldArray (fieldArray) {
-  let query = getStartString();
+  let query = `MATCH (persona:Persona)\n`
+  let firstQuery = true;
 
   for(const field in fieldArray) {
+    if(firstQuery) {
+      firstQuery = false;
+      query += `WHERE `;
+    } else {
+      query += `AND `;
+    }
+
     const filter = fieldArray[field];
-
-    query += `AND `;
-
     const operator = operators[filter.operator];
     const fieldKey = filter.key;
     const fieldValue = filter.value;
@@ -152,14 +160,9 @@ async function getUpnsByFieldArray (fieldArray) {
       throw new Error('Invalid filter');
     }
 
-    let personaToFilterOn = "agent";
-    if(fieldKey === "id") {
-      personaToFilterOn = "alias";
-    }
-
-    query += `${modifier}${personaToFilterOn}.${fieldKey} ${operator} "${fieldValue}"\n`;
+    query += `${modifier}persona.${fieldKey} ${operator} "${fieldValue}"\n`;
   }
-  query += getEndString();
+  query += `RETURN DISTINCT persona.upn`;
   return await readSingleArray(query);
 }
 
@@ -173,9 +176,8 @@ async function getUpnsBySetArray (setArray, upns) {
 }
 
 async function getUpnsBySourceArray (sourceArray, upns) {
-  let query = `MATCH (source:Source)-[:DECLARE]->(agent:Persona)
-  WHERE NOT (agent)<-[:CONTROL { level: 5 }]-(:Persona)
-  AND agent.upn IN $upns\n`;
+  let query = `MATCH (source:Source)-[:DECLARE]->(persona:Persona)
+  WHERE persona.upn IN $upns\n`;
 
   for(const source in sourceArray) {
     const filter = sourceArray[source];
@@ -195,31 +197,38 @@ async function getUpnsBySourceArray (sourceArray, upns) {
 
     query += `${modifier}source.${fieldKey} ${operator} "${fieldValue}"\n`;
   }
-  query += getEndString();
+  query += `RETURN DISTINCT persona.upn`;
   return await readSingleArray(query, { upns });
 }
 
 async function getUpnsByAgency (agency, upns) {
 
-  const direction = agency.key;
-  const filter = agency.filter;
-  const levels = [];
   const confidence = agency.confidence || { min: 0, max: 1 };
-  const filterUpns = await getUpnsFromFilter(filter);
-
   confidence.min = parseFloat(confidence.min);
   confidence.max = parseFloat(confidence.max);
   if(confidence.min > confidence.max || confidence.min < 0 || confidence.max > 1) {
     throw new Error('Invalid confidence range');
   }
 
-  for(const level of agency.levels) {
-    levels.push(CC.LEVEL[level]);
+  let levels = [];
+  if(!agency.levels || agency.levels.length === 0) {
+    levels = allLevels;
+  } else {
+    for(const level of agency.levels) {
+      if(!CC.LEVEL[level]) {
+        throw new Error('Invalid level');
+      }
+      levels.push(CC.LEVEL[level]);
+    }
   }
+
+  const filter = agency.filter;
+  const filterUpns = await getUpnsFromFilter(filter);
 
   let indexUpnString = "";
   let filterUpnString = "";
 
+  const direction = agency.key;
   if(direction === 'control') {
     indexUpnString = "control.upn"
     filterUpnString = "obey.upn"
@@ -230,8 +239,21 @@ async function getUpnsByAgency (agency, upns) {
     throw new Error('Invalid agency direction (must be control or obey)');
   }
 
+  let depthString = "+";  // search all depths by default
+  if(agency.depth && Array.isArray(agency.depth)) {
+    if(agency.depth.length !== 2) {
+      throw new Error('Invalid agency depth array (must be [min, max])');
+    } if(agency.depth[0] > agency.depth[1]) {
+      throw new Error('Invalid agency depth array (min must be less than max)');
+    }
+    depthString = `{${agency.depth[0]},${agency.depth[1]}}`;        // search between the specified depths
+  } else if(agency.depth) {
+    if(agency.depth === 1) { depthString = `{1}` }                // search only immediate relationships
+    if(agency.depth > 1) { depthString = `{1,${agency.depth}}` }  // search up to the specified depth
+  }
+
   // Find all nonredundant paths between the control and obey personas
-  let query = `MATCH SHORTEST 1 ((control:Persona) (()-[rList:CONTROL]->())+ (obey:Persona))\n`;
+  let query = `MATCH SHORTEST 1 ((control:Persona) (()-[rList:CONTROL]->())${depthString} (obey:Persona))\n`;
 
   // Filter control and obey personas based on the control direction
   query += `WHERE ${indexUpnString} IN $upns AND ${filterUpnString} IN $filterUpns\n`;
@@ -244,14 +266,7 @@ async function getUpnsByAgency (agency, upns) {
   if(confidence.min > 0 || confidence.max < 1) {
     query += `AND ALL(confidence IN relConfidences WHERE confidence >= $confidence.min AND confidence <= $confidence.max)\n`;
   }
-  // query += `RETURN DISTINCT ${indexUpnString}`;
-
-  // return the upns for associated agents
-  query += `WITH COLLECT(DISTINCT ${indexUpnString}) AS upns
-  MATCH (agent:Persona) (()-[:CONTROL { level: 5 }]->()){,1} (alias:Persona)
-  WHERE NOT (agent)<-[:CONTROL { level: 5 }]-(:Persona)
-  AND alias.upn IN upns
-  RETURN DISTINCT agent.upn`;
+  query += `RETURN DISTINCT ${indexUpnString}`;
 
   const params = {
     upns,
@@ -280,15 +295,6 @@ async function getUpnsByCompare (compare, upns) {
   return upns;
 }
 
-function getStartString () {
-  return `MATCH (agent:Persona) (()-[:CONTROL { level: 5 }]->()){,1} (alias:Persona)
-  WHERE NOT (agent)<-[:CONTROL { level: 5 }]-(:Persona)\n`;
-}
-
-function getEndString () {
-  return `RETURN DISTINCT agent.upn`;
-}
-
 async function readSingleArray (query, params) {
   // console.log(`--- Running query:\n ${query}`);
   const results = await connector.runRawQuery(query, params);
@@ -298,8 +304,8 @@ async function readSingleArray (query, params) {
 }
 
 async function sortResults (upns, sort) {
-  let query = `MATCH (agent:Persona) WHERE agent.upn IN $upns\n`;
-  query += `RETURN DISTINCT agent ORDER BY agent.${sort.field} ${sort.direction}`;
+  let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
+  query += `RETURN DISTINCT persona ORDER BY persona.${sort.field} ${sort.direction}`;
 
   const results = await connector.runRawQuery(query, { upns });
   return results;

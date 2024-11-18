@@ -28,7 +28,7 @@ const check = require('./check');
  * Structure of a source store object
  * {
  *   source: {
- *     id: string,
+ *     sid: string,
  *     name: string,
  *     lastUpdate: string,
  *   },
@@ -87,14 +87,14 @@ const addRelationships = (store, relationships) => {
 
   for(const relationship of relationships) {
     // skip if source is not the same as the store
-    if(relationship.sourceId && relationship.sourceId !== store.source.id) { continue; }
+    if(relationship.sid && relationship.sid !== store.source.sid) { continue; }
 
     const controlUpn = relationship.controlUpn;
     const obeyUpn = relationship.obeyUpn;
 
     delete relationship.controlUpn;
     delete relationship.obeyUpn;
-    delete relationship.sourceId;
+    delete relationship.sid;
 
     // get or create the control and subordinate personas
     const subordinatePersona = forcePersona(store, obeyUpn);
@@ -130,12 +130,12 @@ const getSyncQueries = (store, storeOld) => {
   let updatedRels = 0; 
   let undeclaredRels = 0;
 
-  const sourceId = store.source.id;
+  const sid = store.source.sid;
 
   if(storeOld){
     // check that the old source data is valid
     check.sourceStoreObject(storeOld);
-    if(store.source.id !== storeOld.source.id) {
+    if(store.source.sid !== storeOld.source.sid) {
       throw Error(`Cannot merge stores with different sources.`);
     }
 
@@ -144,8 +144,8 @@ const getSyncQueries = (store, storeOld) => {
 
     // undeclare old personas that are not in the new store
     for(const upn of oldUpns) {
-      personaQueries.push(getUndeclarePersonaQuery(sourceId, upn));
-      controlQueries = controlQueries.concat(getUndeclareControlQuery(sourceId, upn));
+      personaQueries.push(getUndeclarePersonaQuery(sid, upn));
+      controlQueries = controlQueries.concat(getUndeclareControlQuery(sid, upn));
       undeclaredPersonas++;
       undeclaredRels += Object.keys(storeOld.personas[upn]?.control).length;
     }
@@ -165,13 +165,13 @@ const getSyncQueries = (store, storeOld) => {
       // if the persona is new, declare it
       if(!personaOld) { 
         newPersonas++; 
-        declareQueries.push(getDeclareQuery(sourceId, upn));
+        declareQueries.push(getDeclareQuery(sid, upn));
       }
       else { updatedPersonas++; }
     }
 
     // sync the persona control relationships
-    const personaControlQueries = getSyncControlQueries(sourceId, personaNew, personaOld);
+    const personaControlQueries = getSyncControlQueries(sid, personaNew, personaOld);
     if(personaControlQueries.length > 0) {
       if(!personaOld) { newRels++; }
       else { updatedRels++; }
@@ -240,23 +240,23 @@ const addPersona = (store, persona) => {
   return store;
 }
 
-const getDeclareQuery = (sourceId, upn) => {
+const getDeclareQuery = (sid, upn) => {
   return {
-    query: `MATCH (source:Source { id: $sourceId }), (persona:Persona { upn: $upn })
+    query: `MATCH (source:Source { sid: $sid }), (persona:Persona { upn: $upn })
   MERGE (source)-[rel:DECLARE]->(persona)
   `,
     values: {
-      sourceId: sourceId,
-      upn: upn,
+      sid,
+      upn
     }
   }
 }
 
-const getControlQuery = (sourceId, controlUpn, obeyUpn, relProps) => {
-  relProps.sourceId = sourceId;
+const getControlQuery = (sid, controlUpn, obeyUpn, relProps) => {
+  relProps.sid = sid;
   return {
     query: `MATCH (control:Persona { upn: $controlUpn }), (obey:Persona { upn: $obeyUpn })
-    MERGE (control)-[rel:CONTROL { sourceId: $relProps.sourceId }]->(obey)
+    MERGE (control)-[rel:CONTROL { sid: $relProps.sid }]->(obey)
     SET rel += $relProps
     `,
     values: {
@@ -308,14 +308,14 @@ const getPersonaQuery = (personaNew, personaOld) => {
   }
 }
 
-const getSyncControlQueries = (sourceId, personaNew, personaOld) => {
+const getSyncControlQueries = (sid, personaNew, personaOld) => {
   let queries = [];
 
   if(personaOld) {
     // create an array of upns in the old persona that are not in the new persona
     const controlRelOldUpns = Object.keys(personaOld.control).filter((upn) => !personaNew.control[upn]);
     for(const controlRelOldUpn of controlRelOldUpns) {
-      queries.push(getRemoveControlQuery(sourceId, personaNew.upn, controlRelOldUpn));
+      queries.push(getRemoveControlQuery(sid, personaNew.upn, controlRelOldUpn));
     }
   }
 
@@ -324,23 +324,23 @@ const getSyncControlQueries = (sourceId, personaNew, personaOld) => {
     const controlRelOld = personaOld?.control[obeyUpn];
 
     if(!controlRelOld) {
-      queries.push(getControlQuery(sourceId, personaNew.upn, obeyUpn, controlRelNew));
+      queries.push(getControlQuery(sid, personaNew.upn, obeyUpn, controlRelNew));
     } else {
       const relProps = {};
       for(const prop in controlRelNew) {
-        if(prop === "sourceId") { continue; }
+        if(prop === "sid") { continue; }
         if(controlRelNew[prop] !== controlRelOld[prop]) {
           relProps[prop] = controlRelNew[prop];
         }
       }
       for(const prop in controlRelOld) {
-        if(prop === "sourceId") { continue; }
+        if(prop === "sid") { continue; }
         if(controlRelNew[prop] === undefined) {
           relProps[prop] = null;
         }
       }
       if(Object.keys(relProps).length > 0) {
-        queries.push(getControlQuery(sourceId, personaNew.upn, obeyUpn, relProps));
+        queries.push(getControlQuery(sid, personaNew.upn, obeyUpn, relProps));
       }
     }
   }
@@ -350,47 +350,47 @@ const getSyncControlQueries = (sourceId, personaNew, personaOld) => {
 /**
  * Get a query set to remove a persona declaration
  * 
- * @param {string} sourceId
+ * @param {string} sid
  * @param {string} upn
  * @returns {object} - The query set object
  */
-const getUndeclarePersonaQuery = (sourceId, upn) => {
-  const query = `MATCH (source:Source { id: $sourceId })-[rel:DECLARE]->(persona:Persona { upn: $upn })
+const getUndeclarePersonaQuery = (sid, upn) => {
+  const query = `MATCH (source:Source { sid: $sid })-[rel:DECLARE]->(persona:Persona { upn: $upn })
     DELETE rel
     `
-  return {query, values: {sourceId, upn}};
+  return {query, values: {sid, upn}};
 }
 
 /**
  * Get a query set to remove a control relationship
  * 
- * @param {string} sourceId
+ * @param {string} sid
  * @param {string} upn
  * @returns {object} - The query set object
  */
-const getUndeclareControlQuery = (sourceId, upn) => {
+const getUndeclareControlQuery = (sid, upn) => {
   const query = `MATCH (persona:Persona { upn: $upn })-[rel:CONTROL]-(:Persona)
-    WHERE rel.sourceId = $sourceId
+    WHERE rel.sid = $sid
     AND persona.upn = $upn
     DELETE rel
     `
-  return {query, values: {sourceId, upn}};
+  return {query, values: {sid, upn}};
 }
 
 /**
  * Get a query set to remove a control relationship
  * 
- * @param {string} sourceId 
+ * @param {string} sid 
  * @param {string} controlUpn 
  * @param {string} obeyUpn 
  * @returns {object} - The query set object
  */
-const getRemoveControlQuery = (sourceId, controlUpn, obeyUpn) => {
+const getRemoveControlQuery = (sid, controlUpn, obeyUpn) => {
   const query = `MATCH (control:Persona { upn: $controlUpn })-[rel:CONTROL]->(obey:Persona { upn: $obeyUpn })
-    WHERE rel.sourceId = $sourceId
+    WHERE rel.sid = $sid
     DELETE rel
     `
-  return {query, values: {sourceId, controlUpn, obeyUpn}};
+  return {query, values: {sid, controlUpn, obeyUpn}};
 }
 
 module.exports = {

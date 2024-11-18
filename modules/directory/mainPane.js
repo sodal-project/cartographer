@@ -1,5 +1,5 @@
 const core = require('../../core/core.js');
-const csv = require('./csv.js');
+const csv = require('./csvPane.js');
 
 // Default Configuration
 // TODO: move this to config database
@@ -66,15 +66,15 @@ async function redraw(formData) {
     personas: { tableData: personas },
   };
   
-  // Render the index.hbs template
-  return core.client.render('index.hbs', data);
+  // Render the mainPane.hbs template
+  return core.client.render('mainPane.hbs', data);
 }
 
 /**
  * @description The main interface for the module.
  * @returns {string} - Compiled HTML content
  */
-async function index() {
+async function mainPane() {
   return redraw();
 }
 
@@ -187,19 +187,24 @@ async function linkPersonas(formData) {
   const confidence = .5;
   const directoryUpns = Array.isArray(formData.directory) ? formData.directory : [formData.directory];
   const personaUpns = Array.isArray(formData.persona) ? formData.persona : [formData.persona];
-  const sourceId = directorySource.id;
-  const queries = [];
+  const personas = [];
 
   // Generate link queries; all selected directory upns will be linked to all selected personas
   for(const directoryUpn of directoryUpns) {
     for(const personaUpn of personaUpns) {
-      queries.push(await core.graph.linkPersona(directoryUpn, personaUpn, level, confidence, sourceId, true));
+      const persona = core.persona.newFromUpn(personaUpn);
+      persona.control.push({
+        upn: directoryUpn,
+        level: level,
+        confidence: confidence,
+      })
+      personas.push(persona);
     }
   }
 
-  await core.graph.runRawQueryArray(queries);
+  await core.graph.mergePersonas(personas, directorySource);
 
-  console.log(`Processed ${queries.length} link queries`);
+  console.log(`Processed ${personas.length} persona links`);
 
   return redraw();
 }
@@ -215,7 +220,7 @@ async function nextId(type) {
   let nextId = await core.config.readConfig(`next${type}Id`) || 10000; 
 
   // Verify that graph does not have a lower ID
-  const rawPersonas = await core.graph.readAgents([{ 
+  const rawPersonas = await core.graph.readPersonas([{ 
     type: "field",
     key: "platform",
     value: "directory",
@@ -249,8 +254,8 @@ async function nextId(type) {
  * 
  * @returns {string} - Compiled HTML content for the CSV pane
  */
-async function csvIndex() {
-  return csv.csvIndex();
+async function csvPane() {
+  return csv.csvPane();
 }
 
 /**
@@ -284,8 +289,8 @@ async function csvMerge(formData) {
 }
 
 module.exports = {
-  index,
-  csvIndex,
+  mainPane,
+  csvPane,
   csvAddFile,
   csvDeleteFile,
   csvMerge,
