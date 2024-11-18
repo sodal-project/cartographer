@@ -4,12 +4,14 @@
   <div class="w-2/3">
     <div class="grid grid-cols-3 gap-2">
       <!-- Loop It -->
-      <div class="relative bg-gray-800 px-4 py-2 rounded-lg h-16">
-        <h4 class="mt-0.5 text-gray-400 text-sm capitalize">Property Name</h4>
-        <div class="mt-1 text-white text-sm font-bold overflow-hidden text-ellipsis overflow-hidden">
-          Property Value
+      {{#each customProperties as |property|}}
+        <div class="relative bg-gray-800 px-4 py-2 rounded-lg h-16">
+          <h4 class="mt-0.5 text-gray-400 text-sm capitalize">{{property.key}}</h4>
+          <div class="mt-1 text-white text-sm font-bold overflow-hidden text-ellipsis overflow-hidden">
+            {{property.value}}
+          </div>
         </div>
-      </div>
+      {{/each}}
     </div>
   </div>
 
@@ -30,31 +32,44 @@
 
 </div>
 
-<div class="px-6">
-  <div class="border-b border-gray-700">
-    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-      <button
-        class="whitespace-nowrap border-b-2 hover:border-gray-500 hover:text-white py-4 px-1 text-sm font-medium border-indigo-500 text-white"
-      >
-        Aliases
-      </button>
-      <button
-        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium border-transparent text-gray-400"
-      >
-        Controls
-      </button>
-      <button
-        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium border-transparent text-gray-400"
-      >
-        Obeys
-      </button>
-    </nav>
+<!-- Tabbed Tables -->
+<div x-data="{ currentTab: 'obey' }">
+  <div class="px-6">
+    <div class="border-b border-gray-700">
+      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <button
+          @click="currentTab = 'alias'"
+          :class="{ 'border-indigo-500 text-white': currentTab === 'alias', 'border-transparent text-gray-400': currentTab !== 'alias' }"
+          class="whitespace-nowrap border-b-2 hover:border-gray-500 hover:text-white py-4 px-1 text-sm font-medium"
+        >
+          Aliases
+        </button>
+        <button
+          @click="currentTab = 'control'"
+          :class="{ 'border-indigo-500 text-white': currentTab === 'control', 'border-transparent text-gray-400': currentTab !== 'control' }"
+          class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+        >
+          Controls
+        </button>
+        <button
+          @click="currentTab = 'obey'"
+          :class="{ 'border-indigo-500 text-white': currentTab === 'obey', 'border-transparent text-gray-400': currentTab !== 'obey' }"
+          class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+        >
+          Obeys
+        </button>
+      </nav>
+    </div>
   </div>
-</div>
 
-<div class="px-6 py-4">
-  {{> PersonaTable data=aliasTableData }}
-</div>
-<div class="px-6 py-4">
-  {{> PersonaTable data=controlTableData }}
+  <!-- Tab Contents -->
+  <div x-show="currentTab === 'alias'" class="px-6 py-4" style="display: none;">
+    {{> PersonaTable data=aliasTableData }}
+  </div>
+  <div x-show="currentTab === 'control'" class="px-6 py-4" style="display: none;">
+    {{> PersonaTable data=controlTableData }}
+  </div>
+  <div x-show="currentTab === 'obey'" class="px-6 py-4" style="display: none;">
+    {{> PersonaTable data=obeyTableData }}
+  </div>
 </div>

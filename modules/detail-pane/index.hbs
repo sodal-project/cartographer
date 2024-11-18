@@ -6,7 +6,7 @@
     <div>
       <form
         class="flex gap-3 items-center"
-        hx-post="/mod/detail-pane/getDetailSubpane/"
+        hx-post="/mod/detail-pane/search/"
         hx-target="closest #main"
         hx-swap="innerHTML"
       >
@@ -21,25 +21,27 @@
   </div>
 
   <!-- Name and UPN -->
-  <div class="flex p-6 pb-10 items-center">
-    <div class="w-1/2">
-      <h3 class="text-white text-lg capitalize inline-block relative">
-        {{friendlyName}}
-      </h3>
-    </div>
-    <div class="w-1/2">
-      <div class="bg-gray-800 pl-4 pr-8 py-4 rounded-lg relative">
-        <p class="text-sm text-white font-bold truncate ">{{upn}}</p>
-        <div class="absolute top-0 right-0 p-3 h-full w-10 text-gray-400 hover:text-white cursor-pointer">
-          X
+  {{#if upn}}
+    <div class="flex p-6 pb-10 items-center">
+      <div class="w-1/2">
+        <h3 class="text-white text-lg capitalize inline-block relative">
+          {{name}}
+        </h3>
+      </div>
+      <div class="w-1/2">
+        <div class="bg-gray-800 pl-4 pr-8 py-4 rounded-lg relative">
+          <p class="text-sm text-white font-bold truncate ">{{upn}}</p>
+          <div class="absolute top-0 right-0 p-3 h-full w-10 text-gray-400 hover:text-white cursor-pointer">
+            X
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  {{/if}}
 
   <!-- Subpanes -->
   {{#each subpanes}}
-    <div>
+    <div class="text-white ml-6">
       {{dynamicPartial this.component this.data}}
     </div>
   {{/each}}

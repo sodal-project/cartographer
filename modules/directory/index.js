@@ -283,20 +283,42 @@ async function csvMerge(formData) {
   return csv.csvMerge(formData, directorySource);
 }
 
+function getPersonaCustomProperties(persona) {
+  const keysToFilterOut = [
+    "upn",
+    "control",
+    "obey",
+  ];
+
+  const filteredProperties = Object.entries(persona).reduce((accumulator, [key, value]) => {
+    if (!keysToFilterOut.includes(key)) {
+      accumulator[key] = value;
+    }
+    return accumulator;
+  }, {});
+  const filteredPropertiesArray = Object.keys(filteredProperties).map(key => ({ key: key, value: filteredProperties[key] }));
+  const sortedPropertiesArray = filteredPropertiesArray.sort((a, b) => a.key.localeCompare(b.key));
+  return sortedPropertiesArray;
+}
+
 /**
  * @description Provide a detail subpane for a persona
  * @param {string} upn 
  * @returns {object} - The subpane object
  */
-async function getDetailSubpane(upn = "upn:directory:participant:p0001") {
-  // TODO: Check if we have a UPN
-
-  // Get Persona Data
+async function getDetailSubpane(upn) {
+  // Find a persona object in the graph
   const persona = await core.graph.readPersonaObject(upn);
-  console.log('Persona from directory', persona);
+  if (!persona) {
+    console.error(`Persona not found for upn: ${upn}`);
+    return {};
+  }
+
+  // Get the custom properties for grid display
+  const customProperties = getPersonaCustomProperties(persona);
   
-  // TODO: Get data for tables
-  const aliasTable = {
+  // Define the configuration for the tables we want to display
+  const aliasTableConfig = {
     tableFormId: "directory-subpane-alias",
     forceFilters: [
       {
@@ -314,7 +336,7 @@ async function getDetailSubpane(upn = "upn:directory:participant:p0001") {
       }
     ]
   };
-  const controlTable = {
+  const controlTableConfig = {
     tableFormId: "directory-subpane-control",
     forceFilters: [
       {
@@ -332,18 +354,37 @@ async function getDetailSubpane(upn = "upn:directory:participant:p0001") {
       }
     ]
   }
+  const obeyTableConfig = {
+    tableFormId: "directory-subpane-obey",
+    forceFilters: [
+      {
+        "type":"agency",
+        "key":"control",
+        "levels": ["ADMIN", "MANAGE", "ACT_AS", "DIRECT"],
+        "filter": [
+          {
+            "type":"field",
+            "key":"upn",
+            "value":upn,
+            "operator":"=",
+          },
+        ],
+      }
+    ]
+  }
 
-  const aliasTableData = await core.mod.personaTable.build(aliasTable)
-  const controlTableData = await core.mod.personaTable.build(controlTable)
-
-  console.log('controlsTableData', controlTableData)
+  const aliasTableData = await core.mod.personaTable.build(aliasTableConfig)
+  const controlTableData = await core.mod.personaTable.build(controlTableConfig)
+  const obeyTableData = await core.mod.personaTable.build(obeyTableConfig)
 
   return {
     component: "DirectoryDetailSubpane",
     data: {
+      persona,
+      customProperties,
       aliasTableData,
       controlTableData,
-      label: "some data"
+      obeyTableData,
     }
   }
 }
