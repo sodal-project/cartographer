@@ -307,6 +307,7 @@ function getPersonaCustomProperties(persona) {
     "upn",
     "control",
     "obey",
+    "directoryNote",
   ];
 
   const filteredProperties = Object.entries(persona).reduce((accumulator, [key, value]) => {
@@ -335,6 +336,7 @@ async function getDetailSubpane(upn) {
 
   // Get the custom properties for grid display
   const customProperties = getPersonaCustomProperties(persona);
+  const directoryNote = persona.directoryNote;
   
   // Define the configuration for the tables we want to display
   const aliasTableConfig = {
@@ -438,13 +440,26 @@ async function getDetailSubpane(upn) {
   return {
     component: "DirectoryDetailSubpane",
     data: {
+      upn,
       persona,
+      directoryNote,
       customProperties,
       aliasTableData,
       controlTableData,
       obeyTableData,
     }
   }
+}
+
+async function setDetailSubpaneNote(formData) {
+
+  console.log(`Setting note for ${formData.upn}: ${formData.note}`);
+
+  const persona = await core.persona.newFromUpn(formData.upn);
+  persona.directoryNote = formData.note;
+  await core.graph.mergePersona(persona, directorySource);
+
+  return `Updated at ${new Date().toISOString().slice(11, 19)}`;
 }
 
 /**
@@ -467,5 +482,6 @@ module.exports = {
   linkPersonas,
   unlinkPersonas,
   getDetailSubpane,
+  setDetailSubpaneNote,
   init,
 };
