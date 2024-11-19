@@ -40,6 +40,10 @@ const coreData = {
       label: "Detail Pane",
     },
     {
+      folder: "exportCsv",
+      label: "Export CSV",
+    },
+    {
       folder: "slack",
       label: "Slack Integration",
     },

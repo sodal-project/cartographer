@@ -17,12 +17,29 @@ const handleModuleFunction = async (req, res) => {
   try {
     const moduleResponse = await core.mod[moduleName][command](data);
     res.send(moduleResponse);
-  } catch (err) {
-    console.error('Error calling module command:', err);
+  } catch (error) {
+    console.error('Error calling module command:', error);
+    res.status(500).send('Error executing module command');
+  }
+};
+
+const handleModuleFunctionDownload = async (req, res) => {
+  const { moduleName, command } = req.params;
+  let data = req.body;
+
+  try {
+    const moduleResponse = await core.mod[moduleName][command](data);
+    const { file, fileName, type } = moduleResponse;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', type);
+    res.send(file);
+  } catch (error) {
     res.status(500).send('Error executing module command');
   }
 };
 
 module.exports = {
-  handleModuleFunction
+  handleModuleFunction,
+  handleModuleFunctionDownload,
 };
