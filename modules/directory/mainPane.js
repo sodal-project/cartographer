@@ -330,6 +330,7 @@ async function getDetailSubpane(upn) {
         "type":"agency",
         "key":"obey",
         "levels": ["ALIAS"],
+        "depth": 1,
         "filter": [
           {
             "type":"field",
@@ -365,7 +366,7 @@ async function getDetailSubpane(upn) {
       {
         "type":"agency",
         "key":"control",
-        "levels": ["ADMIN", "MANAGE", "ACT_AS", "DIRECT"],
+        "levels": ["ADMIN", "MANAGE", "ACT_AS"],
         "filter": [
           {
             "type":"field",

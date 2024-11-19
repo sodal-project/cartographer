@@ -116,9 +116,14 @@ const json = (context) => {
   return JSON.stringify(context, null, 2);
 }
 
+const urlEncode = (context) => {
+  return encodeURIComponent(context);
+}
+
 module.exports = {
   eq,
   add,
   dynamicPartial,
   json,
+  urlEncode,
 };

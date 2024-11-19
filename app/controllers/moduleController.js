@@ -6,7 +6,7 @@ const handleModuleFunction = async (req, res) => {
 
   // If it's a GET request, clear `data` as it might not be used.
   if (req.method === 'GET') {
-    data = {};
+    data = req.query;
   }
   
   // Include file data if it exists (for file upload routes)
