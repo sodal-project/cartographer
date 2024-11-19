@@ -63,13 +63,13 @@ async function buildConfig(upn = "upn:directory:participant:p0001") {
  * @returns {string} - Compiled HTML content
  */
 async function mainPane(formData) {
-  const config = await buildConfig(formData?.upn?.trim());
+  const config = formData?.upn ? await buildConfig(formData.upn.trim()) : null;
   // return redraw(config);
   return core.client.render('mainPane.hbs', config);
 }
 
 async function search(formData) {
-  const config = await buildConfig(formData.upn.trim());
+  const config = formData?.upn ? await buildConfig(formData.upn.trim()) : null;
   return redraw(config);
 }
 

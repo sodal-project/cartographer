@@ -366,6 +366,12 @@ async function getDetailSubpane(upn) {
             ],
           }
         ],
+      },
+      {
+        "type":"field",
+        "key":"upn",
+        "value":upn,
+        "operator":"<>",
       }
     ]
   }
@@ -392,6 +398,12 @@ async function getDetailSubpane(upn) {
             ],
           }
         ],
+      },
+      {
+        "type":"field",
+        "key":"upn",
+        "value":upn,
+        "operator":"<>",
       }
     ]
   }

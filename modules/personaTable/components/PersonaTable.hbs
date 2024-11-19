@@ -234,13 +234,10 @@
                 {{#each this}}
                   <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
                     hx-trigger="click"
-                    hx-post="/mod/detailPane/search/"
+                    hx-get="/mod/detailPane/search/?upn={{urlEncode ../this.upn}}"
                     hx-target="closest #main"
                     hx-swap="innerHTML"
                     hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
-                    hx-vals='{
-                      "upn": "{{../this.upn}}"
-                    }'
                   >
                     {{this}}
                   </td>
