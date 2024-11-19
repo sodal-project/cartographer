@@ -181,27 +181,9 @@
     hx-post="/mod/exportCsv/download/download"
   >
     <pre class="text-white">
-      {{ json data.filters}}
+      {{ data.graphFiltersString }}
     </pre>
-    <input type="hidden" name="csvFilter" value='[
-      {
-        "type":"agency",
-        "key":"obey",
-        "levels":[1, 5, 9, 10, 11],
-        "confidence": { "min": ".75", "max": "1" },
-        "filter": [
-          {{#each data.filters}}
-            {
-              "type": "field",
-              "key": "{{this.field}}",
-              "value": "{{this.value}}",
-              "operator": "{{this.operator}}",
-              "not": false
-            }{{#unless @last}},{{/unless}}
-          {{/each}}
-        ]
-      }
-    ]'>
+    <input type="hidden" name="csvFilter" value='{{data.graphFiltersString}}'>
     {{> FormSubmit label="Export CSV" }}
   </form>
 
