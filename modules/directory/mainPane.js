@@ -348,14 +348,22 @@ async function getDetailSubpane(upn) {
       {
         "type":"agency",
         "key":"obey",
-        "levels": ["ADMIN", "MANAGE", "ACT_AS"],
+        "depth": [1,1],
         "filter": [
           {
-            "type":"field",
-            "key":"upn",
-            "value":upn,
-            "operator":"=",
-          },
+            "type":"agency",
+            "key":"obey",
+            "levels": ["ALIAS"],
+            "depth": 1,
+            "filter": [
+              {
+                "type":"field",
+                "key":"upn",
+                "value":upn,
+                "operator":"=",
+              }
+            ],
+          }
         ],
       }
     ]
@@ -366,14 +374,22 @@ async function getDetailSubpane(upn) {
       {
         "type":"agency",
         "key":"control",
-        "levels": ["ADMIN", "MANAGE", "ACT_AS"],
+        "depth": [1,1],
         "filter": [
           {
-            "type":"field",
-            "key":"upn",
-            "value":upn,
-            "operator":"=",
-          },
+            "type":"agency",
+            "key":"obey",
+            "levels": ["ALIAS"],
+            "depth": 1,
+            "filter": [
+              {
+                "type":"field",
+                "key":"upn",
+                "value":upn,
+                "operator":"=",
+              }
+            ],
+          }
         ],
       }
     ]
