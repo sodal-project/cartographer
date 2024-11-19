@@ -1,4 +1,17 @@
 <div class="relative table-wrap" x-data="columnVisibility([{{data.visibility}}])">
+  <!-- Export CSV -->
+  <form
+    class="absolute z-20 right-10 top-1 pr-1 pt-px"
+    hx-ext="download-csv"
+    hx-post="/mod/exportCsv/download/download"
+  >
+    <input type="hidden" name="csvFilter" value='{{data.graphFiltersString}}'>
+    <button class="text-white" type="submit">
+      <div class="w-5 h-5 text-gray-500 hover:text-white">{{> icons/DownloadFile }}</div>
+    </button>
+  </form>
+
+  <!-- Filter Table -->
   <form
     hx-post="/mod/personaTable/update/"
     hx-target="closest .table-wrap"
@@ -137,7 +150,7 @@
           type="button"
           @click="open = !open"
         >
-          <div class="w-6 h-6 mr-2 mt-1 text-gray-500 hover:text-white">{{> icons/Eye }}</div>
+          <div class="w-5 h-5 mr-2 mt-1.5 text-gray-500 hover:text-white">{{> icons/Eye }}</div>
         </button>
 
         <div
@@ -172,19 +185,6 @@
         </div>
       </div>
     </div>
-  </form>
-
-  <!-- Export CSV -->
-  <form
-    class="gap-6 mb-0"
-    hx-ext="download-csv"
-    hx-post="/mod/exportCsv/download/download"
-  >
-    <pre class="text-white">
-      {{ data.graphFiltersString }}
-    </pre>
-    <input type="hidden" name="csvFilter" value='{{data.graphFiltersString}}'>
-    {{> FormSubmit label="Export CSV" }}
   </form>
 
   <div class="relative" x-data="tableCheckbox()" >
