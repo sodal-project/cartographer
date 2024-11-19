@@ -239,17 +239,15 @@ async function getUpnsByAgency (agency, upns) {
     throw new Error('Invalid agency direction (must be control or obey)');
   }
 
-  let depthString = "+";  // search all depths by default
+  let depthString = "*";  // search all depths by default
   if(agency.depth && Array.isArray(agency.depth)) {
     if(agency.depth.length !== 2) {
       throw new Error('Invalid agency depth array (must be [min, max])');
-    } if(agency.depth[0] > agency.depth[1]) {
-      throw new Error('Invalid agency depth array (min must be less than max)');
-    }
+    } 
     depthString = `{${agency.depth[0]},${agency.depth[1]}}`;        // search between the specified depths
   } else if(agency.depth) {
-    if(agency.depth === 1) { depthString = `{1}` }                // search only immediate relationships
-    if(agency.depth > 1) { depthString = `{1,${agency.depth}}` }  // search up to the specified depth
+    if(agency.depth === 1) { depthString = `{,1}` }                // search only immediate relationships
+    if(agency.depth > 1) { depthString = `{,${agency.depth}}` }  // search up to the specified depth
   }
 
   // Find all nonredundant paths between the control and obey personas

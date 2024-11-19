@@ -1,7 +1,7 @@
-<div class="relative table-wrap" x-data="columnVisibility([{{data.visibility}}])">
+<div class="relative persona-table-wrap" x-data="columnVisibility([{{data.visibility}}])">
   <form
     hx-post="/mod/personaTable/update/"
-    hx-target="closest .table-wrap"
+    hx-target="closest .persona-table-wrap"
     hx-swap="innerHTML"
     hx-vals='{
       "tableFormId": "{{data.tableFormId}}"
@@ -178,8 +178,12 @@
     <form
       id="{{data.tableFormId}}"
       hx-post="{{data.action.endpoint}}"
-      hx-target="closest #main"
+      hx-target="closest .persona-table-wrap"
       hx-swap="innerHTML"
+      hx-vals='{
+        "customValue": "{{data.action.customValue}}",
+        "tableFormId": "{{data.tableFormId}}"
+      }'
       @keydown.enter.prevent
     >
       <!-- Delete Selected -->
@@ -228,11 +232,20 @@
           <tbody class="divide-y divide-gray-800">
             {{#each data.rows}}
               <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
-                <td class="p-4">
+                <td class="p-4 hover:cursor-pointer">
                   <input type="checkbox" name="upn" value="{{this.upn}}" x-model="selected" @change="updateSelectAllState()">
                 </td>
                 {{#each this}}
-                  <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white">
+                  <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
+                    hx-trigger="click"
+                    hx-post="/mod/detailPane/search/"
+                    hx-target="closest #main"
+                    hx-swap="innerHTML"
+                    hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
+                    hx-vals='{
+                      "upn": "{{../this.upn}}"
+                    }'
+                  >
                     {{this}}
                   </td>
                 {{/each}}
