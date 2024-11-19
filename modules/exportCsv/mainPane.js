@@ -1,4 +1,3 @@
-// TODO: Is json2csv the best library for this?
 const { Parser } = require('json2csv');
 const core = require('../../core/core.js');
 
