@@ -553,6 +553,24 @@ const readSourceStore = async (module, sid) => {
   return store;
 }
 
+const unlinkPersonas = async (module, upn1, upn2, sid) => {
+
+  const query = `MATCH (persona1:Persona {upn: $upn1})-[r:CONTROL]-(persona2:Persona {upn: $upn2})
+  WHERE r.sid = $sid
+  DELETE r`
+
+  if(!sid) {
+    sid = sourceUtils.getSourceObject(module).sid;
+  }
+
+  const response = await connector.runRawQuery(query, { upn1, upn2, sid });
+
+  console.log('Unlinked personas:', upn1, upn2);
+
+  return response;
+}
+
+
 module.exports = {
   deleteOrphanedPersonas,
   deletePersona,
@@ -570,4 +588,5 @@ module.exports = {
   runRawQuery,
   runRawQueryArray,
   syncPersonas,
+  unlinkPersonas,
 }

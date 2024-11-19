@@ -1,7 +1,7 @@
-<div class="relative table-wrap" x-data="columnVisibility([{{data.visibility}}])">
+<div class="relative persona-table-wrap" x-data="columnVisibility([{{data.visibility}}])">
   <form
     hx-post="/mod/personaTable/update/"
-    hx-target="closest .table-wrap"
+    hx-target="closest .persona-table-wrap"
     hx-swap="innerHTML"
     hx-vals='{
       "tableFormId": "{{data.tableFormId}}"
@@ -178,8 +178,12 @@
     <form
       id="{{data.tableFormId}}"
       hx-post="{{data.action.endpoint}}"
-      hx-target="closest #main"
+      hx-target="closest .persona-table-wrap"
       hx-swap="innerHTML"
+      hx-vals='{
+        "customValue": "{{data.action.customValue}}",
+        "tableFormId": "{{data.tableFormId}}"
+      }'
       @keydown.enter.prevent
     >
       <!-- Delete Selected -->
@@ -234,10 +238,13 @@
                 {{#each this}}
                   <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
                     hx-trigger="click"
-                    hx-get="/mod/detailPane/search/?upn={{urlEncode ../this.upn}}"
+                    hx-post="/mod/detailPane/search/"
                     hx-target="closest #main"
                     hx-swap="innerHTML"
                     hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
+                    hx-vals='{
+                      "upn": "{{../this.upn}}"
+                    }'
                   >
                     {{this}}
                   </td>

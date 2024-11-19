@@ -210,6 +210,19 @@ async function linkPersonas(formData) {
   return redraw();
 }
 
+async function unlinkPersonas(formData) {
+  // Extract the form data
+  const upns = Array.isArray(formData.upn) ? formData.upn : [formData.upn];
+  const upn = formData.customValue;
+
+  console.log(`Unlinking ${upn} from personas:`, upns);
+
+  for(const unlinkUpn of upns) {
+    await core.graph.unlinkPersonas(upn, unlinkUpn, directorySource.sid);
+  }
+  return core.mod.personaTable.update({ tableFormId: formData.tableFormId });
+}
+
 /**
  * @description Generate the next ID for a persona type
  * 
@@ -345,6 +358,11 @@ async function getDetailSubpane(upn) {
   };
   const controlTableConfig = {
     tableFormId: "directory-subpane-control",
+    action: {
+      label: "Unlink",
+      endpoint: "/mod/directory/unlinkPersonas",
+      customValue: upn,
+    },
     forceFilters: [
       {
         "type":"agency",
@@ -377,6 +395,11 @@ async function getDetailSubpane(upn) {
   }
   const obeyTableConfig = {
     tableFormId: "directory-subpane-obey",
+    action: {
+      label: "Unlink",
+      endpoint: "/mod/directory/unlinkPersonas",
+      customValue: upn,
+    },
     forceFilters: [
       {
         "type":"agency",
@@ -442,6 +465,7 @@ module.exports = {
   addActivity,
   deletePersonas,
   linkPersonas,
+  unlinkPersonas,
   getDetailSubpane,
   init,
 };
