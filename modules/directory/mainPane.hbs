@@ -1,63 +1,66 @@
 <div class="p-8" x-data="formHandler">
   <div class="flex justify-between items-start mb-6">
     {{> Headline title="Directory Module" }}
-    <div class="flex gap-3">
+    <div class="flex gap-3">    
 
-      <!-- Add Activity Modal -->
-      {{#> ModalButton label="Add Activity" }}
-        <div x-ref="filterFields">
-          <h2 class="text-white text-lg mb-4">Add Activity</h2>
-          <form
-            hx-post="/mod/directory/addActivity/"
-            hx-target="closest #main"
-            hx-swap="innerHTML"
-          >
-            {{> FormText label="Name" name="name" value="" }}
-            {{> FormSubmit label="Add Activity" }}
-          </form>
-        </div>
-      {{/ModalButton}}
-
-      <!-- Add Participant Modal -->
-      {{#> ModalButton label="Add Participant" }}
-        <div x-ref="filterFields">
-          <h2 class="text-white text-lg mb-4">Add Participant</h2>
-          <form
-            hx-post="/mod/directory/addParticipant/"
-            hx-target="closest #main"
-            hx-swap="innerHTML"
-          >
-            {{> FormText label="First Name" name="firstName" value="" }}
-            {{> FormText label="Last Name" name="lastName" value="" }}
-            {{> FormText label="Handle" name="handle" value="" }}
-            {{> FormSubmit label="Add Participant" }}
-          </form>
-        </div>
-      {{/ModalButton}}
-
-      {{#> ModalButtonPane label="Manage CSVs" }}
-        <div 
-          id="directoryCsvPane" 
-          class="p-8"
-          hx-post="/mod/directory/csvPane/"
-          hx-target="#directoryCsvPane"
-          hx-swap="innerHTML"
-          hx-trigger="load"
-        >
-        </div>
-      {{/ModalButtonPane}}
-      
-      <!-- Link -->
-      {{> Button click="linkData()" label="Link" }}
     </div>
   </div>
   <div class="relative">
     <div class="absolute top-0 left-0 right-1/2 pr-4">
       <h2 class="text-white text-lg mb-4">Directory</h2>
+      <div class="flex gap-3 mb-4">
+        <!-- Add Activity Modal -->
+        {{#> ModalButton label="Add Activity" }}
+          <div x-ref="filterFields">
+            <h2 class="text-white text-lg mb-4">Add Activity</h2>
+            <form
+              hx-post="/mod/directory/addActivity/"
+              hx-target="closest #main"
+              hx-swap="innerHTML"
+            >
+              {{> FormText label="Name" name="name" value="" }}
+              {{> FormSubmit label="Add Activity" }}
+            </form>
+          </div>
+        {{/ModalButton}}
+
+        <!-- Add Participant Modal -->
+        {{#> ModalButton label="Add Participant" }}
+          <div x-ref="filterFields">
+            <h2 class="text-white text-lg mb-4">Add Participant</h2>
+            <form
+              hx-post="/mod/directory/addParticipant/"
+              hx-target="closest #main"
+              hx-swap="innerHTML"
+            >
+              {{> FormText label="First Name" name="firstName" value="" }}
+              {{> FormText label="Last Name" name="lastName" value="" }}
+              {{> FormText label="Handle" name="handle" value="" }}
+              {{> FormSubmit label="Add Participant" }}
+            </form>
+          </div>
+        {{/ModalButton}}
+
+        {{#> ModalButtonPane label="Manage CSVs" }}
+          <div 
+            id="directoryCsvPane" 
+            class="p-8"
+            hx-post="/mod/directory/csvPane/"
+            hx-target="#directoryCsvPane"
+            hx-swap="innerHTML"
+            hx-trigger="load"
+          >
+          </div>
+        {{/ModalButtonPane}}
+      </div>
       {{> PersonaTable data=directory.tableData }}
     </div>
     <div class="absolute top-0 left-1/2 right-0 pl-4">
       <h2 class="text-white text-lg mb-4">Personas</h2>
+        <div class="flex gap-3 mb-4">
+          <!-- Link -->
+          {{> Button click="linkData()" label="Link" }}
+        </div>
       {{> PersonaTable data=personas.tableData }}
     </div>
   </div>
