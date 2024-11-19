@@ -3,10 +3,8 @@
   <div class="rounded-lg p-6 border border-gray-700 bg-gray-900">
     <form
       class="gap-6 mb-0"
+      hx-ext="download-csv"
       hx-post="/mod/exportCsv/download/download"
-      hx-swap="none"
-      hx-target="this"
-      onsubmit="handleDownloadCsv(event)"
     >
       <div class="flex-grow">
         <label class="block text-white text-sm mb-2" for="filter">Filter:</label>
@@ -20,49 +18,3 @@
     </form>
   </div>
 </div>
-
-<script>
-  async function handleDownloadCsv(event) {
-    event.preventDefault();
-
-    // Prepare the form data for submission
-    const form = event.target;
-    const url = form.getAttribute('hx-post');
-    const formData = new FormData(form);
-
-    try {
-      // Submit the form
-      const response = await fetch(url, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to download file');
-      }
-
-      // Parse the filename from Content-Disposition header
-      const fileName = response.headers
-        .get('Content-Disposition')
-        ?.split('filename=')[1]
-        ?.replace(/"/g, '') || 'download.csv';
-
-      // Convert the response to a Blob
-      const blob = await response.blob();
-
-      // Create a temporary anchor element and trigger the download
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      alert('There was an issue downloading the file.');
-    }
-  }
-</script>
