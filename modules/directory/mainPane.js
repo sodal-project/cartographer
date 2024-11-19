@@ -37,6 +37,7 @@ const personaTableConfig = {
     "upn",
     "type",
     "platform",
+    "id",
     "friendlyName",
     "firstName",
     "lastName",
