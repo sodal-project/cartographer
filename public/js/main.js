@@ -89,12 +89,13 @@ htmx.defineExtension('download-csv', {
       const form = event.detail.elt;
       const method = 'POST';
       const url = form.getAttribute('hx-post');
-      const formData = new FormData(form);
 
-      // Override request details
-      event.detail.parameters = formData;
-      event.detail.verb = method;
-      event.detail.path = url;
+      // Convert FormData to a plain object
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
 
       // Prevent the default form submission
       event.preventDefault();
@@ -103,7 +104,11 @@ htmx.defineExtension('download-csv', {
         // Fetch the file
         const response = await fetch(url, {
           method: method,
-          body: formData,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'HTMX',
+          },
+          body: JSON.stringify(data),
         });
 
         if (!response.ok) {

@@ -53,7 +53,7 @@ async function mainPane() {
  * @returns {string} - A CSV file and it's filename
  */
 async function download(formData) {
-  const filter = formData.filter | [];
+  const filter = formData.csvFilter ? JSON.parse(formData.csvFilter) : [];
 
   // Get the persona data from the graph
   const response = await core.graph.readPersonas(filter);
