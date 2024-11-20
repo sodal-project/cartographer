@@ -24,7 +24,7 @@ async function mainPane() {
  * @param {object} formData - The form data
  */
 async function addInstance(formData) {
-  if(!formData.name || !formData.url || !formData.token) {
+  if(!formData.name || !formData.subdomain || !formData.token || !formData.reportId) {
     throw new Error('Missing required fields');
   }
 
@@ -34,7 +34,8 @@ async function addInstance(formData) {
   const instance = {
     id,
     name: formData.name,
-    url: formData.url,
+    subdomain: formData.subdomain,
+    reportId: formData.reportId,
     secret: secret,
     ready: true,
   }

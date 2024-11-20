@@ -7,7 +7,8 @@
       <li class="group relative border-b border-gray-800 py-2 flex items-center">
         <span class="flex-grow text-white-200">ID</span>
         <span class="flex-grow text-white-200">Name</span>
-        <span class="flex-grow text-white-200">URL</span>
+        <span class="flex-grow text-white-200">Subdomain</span>
+        <span class="flex-grow text-white-200">Report ID</span>
         <span class="flex-grow text-white-200">Status</span>
         <span class="flex-grow text-white-200 w-24">Actions</span>
       </li> 
@@ -15,7 +16,8 @@
         <li class="group relative border-b border-gray-800 py-2 flex items-center">
           <span class="flex-grow text-gray-400">{{this.id}}</span>
           <span class="flex-grow text-gray-400">{{this.name}}</span>
-          <span class="flex-grow text-gray-400">{{this.url}}</span>
+          <span class="flex-grow text-gray-400">{{this.subdomain}}</span>
+          <span class="flex-grow text-gray-400">{{this.reportId}}</span>
           <span class="flex-grow text-gray-400">{{#if this.ready}}Ready{{else}}Processing{{/if}}</span>
 
           <!-- Form to run a sync for this instance -->
@@ -79,8 +81,9 @@
       hx-swap="innerHTML"
     >
       <div class="mb-4">{{> FormText label="Instance Name" name="name" }}</div>
-      <div class="mb-4">{{> FormText label="BambooHR Team URL" name="url" }}</div>
-      <div class="mb-4">{{> FormText label="BambooHR Token" name="token" }}</div>
+      <div class="mb-4">{{> FormText label="Team Subdomain" name="subdomain" }}</div>
+      <div class="mb-4">{{> FormText label="Report ID" name="reportId" }}</div>
+      <div class="mb-4">{{> FormText label="API Token" name="token" }}</div>
       {{> FormSubmit label="Add" }}
     </form>
   {{/Card}}
