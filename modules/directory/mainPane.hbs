@@ -1,7 +1,32 @@
 <div class="p-8" x-data="formHandler">
   <div class="flex justify-between items-start mb-6">
     {{> Headline title="Directory Module" }}
-    <div class="flex gap-3">    
+    <div class="flex gap-3">
+      <form
+        hx-ext="download-csv"
+        hx-post="/mod/directory/backup/download/"
+      >
+        <button
+          type="submit"
+          class="bg-indigo-600 py-1 px-4 rounded text-white text-sm"
+
+        >
+          Backup
+        </button>
+      </form>
+
+      {{#> ModalButton label="Restore" }}
+        <h2 class="text-white text-lg mb-4">Restore Directory</h2>
+        <form
+          hx-encoding="multipart/form-data"
+          hx-post="/mod/directory/restore/upload"
+          hx-target="closest #main"
+          hx-swap="innerHTML"
+        >
+          {{> FormFilePicker label="JSON File" name="file" }}
+          {{> FormSubmit label="Restore" }}
+        </form>
+      {{/ModalButton}}
 
     </div>
   </div>

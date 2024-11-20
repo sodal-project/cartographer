@@ -168,7 +168,7 @@ async function deletePersonas(formData) {
   for(const upn of upns) {
     await core.graph.deletePersona(upn);
   }
-  return redraw();
+  return await core.mod.personaTable.update({ tableFormId: formData.tableFormId });
 }
 
 /**
@@ -194,7 +194,7 @@ async function linkPersonas(formData) {
   for(const directoryUpn of directoryUpns) {
     for(const personaUpn of personaUpns) {
       const persona = core.persona.newFromUpn(personaUpn);
-      persona.control.push({
+      persona.obey.push({
         upn: directoryUpn,
         level: level,
         confidence: confidence,
@@ -462,6 +462,32 @@ async function setDetailSubpaneNote(formData) {
   return `Updated at ${new Date().toISOString().slice(11, 19)}`;
 }
 
+async function backup(clientData) {
+    const file = await core.graph.backupSource(directorySource.sid);
+    const fileName = `directory_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    
+    // Definte the file type
+    const type = "application/json";
+  
+    return {file, fileName, type};
+}
+
+async function restore(clientData) {
+  const file = clientData.file.buffer.toString();
+  // const file = clientData.file;
+  const json = JSON.parse(file);
+  
+  core.check.sourceStoreObject(json);
+
+  if(!json.source || !json.source.sid || json.source.sid !== directorySource.sid) {
+    throw new Error("Invalid source in backup file");
+  }
+
+  await core.graph.restoreSource(json);
+
+  return redraw();
+}
+
 /**
  * @description Initialize the module and register partials
  * @returns {void}
@@ -483,5 +509,7 @@ module.exports = {
   unlinkPersonas,
   getDetailSubpane,
   setDetailSubpaneNote,
+  backup,
+  restore,
   init,
 };

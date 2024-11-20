@@ -570,8 +570,31 @@ const unlinkPersonas = async (module, upn1, upn2, sid) => {
   return response;
 }
 
+const backupSource = async (module, sid) => {
+  return await readSourceStore(module, sid);
+}
+
+const restoreSource = async (module, sourceStoreObject) => {
+  check.sourceStoreObject(sourceStoreObject);
+
+  const source = sourceStoreObject.source;
+  await deleteSource(module, source.sid);
+  await mergeSource(module, source);
+
+  const queries = await sourceStore.getSyncQueries(sourceStoreObject, null);
+
+  // execute the merge queries
+  if(queries.length > 0) {
+    console.log(`Restore Source with ${queries.length} queries`);
+    return await connector.runRawQueryArray(queries);
+  } else {
+    console.log(`Restore Source found ${queries.length} queries, no changes to process`);
+  }
+}
+
 
 module.exports = {
+  backupSource,
   deleteOrphanedPersonas,
   deletePersona,
   removePersona,
@@ -585,6 +608,7 @@ module.exports = {
   readSource,
   readSourcePersonas,
   readSourceRelationships,
+  restoreSource,
   runRawQuery,
   runRawQueryArray,
   syncPersonas,
