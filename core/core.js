@@ -52,6 +52,10 @@ const coreData = {
       label: "Google Integration",
     },
     {
+      folder: "bamboohr",
+      label: "BambooHR Integration",
+    },
+    {
       folder: "personaTable",
       label: "Persona Table",
     },
@@ -96,8 +100,6 @@ function initNamespaces() {
   for(const namespace in namespaces) {
     calls[namespace] = namespaces[namespace]
     core[namespace] = {};
-
-    // console.log("Core: loading internal module: ", namespace)
 
     // For each exported function in the namespace, add it to the core object
     for(const call in calls[namespace]) {

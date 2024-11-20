@@ -1,5 +1,5 @@
 const core = require('../../core/core.js');
-const slack = require('./slack.js');
+const bamboohr = require('./bamboohr.js');
 const crypto = require('crypto');
 
 /**
@@ -20,11 +20,11 @@ async function mainPane() {
 }
 
 /**
- * @description Handle adding a new Slack integration instance
+ * @description Handle adding a new BambooHR integration instance
  * @param {object} formData - The form data
  */
 async function addInstance(formData) {
-  if(!formData.name || !formData.teamId || !formData.token) {
+  if(!formData.name || !formData.url || !formData.token) {
     throw new Error('Missing required fields');
   }
 
@@ -34,7 +34,7 @@ async function addInstance(formData) {
   const instance = {
     id,
     name: formData.name,
-    teamId: formData.teamId,
+    url: formData.url,
     secret: secret,
     ready: true,
   }
@@ -51,11 +51,11 @@ async function deleteInstance(formData) {
   const id = formData.id;
 
   if(instances[id]) {
-    console.log('Deleting Slack Instance: ', instances[id].name);
-    await core.graph.deleteSource(`source:slack:${id}`);
+    console.log('Deleting BambooHR Instance: ', instances[id].name);
+    await core.graph.deleteSource(`source:bamboohr:${id}`);
     await core.config.deleteConfig(`instances.${id}`);
   } else {
-    console.log(`Slack instance ${id} not found`);
+    console.log(`BambooHR instance ${id} not found`);
   }
 
   return redraw();
@@ -76,7 +76,7 @@ async function sync(formData) {
     instance.ready = false;
     await core.config.writeConfig({ instances });
 
-    slack.sync(instance).then(async () => {
+    bamboohr.sync(instance).then(async () => {
       instance.ready = true;
       console.log(`Instance ${instance.name} is ready`);
       await core.config.writeConfig({ instances });
