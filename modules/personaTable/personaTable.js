@@ -172,6 +172,7 @@ async function read(tableConfig, tableForm) {
     sortDirection: tableForm.sortDirection || sortDirections[0].value,
     filters: getTableFilterArray(tableForm),
     visibility: visibility,
+    graphFiltersString: JSON.stringify(allGraphFilters),
   };
 
   return tableData;

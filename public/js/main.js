@@ -55,7 +55,6 @@ function tableCheckbox() {
   }
 }
 
-
 /**
  * Manages column visibility in a table based on a list of pre-checked columns.
  *
