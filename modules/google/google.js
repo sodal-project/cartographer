@@ -257,14 +257,16 @@ const mapGroupMemberPersonas = (groupMemberSets) => {
           role: member.role,
           confidence: 1
         })
-    
-        const alias = {
-          upn: `upn:email:account:${member.email}`,
-          level: LEVEL["ALIAS"],
-          confidence: 1
+        
+        if(member.email) {
+          const alias = {
+            upn: `upn:email:account:${member.email}`,
+            level: LEVEL["ALIAS"],
+            confidence: 1
+          }
+          newMember.control.push(alias);
+          newMember.obey.push(alias);
         }
-        newMember.control.push(alias);
-        newMember.obey.push(alias);
       }
       personas.push(newMember);
     }); // end groupMembers.forEach
