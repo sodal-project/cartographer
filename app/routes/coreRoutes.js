@@ -4,6 +4,6 @@ const authenticateToken = require('../middlewares/authenticateToken');
 const { renderHomePage } = require('../controllers/coreController');
 
 router.get("/", authenticateToken, renderHomePage);
-router.get("/:moduleName/:command", authenticateToken, renderHomePage);
+router.get("/:moduleName/:command/", authenticateToken, renderHomePage);
 
 module.exports = router;
