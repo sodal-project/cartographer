@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { consoleLog } = require('./log.js');
 const { MongoClient } = require('mongodb');
 
 /**
@@ -30,7 +31,7 @@ async function readFromMongo(namespace) {
       // Return the data from the specified namespace
       return document[namespace];
     } else {
-      console.log(`No data found for namespace: ${namespace}`);
+      consoleLog(`No data found for namespace: ${namespace}`);
       return null;
     }
   } catch (err) {
@@ -82,7 +83,7 @@ async function writeToMongo(namespace, data) {
       { upsert: true }               // Create the document if it doesn't exist
     );
 
-    console.log(`Updated document with _id: ${result.upsertedId || 'namespace-config'}`);
+    consoleLog(`Updated document with _id: ${result.upsertedId || 'namespace-config'}`);
     
     // Return the result of the update operation (true if successful)
     return result.acknowledged;
@@ -125,10 +126,10 @@ async function deleteFromMongo(namespace, property) {
     );
 
     if (result.modifiedCount > 0) {
-      console.log(`Deleted property '${property}' from namespace '${namespace}'`);
+      consoleLog(`Deleted property '${property}' from namespace '${namespace}'`);
       return true;
     } else {
-      console.log(`No changes made. Either property '${property}' not found or document doesn't exist.`);
+      consoleLog(`No changes made. Either property '${property}' not found or document doesn't exist.`);
     }
     return false;
   } catch (err) {

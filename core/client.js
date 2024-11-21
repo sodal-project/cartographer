@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const Handlebars = require('handlebars');
 const sanitize = require('sanitize-filename');
+const { consoleLog } = require('./log.js');
 
 /**
  * Render Handlebars Template
@@ -59,7 +60,7 @@ const registerPartials = (moduleName) => {
         const name = path.relative(partialsDir, filePath).replace(/\\/g, '/').replace('.hbs', '');
         const template = fs.readFileSync(filePath, 'utf8');
 
-        if(moduleName) { console.log('Registering partial:', name); }
+        if(moduleName) { consoleLog(`Registering partial: ${name}`); }
 
         // Register the partial with the relative path name
         Handlebars.registerPartial(name, template);

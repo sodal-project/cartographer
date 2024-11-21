@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { consoleLog } = require('./log.js');
 const neo4j = require('neo4j-driver');
 const cache = require('./cache.js');
 
@@ -34,23 +35,23 @@ const healthCheck = async () => {
     try {
 
       // connect to the default database with the admin login
-      console.log('Health Check: CHECK - connecting to the database');
+      consoleLog('Health Check: CHECK - connecting to the database');
       driver = neo4j.driver(Config.db_host, neo4j.auth.basic(Config.db_username, Config.db_password));
       session = driver.session();
 
       // verify that the database is connected
       const result = await session.run(HealthQueries.getCount);
       const count = result.records[0].get('count');
-      console.log(`Health Check: OK - Connected, ${count} nodes in the database`);
+      consoleLog(`Health Check: OK - Connected, ${count} nodes in the database`);
 
       // verify that indexes and constraints are set
-      console.log('Health Check: CHECK - setting constraints and indexes on the database');
+      consoleLog('Health Check: CHECK - setting constraints and indexes on the database');
       await session.run(HealthQueries.setConstraintUPN);
       await session.run(HealthQueries.setConstraintSource);
       await session.run(HealthQueries.setIndexType);
       await session.run(HealthQueries.setIndexPlatform);
       await session.run(HealthQueries.setIndexRelationship);
-      console.log('Health Check: OK - Constraints and Indexes are set on the database');
+      consoleLog('Health Check: OK - Constraints and Indexes are set on the database');
 
       // return true if all checks pass
       Config.healthCheck = true;
@@ -92,7 +93,7 @@ const runRawQuery = async (query, optionalParams, doCache) => {
 
     // log notifications
     if(result.summary.notifications.length > 0) {
-      console.log('Notifications:', result.summary.notifications);
+      consoleLog('Notifications:', result.summary.notifications);
     }
 
     if(doCache){
@@ -144,7 +145,7 @@ const runRawQueryArray = async (queryArray, doCache) => {
     return null;
   }
 
-  console.log('--- Process dbQueryArray with ' + queryArray.length + ' queries...');
+  consoleLog('--- Process dbQueryArray with ' + queryArray.length + ' queries...');
 
   const driver = neo4j.driver(Config.db_host, neo4j.auth.basic(Config.db_username, Config.db_password), { encrypted: false });
   const session = driver.session();
@@ -165,7 +166,7 @@ const runRawQueryArray = async (queryArray, doCache) => {
       tPromisesArray.push(tPromise);
     }
 
-    console.log("All query transactions submitted, waiting for completion...");
+    consoleLog("All query transactions submitted, waiting for completion...");
     // wait for all transactions to finish
     await Promise.all(tPromisesArray).then(
       (results) => {
@@ -175,7 +176,7 @@ const runRawQueryArray = async (queryArray, doCache) => {
     );
     await transaction.commit();
     const duration = performance.now() - startTime;
-    console.log(`Processed ${queryArray.length} queries in ${duration} milliseconds.`);
+    consoleLog(`Processed ${queryArray.length} queries in ${duration} milliseconds.`);
     if(response.summary?.notifications?.length) {
       console.log(`Notifications:\n${response.summary.notifications}`);
     } else {
