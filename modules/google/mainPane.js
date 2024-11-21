@@ -87,10 +87,10 @@ async function sync(formData) {
     instance.ready = false;
     await core.config.writeConfig({ instances });
 
-    google.sync(instance).then(async () => {
+    google.sync(instance).then(async (message) => {
       instance.ready = true;
       instance.lastSync = new Date();
-      console.log(`Instance ${instance.name} is ready`);
+      console.log(message);
       await core.config.writeConfig({ instances });
     });
   }

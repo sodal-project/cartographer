@@ -77,9 +77,9 @@ async function sync(formData) {
     instance.ready = false;
     await core.config.writeConfig({ instances });
 
-    bamboohr.sync(instance).then(async () => {
+    bamboohr.sync(instance).then(async (message) => {
       instance.ready = true;
-      console.log(`Instance ${instance.name} is ready`);
+      console.log(message);
       await core.config.writeConfig({ instances });
     });
   }

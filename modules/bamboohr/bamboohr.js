@@ -1,19 +1,23 @@
 const core = require('../../core/core');
 
 async function sync(instance){
-  console.log('Syncing BambooHR Instance: ', instance.name);
+  try {
+    console.log('Syncing BambooHR Instance: ', instance.name);
 
-  const instanceId = instance.id;
-  const name = instance.name;
-  const token = await core.crypto.decrypt(instance.secret);
-  const subdomain = instance.subdomain;
-  const reportId = instance.reportId;
+    const instanceId = instance.id;
+    const name = instance.name;
+    const token = await core.crypto.decrypt(instance.secret);
+    const subdomain = instance.subdomain;
+    const reportId = instance.reportId;
 
-  const source = core.source.getSourceObject('bamboohr', instanceId, name);
+    const source = core.source.getSourceObject('bamboohr', instanceId, name);
 
-  const json = await apiCall(subdomain, reportId, token);
+    const json = await apiCall(subdomain, reportId, token);
 
-
+    return `BambooHR instance synced: ${name}`;
+  } catch (error) {
+    return `Error syncing BambooHR instance: ${error.message}`;
+  }
 }
 
 async function apiCall(subdomain, reportId, token) {

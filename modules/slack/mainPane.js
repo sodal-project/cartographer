@@ -76,9 +76,9 @@ async function sync(formData) {
     instance.ready = false;
     await core.config.writeConfig({ instances });
 
-    slack.sync(instance).then(async () => {
+    slack.sync(instance).then(async (message) => {
       instance.ready = true;
-      console.log(`Instance ${instance.name} is ready`);
+      console.log(message);
       await core.config.writeConfig({ instances });
     });
   }

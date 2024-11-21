@@ -4,67 +4,73 @@ const tokenMap = require('./googleTokens.js');
 const LEVEL = core.constants.LEVEL;
 
 const sync = async (instance) => {
-  console.log('Syncing Google instance:', instance.name);
+  try {
+    console.log('Syncing Google instance:', instance.name);
 
-  // Extract the instance properties
-  const instanceId = instance.id
-  const name = instance.name
-  const source = core.source.getSourceObject('google', instanceId, name);
+    // Extract the instance properties
+    const instanceId = instance.id
+    const name = instance.name
+    const source = core.source.getSourceObject('google', instanceId, name);
 
-  const subjectEmail = instance.subjectEmail
-  const customerId = instance.customerId
-  const encryptedFile = instance.encryptedFile
-  const rawFile = await core.crypto.decrypt(encryptedFile);
-  const jsonFile = JSON.parse(rawFile);
+    const subjectEmail = instance.subjectEmail
+    const customerId = instance.customerId
+    const encryptedFile = instance.encryptedFile
+    const rawFile = await core.crypto.decrypt(encryptedFile);
+    const jsonFile = JSON.parse(rawFile);
 
-  // Create a new Google API client
-  const auth = new google.auth.JWT({
-    key: jsonFile.private_key,
-    email: jsonFile.client_email,
-    subject: subjectEmail,
-    scopes:[
-      'https://www.googleapis.com/auth/admin.directory.user.readonly',
-      'https://www.googleapis.com/auth/admin.directory.domain.readonly',
-      'https://www.googleapis.com/auth/admin.directory.group.readonly',
-      'https://www.googleapis.com/auth/admin.directory.user.security'
-    ]
-  });
-  const client = google.admin({ version: 'directory_v1', auth });
+    // Create a new Google API client
+    const auth = new google.auth.JWT({
+      key: jsonFile.private_key,
+      email: jsonFile.client_email,
+      subject: subjectEmail,
+      scopes:[
+        'https://www.googleapis.com/auth/admin.directory.user.readonly',
+        'https://www.googleapis.com/auth/admin.directory.domain.readonly',
+        'https://www.googleapis.com/auth/admin.directory.group.readonly',
+        'https://www.googleapis.com/auth/admin.directory.user.security'
+      ]
+    });
+    const client = google.admin({ version: 'directory_v1', auth });
 
-  // Get raw data for this instance
-  const workspaces = [{
-    id: customerId,
-    name: name,
-  }]
-  const users = await loadCached(loadUsers, client, instanceId, customerId);
-  const groups = await loadCached(loadGroups, client, instanceId, customerId);
-  const groupMemberSets = await Promise.all(groups.map(async (group) => {
-    return {
-      members: await loadCached(loadGroupMembers, client, instanceId, customerId, group.id),
-      id: group.id
-    }
-  }));
+    // Get raw data for this instance
+    const workspaces = [{
+      id: customerId,
+      name: name,
+    }]
+    const users = await loadCached(loadUsers, client, instanceId, customerId);
+    const groups = await loadCached(loadGroups, client, instanceId, customerId);
+    const groupMemberSets = await Promise.all(groups.map(async (group) => {
+      return {
+        members: await loadCached(loadGroupMembers, client, instanceId, customerId, group.id),
+        id: group.id
+      }
+    }));
 
-  const userTokens = await Promise.all(users.map(async (user) => {
-    const userTokens = await loadCached(loadAuthTokens, client, instanceId, customerId, user.id);
-    return {
-      userTokens: userTokens,
-      userEmail: user.primaryEmail,
-      userId: user.id,
-    }
-  }));
+    const userTokens = await Promise.all(users.map(async (user) => {
+      const userTokens = await loadCached(loadAuthTokens, client, instanceId, customerId, user.id);
+      return {
+        userTokens: userTokens,
+        userEmail: user.primaryEmail,
+        userId: user.id,
+      }
+    }));
 
-  // Map the data to persona objects
-  let personas = [];
-  personas = personas.concat(mapWorkspacePersonas(workspaces));
-  personas = personas.concat(mapUserPersonas(users, customerId));
-  personas = personas.concat(mapGroupPersonas(groups, customerId));
-  personas = personas.concat(mapGroupMemberPersonas(groupMemberSets));
-  personas = personas.concat(mapAuthTokenPersonas(userTokens));
+    // Map the data to persona objects
+    let personas = [];
+    personas = personas.concat(mapWorkspacePersonas(workspaces));
+    personas = personas.concat(mapUserPersonas(users, customerId));
+    personas = personas.concat(mapGroupPersonas(groups, customerId));
+    personas = personas.concat(mapGroupMemberPersonas(groupMemberSets));
+    personas = personas.concat(mapAuthTokenPersonas(userTokens));
 
-  await core.cache.save(`allPersonas-${instanceId}`, personas);
-  // Save the personas to the graph
-  await core.graph.syncPersonas(personas, source);
+    await core.cache.save(`allPersonas-${instanceId}`, personas);
+    // Save the personas to the graph
+    await core.graph.syncPersonas(personas, source);
+
+    return `Google instance synced: ${name}`;
+  } catch (error) {
+    return `Error syncing Google instance: ${error.message}`;
+  }
 }
 
 //

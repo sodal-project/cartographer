@@ -3,7 +3,6 @@ const core = require('../../core/core');
 
 async function sync(instance){
   try {
-
     const source = {
       sid: `source:slack:${instance.id}`,
       name: instance.name,
@@ -21,10 +20,10 @@ async function sync(instance){
 
     console.log(`Process Complete for ${instance.name}`);
     
-  } catch(e) {
-    console.log(e);
+    return `Slack instance synced: ${instance.name}`;
+  } catch (error) {
+    return `Error syncing Slack instance: ${error.message}`;
   }
-  return true;
 }
 
 const getInstancePersonas = async (instance) => {
