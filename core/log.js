@@ -42,6 +42,20 @@ function writeLog(moduleName, message, type) {
   console.log(logMessage);
 }
 
+/**
+ * consoleLog
+ * Use this to log messages to the console instead of console.log so
+ * they can be muted by adding CONSOLE_MUTED=true to the env file.
+ * 
+ * @param {string} message - The message to log
+ */
+function consoleLog(msg) {
+  if (process.env.CONSOLE_MUTED != 'true') {
+    console.log(msg);
+  }
+}
+
 module.exports = {
   writeLog,
+  consoleLog,
 };
