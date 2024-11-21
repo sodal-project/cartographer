@@ -38,7 +38,7 @@ const personaTableConfig = {
     "type",
     "platform",
     "id",
-    "friendlyName",
+    "name",
     "firstName",
     "lastName",
     "handle",
@@ -97,9 +97,9 @@ async function addParticipant(formData) {
   const id = await nextId("Participant");
 
   // Build a friendly name from the form data
-  let friendlyName = (data.firstName ? `${data.firstName}` : "");
-  friendlyName += (data.lastName ? ` ${data.lastName}` : "");
-  friendlyName += (data.handle ? ` (${data.handle})` : "");
+  let name = (data.firstName ? `${data.firstName}` : "");
+  name += (data.lastName ? ` ${data.lastName}` : "");
+  name += (data.handle ? ` (${data.handle})` : "");
 
   // Build the persona object
   const personaObject = {
@@ -107,7 +107,7 @@ async function addParticipant(formData) {
     type: "participant",
     platform: "directory",
     id: id.toString(),
-    friendlyName: friendlyName,
+    name: name,
     ...data
   }
   core.check.personaObject(personaObject);
@@ -128,7 +128,7 @@ async function addParticipant(formData) {
 async function addActivity(formData) {
   // Extract the form data
   const data = { 
-    friendlyName: formData.name,
+    name: formData.name,
   };
 
   // Generate a new ID for the activity

@@ -78,7 +78,7 @@ const mapWorkspacePersonas = (workspaces) => {
       id: workspace.id,
       platform: 'google',
       type: 'workspace',
-      friendlyName: workspace.name,
+      name: workspace.name,
     }
     return newWorkspace;
   })
@@ -108,7 +108,7 @@ const mapUserPersonas = (users, customerId) => {
       id: user.id,
       platform: 'google',
       type: 'account',
-      friendlyName: user.name.fullName,
+      name: user.name.fullName,
       firstName: firstName,
       lastName: lastName,
       authenticationMin: user.isEnrolledIn2Sv ? 2: 1,
@@ -174,7 +174,7 @@ const mapGroupPersonas = (groups, customerId) => {
       id: group.id,
       platform: 'google',
       type: 'group',
-      friendlyName: `${group.name} (${group.email})`,
+      name: `${group.name} (${group.email})`,
       name: group.name,
       email: group.email,
       description: group.description,

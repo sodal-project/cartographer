@@ -227,7 +227,7 @@ function rowsFromRawQuery(rawPersonas, forceVisibility) {
   const data = rawPersonas.records.map(node => node._fields[0].properties);
 
   // Get the fields from the data
-  const defaultFields = ["upn", "platform", "type", "id", "friendlyName"]
+  const defaultFields = ["upn", "platform", "type", "id", "name"]
   const actualFields = data.map(row => Object.keys(row)).flat().sort();
   const fields = forceVisibility || new Set([...defaultFields, ...actualFields]);
 
