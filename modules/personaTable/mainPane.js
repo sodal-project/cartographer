@@ -81,7 +81,7 @@ async function updateSelectedUpns(data){
   }
 
   // Update the table config with the new selectedUpns
-  tableConfig.selectedUpns = upns;
+  tableConfig.selectedUpns = newSelectedUpns;
 
   // Write the updated selectedUpns to the database
   const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: tableConfig});
