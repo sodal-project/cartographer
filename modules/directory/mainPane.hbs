@@ -28,6 +28,19 @@
         </form>
       {{/ModalButton}}
 
+      {{#> ModalButton label="Add Raw Persona" }}
+        <h2 class="text-white text-lg mb-4">Add Raw Persona</h2>
+        <form
+          hx-post="/mod/directory/addPersona"
+          hx-target="closest #main"
+          hx-swap="innerHTML"
+        >
+        <p>Use caution, you can break things.</p>
+          {{> FormText label="UPN" name="upn" value="" }}
+          {{> FormSubmit label="Add Persona" }}
+        </form>
+      {{/ModalButton}}
+
     </div>
   </div>
   <div class="relative">

@@ -146,6 +146,25 @@ async function addActivity(formData) {
   return redraw();
 }
 
+async function addPersona(formData) {
+  const data = {
+    upn: formData.upn,
+  }
+
+  if(!data.upn) {
+    console.error("No UPN provided");
+    return redraw();
+  }
+
+  console.log(`Adding persona: ${data.upn}`);
+
+  const persona = core.persona.newFromUpn(data.upn);
+
+  await core.graph.mergePersona(persona, directorySource);
+
+  return redraw();
+}
+
 /**
  * @description Delete personas from the directory
  * 
@@ -497,6 +516,7 @@ module.exports = {
   csvDeleteFile,
   csvMerge,
   addParticipant,
+  addPersona,
   addActivity,
   deletePersonas,
   linkPersonas,
