@@ -55,8 +55,8 @@ function tableCheckbox() {
     },
 
     initializeTotalCheckboxes() {
-      // Set `totalCheckboxes` based on the number of rows in the tbody
-      this.totalCheckboxes = document.querySelectorAll('tbody tr').length;
+      const table = this.$el.closest('table');
+      this.totalCheckboxes = table.querySelectorAll('tbody tr').length;
     },
 
     toggleSelectAll() {
