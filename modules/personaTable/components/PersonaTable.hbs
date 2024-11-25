@@ -225,7 +225,7 @@
                 type="checkbox"
                 hx-post="/mod/personaTable/updateAllSelectedUpns/"
                 hx-vals='{"tableFormId": "{{data.tableFormId}}"}'
-                hx-target="#main"
+                hx-target="closest .persona-table-wrap"
                 x-model="selectAll"
                 x-ref="headerCheckbox"
                 @change="toggleSelectAll()"
