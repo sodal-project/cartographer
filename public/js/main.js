@@ -15,8 +15,12 @@ document.body.addEventListener('htmx:afterRequest', (event) => {
   document.getElementById('spinner').style.visibility = 'hidden';
   document.getElementById('main').style.visibility = 'visible';
 
-  // Reinitialize Alpine components after an HTMX request as the dom has changed
-  Alpine.initTree(document.body);
+  // Reinitialize Alpine components after certain HTMX requests
+  // This is necessary to rebind Alpine components to the updated DOM
+  // This cannot be done on the element as HTMX is swapping it out
+  if (event.detail?.pathInfo?.requestPath === '/mod/personaTable/updateSelectedUpns/') {
+    Alpine.initTree(document.body);
+  }
 });
 
 /**
