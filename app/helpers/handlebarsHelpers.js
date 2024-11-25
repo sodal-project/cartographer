@@ -120,10 +120,38 @@ const urlEncode = (context) => {
   return encodeURIComponent(context);
 }
 
+/**
+ * Check if an array includes a specific value.
+ * 
+ * @param {*} array - The array to check.
+ * @param {*} value - The value to search for.
+ * @param {*} options - Handlebars options object.
+ * @returns - The content inside the block if the array includes the value.
+ * 
+ * @example
+ * // Handlebars template:
+ * {{#includes fruits "apple"}}
+ *  <p>Apple is in the list!</p>
+ * {{/includes}}
+ * 
+ * // Data:
+ * { fruits: ['banana', 'apple', 'orange'] }
+ * 
+ * // Rendered output:
+ * <p>Apple is in the list!</p>
+ */
+const includes = (array, value, options) => {
+  if (Array.isArray(array) && array.includes(value)) {
+    return options.fn(this);
+  }
+  return options.inverse(this);
+};
+
 module.exports = {
   eq,
   add,
   dynamicPartial,
   json,
   urlEncode,
+  includes,
 };

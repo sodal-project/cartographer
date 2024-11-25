@@ -65,9 +65,47 @@ async function init(){
   await core.client.registerPartials();
 }
 
+async function updateSelectedUpns(data){
+  const {upn, action, tableFormId} = data;
+  
+  // Get the current selectedUpns
+  const tableConfig = await core.config.readConfig(`table-config-${tableFormId}`) || {};
+  const selectedUpns = tableConfig.selectedUpns || [];
+
+  // Update the selectedUpns
+  let newSelectedUpns;
+  if (action === 'add') {
+    newSelectedUpns = [...selectedUpns, upn];
+  } else {
+    newSelectedUpns = selectedUpns.filter(item => item !== upn);
+  }
+  const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: { selectedUpns: newSelectedUpns }});
+  
+  // Set the next action depending on the reponse
+  // if this fails we should return a checkbox with the existing action
+  let newAction = action;
+  if (response === true) {
+    newAction = action === 'remove' ? 'add' : 'remove';
+  }
+
+  // Return a new checkbox with the updated action and checked state
+  const newCheckbox = `<input 
+    type="checkbox" 
+    name="upn" 
+    value="${upn}"
+    hx-post="/mod/personaTable/updateSelectedUpns/"
+    hx-trigger="change"
+    hx-target="closest .checkbox-wrap"
+    hx-vals='{"upn": "${upn}", "action": "${newAction}", "tableFormId": "personaTable" }'
+    ${newAction === 'remove' ? 'checked' : ''}
+  />`
+  return newCheckbox;
+}
+
 module.exports = {
   mainPane,
   build,
   update,
   init,
+  updateSelectedUpns,
 };

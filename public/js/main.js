@@ -10,9 +10,13 @@ document.body.addEventListener('htmx:beforeRequest', (event) => {
 
 // Hide the spinner and clear the timeout immediately after the request is finished
 document.body.addEventListener('htmx:afterRequest', (event) => {
-  clearTimeout(spinnerTimeout);  // Cancel showing the spinner if request finishes quickly
+  // Cancel showing the spinner if request finishes quickly
+  clearTimeout(spinnerTimeout);
   document.getElementById('spinner').style.visibility = 'hidden';
   document.getElementById('main').style.visibility = 'visible';
+
+  // Reinitialize Alpine components after an HTMX request as the dom has changed
+  Alpine.initTree(document.body);
 });
 
 /**
@@ -30,7 +34,22 @@ function tableCheckbox() {
   return {
     selectAll: false,
     selected: [],
+    totalSelectedCheckboxes: 0,
     totalCheckboxes: 0,
+
+    init() {
+      // Find all pre-selected checkboxes and add them to the `selected` array
+      this.selected = Array.from(this.$el.querySelectorAll('input[type="checkbox"][name="upn"]:checked')).map(input => input.value);
+      
+      // Set the total number of selected checkboxes
+      this.totalSelectedCheckboxes = this.selected.length;
+
+      // Set the total number of checkboxes
+      this.totalCheckboxes = this.$el.querySelectorAll('input[type="checkbox"][name="upn"]').length;
+
+      this.updateSelectAllState();
+      console.log('Initialized selected:', this.selected);
+    },
 
     initializeTotalCheckboxes() {
       // Set `totalCheckboxes` based on the number of rows in the tbody
@@ -46,6 +65,7 @@ function tableCheckbox() {
     },
 
     updateSelectAllState() {
+      console.log('Updating select all state');
       const checkedCount = this.selected.length;
       this.selectAll = checkedCount === this.totalCheckboxes;
       

@@ -75,7 +75,12 @@ async function build(tableConfig) {
   const tableForm = tableConfig.lastTableForm || { tableFormId: tableConfig.tableFormId }
 
   // Return a table data object
-  return await read(tableConfig, tableForm);
+  const tableData = await read(tableConfig, tableForm);
+
+  // Add selected upn list to the table data
+  tableData.selectedUpns = tableConfig.selectedUpns || [];
+
+  return tableData;
 }
 
 /**
@@ -103,9 +108,12 @@ async function update(tableForm) {
   await core.config.writeConfig({ [tableKey]: tableConfig });
 
   // generate table data required to render the table
-  const data = await read(tableConfig, tableForm);
+  const tableData = await read(tableConfig, tableForm);
 
-  return await core.client.render('personaTable.hbs', { tableData: data } );
+  // Add selected upn list to the table data
+  tableData.selectedUpns = tableConfig.selectedUpns || [];
+
+  return await core.client.render('personaTable.hbs', { tableData: tableData } );
 }
 /**
  * @description Read a table from a TableConfig object
@@ -186,9 +194,6 @@ async function read(tableConfig, tableForm) {
  */
 function graphFiltersFromTableForm(tableForm) {
   const tableFilters = getTableFilterArray(tableForm);
-
-  // console.log('Table Filters:', tableFilters)
-
   const graphFilters = tableFilters.map(filter => {
     const type = "field";
     const key = filter.field;

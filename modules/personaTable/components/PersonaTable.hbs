@@ -1,4 +1,4 @@
-<div class="relative table-wrap" x-data="columnVisibility([{{data.visibility}}])">
+<div class="relative persona-table-wrap" x-data="columnVisibility([{{data.visibility}}])">
   <!-- Export CSV -->
   <form
     class="absolute z-20 right-10 top-1 pr-1 pt-px"
@@ -187,86 +187,113 @@
     </div>
   </form>
 
-  <div class="relative" x-data="tableCheckbox()" >
-    <form
-      id="{{data.tableFormId}}"
-      hx-post="{{data.action.endpoint}}"
-      hx-target="closest .persona-table-wrap"
-      hx-swap="innerHTML"
-      hx-vals='{
-        "customValue": "{{data.action.customValue}}",
-        "tableFormId": "{{data.tableFormId}}"
-      }'
-      @keydown.enter.prevent
-    >
-      <!-- Delete Selected -->
-      {{#if data.action }}
-        <div 
-          class="absolute z-50 -top-14 left-0 right-12 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
-          x-show="selected.length > 0"
+  <div class="relative" x-data="tableCheckbox()" >    
+    {{#if data.action }}
+      <div 
+        class="absolute z-50 -top-14 left-0 right-20 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
+        x-show="selected.length > 0"
+      >
+        <button
+          type="button"
+          class="bg-indigo-600 rounded text-white text-sm p-1 px-6"
+          hx-post="{{data.action.endpoint}}"
+          hx-target="closest .table-wrap"
+          hx-swap="innerHTML"
+          hx-vals='{
+            "customValue": "{{data.action.customValue}}",
+            "tableFormId": "{{data.tableFormId}}"
+          }'
         >
-          {{> FormSubmit label=data.action.label }}
-          <span class="text-sm">{{ selected }} selected items</span>
-        </div>
-      {{/if}}
+          {{data.action.label}}
+        </button>
+        <span class="text-sm"><span x-text="totalSelectedCheckboxes"></span> selected items</span>
+        <input type="text" name="selectedUpns" x-model="selected" />
+      </div>
+    {{/if}}
 
-      <!-- Table -->
-      <div class="overflow-scroll">
-        <table class="min-w-full" :class="getColumnClasses()" x-init="initializeTotalCheckboxes()">
-          <thead class="sticky top-0">
-            <tr>
+    <!-- Table -->
+    <div class="overflow-scroll">
+      <table class="min-w-full" :class="getColumnClasses()" x-init="initializeTotalCheckboxes()">
+        <thead class="sticky top-0">
+          <tr>
+            <th
+              class="sticky top-0 p-4 bg-gray-900 text-left w-12"
+            >
+              <div
+                class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+              ></div>
+              <input
+                type="checkbox"
+                x-model="selectAll"
+                @click="toggleSelectAll()"
+                x-ref="headerCheckbox"
+              >
+            </th>
+            {{#each data.fields}}
               <th
-                class="sticky top-0 p-4 bg-gray-900 text-left w-12"
+                class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
               >
                 <div
                   class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
                 ></div>
-                <input
-                  type="checkbox"
-                  x-model="selectAll"
-                  @click="toggleSelectAll()"
-                  x-ref="headerCheckbox"
-                >
+                <span onClick="sort" class="cursor-pointer">
+                  {{this.label}}
+                </span>
               </th>
-              {{#each data.fields}}
-                <th
-                  class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+            {{/each}}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800">
+          {{#each data.rows}}
+            <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
+              <td class="p-4 hover:cursor-pointer">
+                {{#includes ../data.selectedUpns upn}}
+                  <div class="checkbox-wrap">
+                    <input 
+                      type="checkbox" 
+                      name="upn"
+                      value="{{../upn}}"
+                      x-model="selected"
+                      hx-post="/mod/personaTable/updateSelectedUpns/"
+                      hx-trigger="change"
+                      hx-target="closest .checkbox-wrap"
+                      hx-vals='{"action": "remove", "tableFormId": "personaTable", "upn": "{{../upn}}"}'
+                      checked
+                    />
+                  </div>
+                {{else}}
+                  <div class="checkbox-wrap">
+                    <input 
+                      type="checkbox" 
+                      name="upn"
+                      value="{{../upn}}"
+                      x-model="selected"
+                      hx-post="/mod/personaTable/updateSelectedUpns/"
+                      hx-trigger="change"
+                      hx-target="closest .checkbox-wrap"
+                      hx-vals='{"action": "add", "tableFormId": "personaTable", "upn": "{{../upn}}"}'
+                    />
+                  </div>
+                {{/includes}}
+              </td>
+              {{#each this}}
+                <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
+                  hx-trigger="click"
+                  hx-post="/mod/detailPane/search/"
+                  hx-target="closest #main"
+                  hx-swap="innerHTML"
+                  hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
+                  hx-vals='{
+                    "upn": "{{../this.upn}}"
+                  }'
                 >
-                  <div
-                    class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
-                  ></div>
-                  <span onClick="sort" class="cursor-pointer">
-                    {{this.label}}
-                  </span>
-                </th>
+                  {{this}}
+                </td>
               {{/each}}
             </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-800">
-            {{#each data.rows}}
-              <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
-                <td class="p-4 hover:cursor-pointer">
-                  <input type="checkbox" name="upn" value="{{this.upn}}" x-model="selected" @change="updateSelectAllState()">
-                </td>
-                {{#each this}}
-                  <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
-                    hx-trigger="click"
-                    hx-post="/mod/detailPane/search/"
-                    hx-target="closest #main"
-                    hx-swap="innerHTML"
-                    hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
-                    hx-vals='{
-                      "upn": "{{../this.upn}}"
-                    }'
-                  >
-                    {{this}}
-                  </td>
-                {{/each}}
-              </tr>
-            {{/each}}
-          </tbody>
-        </table>
-      </div>
-    </form>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
