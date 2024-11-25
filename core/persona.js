@@ -106,7 +106,7 @@ const getRelationships = (persona) => {
  * @returns {object} - A new persona object
  */
 const newFromEmail = (email) => {
-  return newPersona(CC.PLATFORM.EMAIL, CC.TYPE.ACCOUNT, email);
+  return newPersona(CC.PLATFORM.EMAIL, CC.TYPE.ACCOUNT, email.toLowerCase());
 }
 
 /**

@@ -207,7 +207,7 @@ const mapGroupPersonas = (groups, customerId) => {
 
     allAliases.forEach(email => {
       const rel = {
-        upn: `upn:email:account:${email}`,
+        upn: `upn:email:account:${email.toLowerCase()}`,
         level: LEVEL["ALIAS"],
         confidence: 1
       }
@@ -266,7 +266,7 @@ const mapGroupMemberPersonas = (groupMemberSets) => {
         
         if(member.email) {
           const alias = {
-            upn: `upn:email:account:${member.email}`,
+            upn: `upn:email:account:${member.email.toLowerCase()}`,
             level: LEVEL["ALIAS"],
             confidence: 1
           }

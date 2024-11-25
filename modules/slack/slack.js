@@ -194,7 +194,7 @@ const mapUserPersonas = (users, slackTeamId) => {
     const email = user.profile.email;
     if(email && status == "active") {
       const authPersona = {
-        upn: "upn:slack:account:" + email,
+        upn: "upn:slack:account:" + email.toLowerCase(),
         id: email,
         platform: "slack",
         type: "account",
@@ -207,7 +207,7 @@ const mapUserPersonas = (users, slackTeamId) => {
         ], 
         obey: [
           {
-            upn: "upn:email:account:" + email,
+            upn: "upn:email:account:" + email.toLowerCase(),
             level: core.constants.LEVEL["ADMIN"],
             confidence: core.constants.CONFIDENCE["MAX-SYSTEM"],
           }
