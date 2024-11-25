@@ -191,10 +191,10 @@ const mapUserPersonas = (users, slackTeamId) => {
     }
     personas.push(persona);
 
-    const email = user.profile.email;
+    const email = user.profile.email?.toLowerCase();
     if(email && status == "active") {
       const authPersona = {
-        upn: "upn:slack:account:" + email.toLowerCase(),
+        upn: "upn:slack:account:" + email,
         id: email,
         platform: "slack",
         type: "account",
