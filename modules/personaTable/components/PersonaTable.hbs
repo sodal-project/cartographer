@@ -187,7 +187,7 @@
     </div>
   </form>
 
-  <div class="relative" x-data="tableCheckbox()" >    
+  <div class="relative" x-data="tableCheckbox()">    
     {{#if data.action }}
       <div 
         class="absolute z-50 -top-14 left-0 right-20 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
@@ -224,7 +224,7 @@
               <input
                 type="checkbox"
                 hx-post="/mod/personaTable/updateAllSelectedUpns/"
-                hx-vals='{"tableFormId": "personaTable"}'
+                hx-vals='{"tableFormId": "{{data.tableFormId}}"}'
                 hx-target="#main"
                 x-model="selectAll"
                 x-ref="headerCheckbox"
@@ -258,7 +258,7 @@
                       hx-post="/mod/personaTable/updateSelectedUpns/"
                       hx-trigger="change"
                       hx-target="closest .checkbox-wrap"
-                      hx-vals='{"action": "remove", "tableFormId": "personaTable", "upn": "{{../upn}}"}'
+                      hx-vals='{"action": "remove", "tableFormId": "{{../../data.tableFormId}}", "upn": "{{../upn}}"}'
                       checked
                     />
                   </div>
@@ -271,7 +271,7 @@
                       hx-post="/mod/personaTable/updateSelectedUpns/"
                       hx-trigger="change"
                       hx-target="closest .checkbox-wrap"
-                      hx-vals='{"action": "add", "tableFormId": "personaTable", "upn": "{{../upn}}"}'
+                      hx-vals='{"action": "add", "tableFormId": "{{../../data.tableFormId}}", "upn": "{{../upn}}"}'
                     />
                   </div>
                 {{/includes}}

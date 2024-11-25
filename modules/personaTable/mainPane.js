@@ -101,7 +101,7 @@ async function updateSelectedUpns(data){
     hx-post="/mod/personaTable/updateSelectedUpns/"
     hx-trigger="change"
     hx-target="closest .checkbox-wrap"
-    hx-vals='{"upn": "${upn}", "action": "${newAction}", "tableFormId": "personaTable" }'
+    hx-vals='{"upn": "${upn}", "action": "${newAction}", "tableFormId": "${tableFormId}" }'
     ${newAction === 'remove' ? 'checked' : ''}
   />`
   return newCheckbox;
