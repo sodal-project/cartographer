@@ -14,29 +14,38 @@ const directoryTableConfig = {
   forceFilters: [
     {
       type: "field",
-      key: "type",
-      value: "participant",
+      key: "platform",
+      value: "directory",
       operator: "=",
       not: false
-    },
-    {
-      type: "compare",
-      key: "or",
-      filter: [
-        {
-          type: "field",
-          key: "type",
-          value: "activity",
-          operator: "=",
-          not: false
-        }
-      ]
     }
   ],
 }
 
 const personaTableConfig = {
   tableFormId: "persona-table-form",
+  forceFilters: [
+    {
+      type: "compare",
+      key: "not",
+      filter: [
+        {
+          type: "field",
+          key: "platform",
+          value: "directory",
+          operator: "=",
+          not: false
+        },
+        {
+          type: "field",
+          key: "type",
+          value: "participant",
+          operator: "=",
+          not: false
+        }
+      ]
+    }
+  ],
 }
 
 /**
