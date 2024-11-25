@@ -48,7 +48,6 @@ function tableCheckbox() {
       this.totalCheckboxes = this.$el.querySelectorAll('input[type="checkbox"][name="upn"]').length;
 
       this.updateSelectAllState();
-      console.log('Initialized selected:', this.selected);
     },
 
     initializeTotalCheckboxes() {
@@ -57,15 +56,35 @@ function tableCheckbox() {
     },
 
     toggleSelectAll() {
-      this.selectAll = !this.selectAll;
-      this.selected = this.selectAll
-        ? Array.from(document.querySelectorAll('tbody input[type="checkbox"]')).map(cb => cb.value)
-        : [];
-      this.updateSelectAllState();
+      // Get all the upns from the table
+      const table = this.$el.closest('table');
+      const checkboxes = table.querySelectorAll('input[type="checkbox"][name="upn"]');
+      const allUpns = Array.from(checkboxes).map(checkbox => checkbox.value);
+
+      // Determine the state of selection
+      let upns = [];
+      if (this.selected.length === 0) {
+        upns = allUpns; // Select all if none are selected
+      }
+
+      // Set the `hx-vals` attribute on the header checkbox to send the upns as a parameter
+      const existingVals = this.$refs.headerCheckbox.getAttribute('hx-vals');
+      const updatedVals = {
+        ...(existingVals ? JSON.parse(existingVals) : {}), // Parse existing values if present
+        upns, // Add or overwrite the upns key
+      };
+      this.$refs.headerCheckbox.setAttribute('hx-vals', JSON.stringify(updatedVals));
+
+      // Trigger the HTMX post
+      this.$refs.headerCheckbox.dispatchEvent(new CustomEvent('htmx:configRequest', {
+        detail: {
+          headers: { 'Content-Type': 'application/json' },
+          bubbles: true,
+        },
+      }));
     },
 
     updateSelectAllState() {
-      console.log('Updating select all state');
       const checkedCount = this.selected.length;
       this.selectAll = checkedCount === this.totalCheckboxes;
       

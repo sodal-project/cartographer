@@ -207,7 +207,6 @@
           {{data.action.label}}
         </button>
         <span class="text-sm"><span x-text="totalSelectedCheckboxes"></span> selected items</span>
-        <input type="text" name="selectedUpns" x-model="selected" />
       </div>
     {{/if}}
 
@@ -224,9 +223,12 @@
               ></div>
               <input
                 type="checkbox"
+                hx-post="/mod/personaTable/updateAllSelectedUpns/"
+                hx-vals='{"tableFormId": "personaTable"}'
+                hx-target="#main"
                 x-model="selectAll"
-                @click="toggleSelectAll()"
                 x-ref="headerCheckbox"
+                @change="toggleSelectAll()"
               >
             </th>
             {{#each data.fields}}

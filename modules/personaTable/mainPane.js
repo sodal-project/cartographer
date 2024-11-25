@@ -79,7 +79,12 @@ async function updateSelectedUpns(data){
   } else {
     newSelectedUpns = selectedUpns.filter(item => item !== upn);
   }
-  const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: { selectedUpns: newSelectedUpns }});
+
+  // Update the table config with the new selectedUpns
+  tableConfig.selectedUpns = upns;
+
+  // Write the updated selectedUpns to the database
+  const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: tableConfig});
   
   // Set the next action depending on the reponse
   // if this fails we should return a checkbox with the existing action
@@ -102,10 +107,24 @@ async function updateSelectedUpns(data){
   return newCheckbox;
 }
 
+async function updateAllSelectedUpns(data){
+  const {tableFormId, upns} = data;
+  
+  // Get the existing table config and update it's UPNs
+  const tableConfig = await core.config.readConfig(`table-config-${tableFormId}`) || {};
+  tableConfig.selectedUpns = upns;
+
+  // Write the updated table config to the database
+  const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: tableConfig});
+  
+  return redraw();
+}
+
 module.exports = {
   mainPane,
   build,
   update,
   init,
   updateSelectedUpns,
+  updateAllSelectedUpns,
 };
