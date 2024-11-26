@@ -430,18 +430,19 @@ async function getDetailSubpane(upn) {
     ]
   }
 
-  const aliasTableData = await core.mod.personaTable.build(aliasTableConfig)
-  const controlTableData = await core.mod.personaTable.build(controlTableConfig)
-  const obeyTableData = await core.mod.personaTable.build(obeyTableConfig)
+  // Build Table HTML
+  const aliasTableHtml = await core.mod.personaTable.getTable(aliasTableConfig);
+  const controlTableHtml = await core.mod.personaTable.getTable(controlTableConfig);
+  const obeyTableHtml = await core.mod.personaTable.getTable(obeyTableConfig);
 
   return {
     component: "DirectoryDetailSubpane",
     data: {
       persona,
       customProperties,
-      aliasTableData,
-      controlTableData,
-      obeyTableData,
+      aliasTableHtml,
+      controlTableHtml,
+      obeyTableHtml,
     }
   }
 }

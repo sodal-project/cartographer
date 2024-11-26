@@ -64,12 +64,12 @@
 
   <!-- Tab Contents -->
   <div x-show="currentTab === 'alias'" class="px-6 py-4" style="display: none;">
-    {{> PersonaTable data=aliasTableData }}
+    {{{ aliasTableHtml }}}
   </div>
   <div x-show="currentTab === 'control'" class="px-6 py-4" style="display: none;">
-    {{> PersonaTable data=controlTableData }}
+    {{{ controlTableHtml }}}
   </div>
   <div x-show="currentTab === 'obey'" class="px-6 py-4" style="display: none;">
-    {{> PersonaTable data=obeyTableData }}
+    {{{ obeyTableHtml }}}
   </div>
 </div>
