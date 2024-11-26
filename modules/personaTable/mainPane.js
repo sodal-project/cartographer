@@ -55,16 +55,12 @@ async function update(form){
 }
 
 /**
- * @description Initialize the module
+ * @description Add the passed UPN to the selected UPNs list in the config 
+ * database and return a new checkbox
  * 
- * Register PersonaTable partials
- * 
- * @returns {void}
+ * @param {*} data - The data object containing the upn, action, and tableFormId
+ * @returns {string} - Compiled HTML containing a new checkbox
  */
-async function init(){
-  await core.client.registerPartials();
-}
-
 async function updateSelectedUpns(data){
   const {upn, action, tableFormId} = data;
   
@@ -107,6 +103,13 @@ async function updateSelectedUpns(data){
   return newCheckbox;
 }
 
+/**
+ * @description Add the passed UPNs to the selected UPNs list in the config 
+ * database and redraw the entire table
+ * 
+ * @param {*} data - The data object containing the upn, action, and tableFormId
+ * @returns {string} - Compiled HTML containing a new checkbox
+ */
 async function updateAllSelectedUpns(data){
   const {tableFormId, upns} = data;
   
@@ -118,6 +121,18 @@ async function updateAllSelectedUpns(data){
   const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: tableConfig});
   
   return redraw();
+}
+
+
+/**
+ * @description Initialize the module
+ * 
+ * Register PersonaTable partials
+ * 
+ * @returns {void}
+ */
+async function init(){
+  await core.client.registerPartials();
 }
 
 module.exports = {
