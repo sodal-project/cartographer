@@ -254,9 +254,7 @@ async function redraw(formData) {
     }
   }
 
-  const data = {
-    data: await build(tableConfig),
-  }
+  const data = await build(tableConfig);
 
   // Render the main template
   return core.client.render('mainPane.hbs', data);
@@ -344,7 +342,7 @@ async function update(tableForm) {
   data.selectedUpns = tableConfig.selectedUpns || [];
 
   // Build the table markup
-  const markup = await core.client.render('mainPane.hbs', { data: data } );
+  const markup = await core.client.render('mainPane.hbs', data);
 
   return markup;
 }
@@ -436,9 +434,7 @@ async function updateAllSelectedUpns(data){
  * @returns {string} - Compiled HTML content
  */
 async function getTable(config) {
-  const data = {
-    data: await build(config),
-  }
+  const data = await build(config)
 
   // Render the main template
   return core.client.render('mainPane.hbs', data);
