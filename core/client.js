@@ -45,10 +45,13 @@ const registerPartials = (moduleName) => {
 
   const corePartialsDir = `/app/components`;
   const modulePartialsDir = `/app/modules/${moduleName}/components`;
-
   const partialsDir = moduleName? modulePartialsDir : corePartialsDir;
 
   const readPartials = (dir) => {
+    if (!fs.existsSync(dir)) {
+      return;
+    }
+
     fs.readdirSync(dir).forEach((file) => {
       const filePath = path.join(dir, file);
       const stat = fs.statSync(filePath);

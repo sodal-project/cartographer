@@ -435,17 +435,22 @@ async function getDetailSubpane(upn) {
   const controlTableHtml = await core.mod.personaTable.getTable(controlTableConfig);
   const obeyTableHtml = await core.mod.personaTable.getTable(obeyTableConfig);
 
-  return {
-    component: "DirectoryDetailSubpane",
-    data: {
-      persona,
-      customProperties,
-      aliasTableHtml,
-      controlTableHtml,
-      obeyTableHtml,
-    }
-  }
+  // Combine all of the data into a single object
+  const data = {
+    persona,
+    customProperties,
+    aliasTableHtml,
+    controlTableHtml,
+    obeyTableHtml,
+  };
+
+  // Build the subpane markup
+  // TODO: This should loop through all subpanes and render them
+  const markup = core.client.render('directoryDetailSubpane.hbs', data);
+  
+  return markup;
 }
+
 
 /**
  * @description Initialize the module and register partials
