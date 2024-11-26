@@ -35,6 +35,21 @@ async function mainPane() {
 }
 
 /**
+ * @description Get the table HTML for a given configuration
+ * 
+ * @param {*} config 
+ * @returns {string} - Compiled HTML content
+ */
+async function getTable(config) {
+  const data = {
+    tableData: await table.build(config),
+  }
+
+  // Render the main template
+  return core.client.render('mainPane.hbs', data);
+}
+
+/**
  * @description Build a Persona Table from a TableConfig object
  * 
  * @param {object} form - The TableConfig object required to build a table
@@ -142,4 +157,5 @@ module.exports = {
   init,
   updateSelectedUpns,
   updateAllSelectedUpns,
+  getTable,
 };

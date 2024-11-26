@@ -53,7 +53,7 @@
           </div>
         {{/ModalButtonPane}}
       </div>
-      {{> PersonaTable data=directory.tableData }}
+      {{{ directoryTableHtml }}}
     </div>
     <div class="absolute top-0 left-1/2 right-0 pl-4">
       <h2 class="text-white text-lg mb-4">Personas</h2>
@@ -61,7 +61,7 @@
           <!-- Link -->
           {{> Button click="linkData()" label="Link" }}
         </div>
-      {{> PersonaTable data=personas.tableData }}
+      {{{ personaTableHtml }}}
     </div>
   </div>
 </div>
