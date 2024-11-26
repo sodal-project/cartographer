@@ -56,6 +56,10 @@ const coreData = {
       label: "BambooHR Integration",
     },
     {
+      folder: "powerbi",
+      label: "PowerBI Integration",
+    },
+    {
       folder: "personaTable",
       label: "Persona Table",
     },

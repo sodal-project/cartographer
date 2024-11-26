@@ -1,5 +1,4 @@
 const core = require('../../core/core');
-const { deleteOrphanedPersonas } = require('../../core/graph');
 const LEVEL = core.constants.LEVEL;
 
 async function sync(instance){
