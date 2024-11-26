@@ -445,9 +445,8 @@ async function getDetailSubpane(upn) {
   };
 
   // Build the subpane markup
-  // TODO: This should loop through all subpanes and render them
   const markup = core.client.render('directoryDetailSubpane.hbs', data);
-  
+
   return markup;
 }
 
