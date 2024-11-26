@@ -40,8 +40,9 @@ const sync = async (instance) => {
     const users = await loadCached(loadUsers, client, instanceId, customerId);
     const groups = await loadCached(loadGroups, client, instanceId, customerId);
     const groupMemberSets = await Promise.all(groups.map(async (group) => {
+      const members = await loadCached(loadGroupMembers, client, instanceId, customerId, group.id);
       return {
-        members: await loadCached(loadGroupMembers, client, instanceId, customerId, group.id),
+        members: members,
         id: group.id
       }
     }));
@@ -105,6 +106,8 @@ const mapUserPersonas = (users, customerId) => {
   }
 
   users.forEach(user => {
+    if(!user) { return; }
+
     const firstName = user.name?.givenName
     const lastName = user.name?.familyName
     const level = user.isAdmin ? 'superAdmin' : user.isDelegatedAdmin ? 'delegatedAdmin' : 'member';
@@ -152,6 +155,8 @@ const mapUserPersonas = (users, customerId) => {
     if(user.nonEditableAliases) { allAliases = allAliases.concat(user.nonEditableAliases) }
 
     allAliases.forEach(email => {
+      if(!email) { return; }
+
       const rel = {
         upn: `upn:email:account:${email}`,
         level: LEVEL["ALIAS"],
@@ -175,6 +180,8 @@ const mapGroupPersonas = (groups, customerId) => {
   let personas = [];
 
   groups.forEach(group => {
+    if(!group) { return; }
+
     const newGroup = {
       upn: `upn:google:group:${group.id}`,
       id: group.id,
@@ -206,6 +213,8 @@ const mapGroupPersonas = (groups, customerId) => {
     if(group.aliases) { allAliases = allAliases.concat(group.aliases) }
 
     allAliases.forEach(email => {
+      if(!email) { return; }
+
       const rel = {
         upn: `upn:email:account:${email.toLowerCase()}`,
         level: LEVEL["ALIAS"],
@@ -239,12 +248,16 @@ const mapGroupMemberPersonas = (groupMemberSets) => {
   }
 
   groupMemberSets.forEach(set => {
+    if(!set) { return; }
+
     const groupId = set.id;
     if(!groupId) { throw new Error('groupId is required') }
 
     const groupUpn = `upn:google:group:${groupId}`;
 
     set.members.forEach(member => {
+      if(!member) { return; }
+
       const type = typeMap[member.type];
 
       const newMember = {
@@ -292,6 +305,8 @@ const mapAuthTokenPersonas = (authTokenSets) => {
     const tokens = set.userTokens;
 
     tokens.forEach(token => {
+      if(!token) { return; }
+
       const name = token.displayText;
       const platform = tokenMap[name];
       if(!platform) { 
@@ -380,6 +395,8 @@ const apiCall = async (client, path, call, request) => {
     const response = await client[path][call](request);
     responses.push(response);
     pageToken = response.data.nextPageToken;
+    request.pageToken = pageToken;
+    await new Promise(resolve => setTimeout(resolve, 200))
   } while(pageToken);
 
   return responses;
