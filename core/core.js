@@ -74,7 +74,7 @@ const coreData = {
     {
       folder: "test-long-process",
       label: "Test Long Process",
-    },
+    }
   ]
 }
 
