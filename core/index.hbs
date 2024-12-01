@@ -38,14 +38,23 @@
             <li>
               <ul role="list" class="space-y-4">
                 {{#each (lookup . "modulesByCategory")}}
-                  <li>
+                  <li x-data="{ 
+                    hasVisibleChildren() {
+                      return Array.from(this.$refs.moduleList.children)
+                        .some(li => mode === 'admin' || li.dataset.access === 'operator')
+                    }
+                  }">
                     {{#if @key}}
-                      <div class="text-xs font-semibold leading-6 text-gray-400 uppercase px-2 mb-2">{{@key}}</div>
+                      <div 
+                        x-show="hasVisibleChildren()"
+                        class="text-xs font-semibold leading-6 text-gray-400 uppercase px-2 mb-2"
+                      >{{@key}}</div>
                     {{/if}}
-                    <ul class="space-y-1">
+                    <ul x-ref="moduleList" class="space-y-1">
                       {{#each this}}
                         <li
                           x-show="mode === 'admin' || '{{accessLevel}}' === 'operator'"
+                          data-access="{{accessLevel}}"
                           @click="current='{{folder}}'"
                           hx-get="/mod/{{folder}}/mainPane/"
                           hx-target="#main"
