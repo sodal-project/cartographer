@@ -1,12 +1,5 @@
 const core = require('../../core/core.js');
 
-const tableConfig = {
-  tableFormId: "filter-table-form",
-  forceFilters: [
-    
-  ]
-}
-
 /**
  * @description 
  * @returns {string} - Compiled HTML content
@@ -26,20 +19,14 @@ async function mainPane() {
 }
 
 async function runFilter(formData) {
-  let results = null;
   const filter = JSON.parse(formData.filter);
-
-  try {
-    response = await core.graph.readPersonas(filter);
-    const sortedUpns = response.records.map(node => node._fields[0].properties.upn);
-    results = sortedUpns;
-  } catch (error) {
-    results = error;
-  }
-
+  const tableData = await core.mod.personaTable.build({
+    tableFormId: "filter-table-form",
+    forceFilters: filter,
+  })
   return redraw({ 
-    filter: formData.filter, // JSON.stringify(filter),
-    results, 
+    filter: JSON.stringify(filter, null, 2),
+    tableData,
   });
 }
 
