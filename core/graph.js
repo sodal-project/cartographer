@@ -5,26 +5,6 @@ const sourceStore = require('./sourceStore');
 const personaUtils = require('./persona');
 const graphFilter = require('./graphFilter');
 
-/* TODO: enable pagination
-
-optionalParams.page = optionalParams.page || 1;
-const pageSize = optionalParams?.pageSize || 1500;
-const orderBy = optionalParams?.orderBy || "upn";
-const orderByDirection = optionalParams?.orderByDirection || "ASC";
-
-const skip = neo4j.int((page - 1) * pageSize);
-const limit = neo4j.int(pageSize);
-const optionalParams = { skip, limit, ...optionalParams};
-
-const defaultPageParams = {
-  page: 1,
-  pageSize: 1500, 
-  orderBy: "upn",
-  orderByDirection: "ASC",
-}
-
-*/
-
 /**
  * Delete Personas that are not declared by any source
  * 
