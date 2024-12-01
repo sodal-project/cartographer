@@ -148,6 +148,7 @@ const callPowerBIAdminAPI = async (accessToken) => {
     return response;
   } catch (error) {
     console.error("Error calling Power BI Admin API:", error.response?.data || error.message);
+    throw new Error(`Power BI API Error: ${error.response?.data?.error?.message || error.message}`);
   }
 };
 
