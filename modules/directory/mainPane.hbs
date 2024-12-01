@@ -1,5 +1,17 @@
-<div class="p-8" x-data="formHandler">
-  <div class="flex justify-between items-start mb-6">
+<div class="p-8" x-data="{ 
+  showPersonas: false, 
+  personaWidth: 50,
+  hasSelections: false,
+  isResizing: false,
+  watchSelections() {
+    const form = document.getElementById('directory-table-form');
+    if (!form) return;
+    const checked = form.querySelectorAll('input[type=checkbox]:checked').length > 0;
+    this.showPersonas = checked;
+    this.hasSelections = checked;
+  }
+}">
+  <div class="flex justify-between items-start mb-6" :class="{ 'select-none': isResizing }">
     {{> Headline title="Directory Module" }}
     <div class="flex gap-3">
       <form
@@ -43,8 +55,63 @@
 
     </div>
   </div>
-  <div class="relative">
-    <div class="absolute top-0 left-0 right-1/2 pr-4">
+  <div class="relative" :class="{ 'select-none': isResizing }">
+
+    <!-- Floating Persona Panel -->
+    <div 
+      x-show="showPersonas"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="translate-x-full"
+      x-transition:enter-end="translate-x-0"
+      x-transition:leave="transition ease-in duration-300"
+      x-transition:leave-start="translate-x-0"
+      x-transition:leave-end="translate-x-full"
+      class="fixed right-0 bg-gray-900 border-l border-t border-gray-700 shadow-2xl overflow-auto z-50 rounded-tl-lg"
+      :style="`width: ${personaWidth}vw`"
+    >
+      <div class="relative h-full">
+        <!-- Resize Handle -->
+        <div 
+          class="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-indigo-500"
+          @mousedown="
+            isResizing = true;
+            const startWidth = personaWidth;
+            const startX = $event.pageX;
+            const onMove = (e) => {
+              const diff = startX - e.pageX;
+              const newWidth = Math.min(Math.max(startWidth + (diff / window.innerWidth) * 100, 30), 70);
+              personaWidth = newWidth;
+            };
+            const onUp = () => {
+              isResizing = false;
+              document.removeEventListener('mousemove', onMove);
+              document.removeEventListener('mouseup', onUp);
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+          "
+        ></div>
+
+        <!-- Content -->
+        <div class="p-8">
+          <h2 class="text-white text-lg mb-4">Personas</h2>
+          <div class="flex gap-3 mb-4">
+            <!-- Link -->
+            <button 
+              @click="linkData()" 
+              class="bg-indigo-600 py-1 px-4 rounded text-white text-sm"
+              :disabled="!hasSelections"
+            >
+              Link
+            </button>
+          </div>
+          {{> PersonaTable data=personas.tableData }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Directory Table (full width) -->
+    <div class="w-full">
       <h2 class="text-white text-lg mb-4">Directory</h2>
       <div class="flex gap-3 mb-4">
         <!-- Add Activity Modal -->
@@ -91,16 +158,11 @@
           </div>
         {{/ModalButtonPane}}
       </div>
-      {{> PersonaTable data=directory.tableData }}
+      <div @change="watchSelections()">
+        {{> PersonaTable data=directory.tableData }}
+      </div>
     </div>
-    <div class="absolute top-0 left-1/2 right-0 pl-4">
-      <h2 class="text-white text-lg mb-4">Personas</h2>
-        <div class="flex gap-3 mb-4">
-          <!-- Link -->
-          {{> Button click="linkData()" label="Link" }}
-        </div>
-      {{> PersonaTable data=personas.tableData }}
-    </div>
+
   </div>
 </div>
 
