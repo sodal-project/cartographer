@@ -38,7 +38,7 @@ const coreData = {
       accessLevel: "operator"
     },
     {
-      folder: "test-filter",
+      folder: "filter-queries",
       label: "Filter Queries",
       category: "Discovery",
       accessLevel: "operator"

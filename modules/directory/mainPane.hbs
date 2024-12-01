@@ -1,16 +1,4 @@
-<div class="p-8" x-data="{ 
-  showPersonas: false, 
-  personaWidth: 50,
-  hasSelections: false,
-  isResizing: false,
-  watchSelections() {
-    const form = document.getElementById('directory-table-form');
-    if (!form) return;
-    const checked = form.querySelectorAll('input[type=checkbox]:checked').length > 0;
-    this.showPersonas = checked;
-    this.hasSelections = checked;
-  }
-}">
+<div class="p-8" x-data="directoryPane">
   <div class="flex justify-between items-start mb-6" :class="{ 'select-none': isResizing }">
     {{> Headline title="Directory Module" }}
     <div class="flex gap-3">
@@ -168,7 +156,20 @@
 
 <script>
 document.addEventListener('alpine:init', () => {
-  Alpine.data('formHandler', () => ({
+  Alpine.data('directoryPane', () => ({
+    showPersonas: false, 
+    personaWidth: 50,
+    hasSelections: false,
+    isResizing: false,
+    
+    watchSelections() {
+      const form = document.getElementById('directory-table-form');
+      if (!form) return;
+      const checked = form.querySelectorAll('input[type=checkbox]:checked').length > 0;
+      this.showPersonas = checked;
+      this.hasSelections = checked;
+    },
+
     linkData() {
       const directoryTableForm = document.getElementById('directory-table-form');
       const personaTableForm = document.getElementById('persona-table-form');
@@ -192,6 +193,7 @@ document.addEventListener('alpine:init', () => {
         values: combinedData,
       });
     }
-  }));
+  }))
 });
 </script>
+
