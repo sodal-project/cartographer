@@ -7,13 +7,13 @@
     >
       <div
         class="flex grow flex-col gap-y-5 overflow-y-auto h-full bg-gray-900 px-4 pb-4"
+        x-data="{ mode: 'operator', current: '{{currentModule}}' }"
       >
         <!-- Logo -->
         {{> Logo }}
 
         <!-- Tabs -->
         <div
-          x-data="{ mode: 'operator' }"
           class="flex bg-black bg-opacity-30 border border-gray-800 p-1 rounded text-white"
         >
           <button
@@ -36,22 +36,32 @@
           <ul role="list" class="flex flex-1 flex-col gap-y-7">
             <!-- Module List -->
             <li>
-              <ul role="list" class="space-y-1" x-data="{ current: '{{currentModule}}' }">
-                {{#each modules}}
-                  <li
-                    @click="current='{{folder}}'"
-                    hx-get="/mod/{{folder}}/mainPane/"
-                    hx-target="#main"
-                    hx-push-url="/{{folder}}/mainPane/"
-                    class="relative border-transparent group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-white hover:bg-gray-800 cursor-pointer"
-                  >
-                    <span
-                      class="bg-indigo-600 h-full w-1.5 absolute -left-4 top-0 z-2"
-                      x-show="current === '{{folder}}'"
-                    ></span>
-                    <span class="">
-                      {{label}}
-                    </span>
+              <ul role="list" class="space-y-4">
+                {{#each (lookup . "modulesByCategory")}}
+                  <li>
+                    {{#if @key}}
+                      <div class="text-xs font-semibold leading-6 text-gray-400 uppercase px-2 mb-2">{{@key}}</div>
+                    {{/if}}
+                    <ul class="space-y-1">
+                      {{#each this}}
+                        <li
+                          x-show="mode === 'admin' || '{{accessLevel}}' === 'operator'"
+                          @click="current='{{folder}}'"
+                          hx-get="/mod/{{folder}}/mainPane/"
+                          hx-target="#main"
+                          hx-push-url="/{{folder}}/mainPane/"
+                          class="relative border-transparent group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-white hover:bg-gray-800 cursor-pointer"
+                        >
+                          <span
+                            class="bg-indigo-600 h-full w-1.5 absolute -left-4 top-0 z-2"
+                            x-show="current === '{{folder}}'"
+                          ></span>
+                          <span class="">
+                            {{label}}
+                          </span>
+                        </li>
+                      {{/each}}
+                    </ul>
                   </li>
                 {{/each}}
               </ul>

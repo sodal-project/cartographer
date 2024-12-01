@@ -34,47 +34,69 @@ const coreData = {
     {
       folder: "directory",
       label: "Directory",
+      category: "Discovery",
+      accessLevel: "operator"
+    },
+    {
+      folder: "test-filter",
+      label: "Filter Queries",
+      category: "Discovery",
+      accessLevel: "operator"
     },
     {
       folder: "detailPane",
       label: "Detail Pane",
-    },
-    {
-      folder: "exportCsv",
-      label: "Export CSV",
+      category: "Discovery",
+      accessLevel: "operator"
     },
     {
       folder: "slack",
       label: "Slack Integration",
+      category: "Integrations",
+      accessLevel: "admin"
     },
     {
       folder: "google",
       label: "Google Integration",
+      category: "Integrations",
+      accessLevel: "admin"
     },
     {
       folder: "bamboohr",
       label: "BambooHR Integration",
+      category: "Integrations",
+      accessLevel: "admin"
     },
     {
       folder: "powerbi",
       label: "PowerBI Integration",
+      category: "Integrations",
+      accessLevel: "admin"
     },
     {
       folder: "personaTable",
       label: "Persona Table",
-    },
-    {
-      folder: "test-filter",
-      label: "Test Filter",
+      category: "System",
+      accessLevel: "admin"
     },
     {
       folder: "test-config",
       label: "Test Config",
+      category: "System",
+      accessLevel: "admin"
     },
     {
       folder: "test-long-process",
       label: "Test Long Process",
-    }
+      category: "System",
+      accessLevel: "admin"
+    },
+    {
+      folder: "exportCsv",
+      label: "Export CSV",
+      category: "System",
+      accessLevel: "admin"
+    },
   ]
 }
 
@@ -246,6 +268,17 @@ async function init() {
 
   // Initialize core's external module calls
   await initModules(coreData.modules);
+
+
+  // Group modules by category
+  coreData.modulesByCategory = coreData.modules.reduce((acc, module) => {
+    const category = module.category || ''; // Empty string for uncategorized
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(module);
+    return acc;
+  }, {});
 
   // finalize core and freeze it
   core.ready = true;
