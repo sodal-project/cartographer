@@ -110,7 +110,7 @@ async function graphFilter (filter, params = {}) {
     field: "upn", 
     direction: "ASC", 
     number: 1, 
-    size: 1500
+    size: 500
   }
   params = { ...defaultParams, ...params };
 
