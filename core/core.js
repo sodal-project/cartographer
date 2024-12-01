@@ -62,6 +62,12 @@ const coreData = {
       accessLevel: "admin"
     },
     {
+      folder: "tableau",
+      label: "Tableau Integration",
+      category: "Integrations",
+      accessLevel: "admin"
+    },
+    {
       folder: "bamboohr",
       label: "BambooHR Integration",
       category: "Integrations",
