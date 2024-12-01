@@ -1,5 +1,12 @@
 const core = require('../../core/core.js');
 
+const tableConfig = {
+  tableFormId: "filter-table-form",
+  forceFilters: [
+    
+  ]
+}
+
 /**
  * @description 
  * @returns {string} - Compiled HTML content

@@ -7,7 +7,12 @@ sort: {
   direction: ASC | DESC
 }
 
-filter: [
+page: {
+  number: number
+  size: number
+}
+
+filterArray: [
   {
     type: field
     key: string
@@ -43,6 +48,26 @@ filter: [
     upns: string[] // array of upns
   }
 ]
+
+filterObject: {
+  field: "<key> <operator> not value",
+  source: "<key> <operator> not value", // key: id | name | lastUpdate
+  agency: {
+    key: control | obey,
+    filter: filterObject || filterArray,
+    levels: number[],
+    depth: number || [min, max],
+    confidence: {
+      min: number,
+      max: number
+    }
+  },
+  not: filterObject || filterArray,
+  or: filterObject || filterArray,
+  in: filterObject || filterArray,
+  set: string[] // array of upns
+}
+
 */
 
 // Operators for filtering
@@ -82,10 +107,10 @@ const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
  * @param {object} sort - The sort object
  * @returns {object[]} - The query results
  */
-async function graphFilter (filter, sort = { field: "upn", direction: "ASC"}) {
+async function graphFilter (filter, sort = { field: "upn", direction: "ASC"}, page = { number: 1, size: 1500 }) {
 
   const upns = await getUpnsFromFilter(filter);
-  const sortedResults = await sortResults(upns, sort);
+  const sortedResults = await sortResults(upns, sort, page);
   return sortedResults;
 }
 
@@ -301,9 +326,12 @@ async function readSingleArray (query, params) {
   return array;
 }
 
-async function sortResults (upns, sort) {
+async function sortResults (upns, sort, page) {
   let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
-  query += `RETURN DISTINCT persona ORDER BY persona.${sort.field} ${sort.direction}`;
+  query += `RETURN DISTINCT persona 
+  ORDER BY persona.${sort.field} ${sort.direction}
+  SKIP ${(page.number - 1) * page.size}
+  LIMIT ${page.size}`;
 
   const results = await connector.runRawQuery(query, { upns });
   return results;
