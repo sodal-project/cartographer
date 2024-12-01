@@ -2,12 +2,9 @@ const connector = require('./graphNeo4jConnector');
 const CC = require('./constants');
 
 /* 
-sort: {
+params: {
   field: string
   direction: ASC | DESC
-}
-
-page: {
   number: number
   size: number
 }
@@ -107,10 +104,18 @@ const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
  * @param {object} sort - The sort object
  * @returns {object[]} - The query results
  */
-async function graphFilter (filter, sort = { field: "upn", direction: "ASC"}, page = { number: 1, size: 1500 }) {
+async function graphFilter (filter, params = {}) {
+
+  const defaultParams = { 
+    field: "upn", 
+    direction: "ASC", 
+    number: 1, 
+    size: 1500
+  }
+  params = { ...defaultParams, ...params };
 
   const upns = await getUpnsFromFilter(filter);
-  const sortedResults = await sortResults(upns, sort, page);
+  const sortedResults = await sortResults(upns, params);
   return sortedResults;
 }
 
@@ -326,12 +331,12 @@ async function readSingleArray (query, params) {
   return array;
 }
 
-async function sortResults (upns, sort, page) {
+async function sortResults (upns, params) {
   let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
   query += `RETURN DISTINCT persona 
-  ORDER BY persona.${sort.field} ${sort.direction}
-  SKIP ${(page.number - 1) * page.size}
-  LIMIT ${page.size}`;
+  ORDER BY persona.${params.field} ${params.direction}
+  SKIP ${(params.number - 1) * params.size}
+  LIMIT ${params.size}`;
 
   const results = await connector.runRawQuery(query, { upns });
   return results;

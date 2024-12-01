@@ -363,10 +363,10 @@ const readPersona = async (module, upn) => {
  * 
  * @param {string} module - automatically passed by core
  * @param {object} filter - OPTIONAL, a filter object
- * @param {object} sort - OPTIONAL, a sort object
+ * @param {object} params - OPTIONAL, a sort and pagination object
  */
-const readPersonas = async (module, filter, sort, asUpnArray) => {
-  const results = await graphFilter(filter, sort, asUpnArray);
+const readPersonas = async (module, filter, params, asUpnArray) => {
+  const results = await graphFilter(filter, params, asUpnArray);
 
   return results;
 }

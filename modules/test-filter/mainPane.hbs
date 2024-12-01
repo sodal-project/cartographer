@@ -1,21 +1,152 @@
-<div class="p-8" style="max-width: 640px">
+<div class="p-8">
   {{> Headline title="Test Filter" }}
 
-  <!-- Post data to the config database, redraw module on completion -->
-  {{#> Card }}
+  {{#if savedFilters}}
+    <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-4 text-white">Saved Filters</h2>
+      <div class="divide-y divide-gray-700">
+        {{#each savedFilters}}
+          <div class="py-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <button
+                  class="text-gray-400 hover:text-gray-200"
+                  onclick="toggleFilter('filter-{{id}}')"
+                >
+                  <svg class="w-5 h-5 transform transition-transform duration-200" id="filter-{{id}}-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <span class="font-medium text-gray-200">{{name}}</span>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  class="px-3 py-1 text-sm font-medium text-blue-100 bg-blue-600 hover:bg-blue-700 rounded-md"
+                  hx-post="/mod/test-filter/runSavedFilter"
+                  hx-target="closest #main"
+                  hx-vals='{"filterId": "{{id}}"}'
+                >
+                  Run
+                </button>
+                <button
+                  class="px-3 py-1 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600"
+                  hx-post="/mod/test-filter/loadFilter"
+                  hx-target="closest #main"
+                  hx-vals='{"filterId": "{{id}}"}'
+                >
+                  Edit
+                </button>
+                <button
+                  class="px-3 py-1 text-sm font-medium text-red-100 bg-red-600 hover:bg-red-700 rounded-md"
+                  hx-post="/mod/test-filter/deleteFilter"
+                  hx-target="closest #main"
+                  hx-vals='{"filterId": "{{id}}"}'
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+            <div 
+              id="filter-{{id}}" 
+              class="hidden mt-2 pl-7"
+            >
+              <pre class="text-sm text-gray-400 bg-gray-900 p-3 rounded-md overflow-x-auto">{{expression}}</pre>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+
+  <div class="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-white">
+        {{#if this.filterId}}
+          Edit Filter
+        {{else}}
+          New Filter
+        {{/if}}
+      </h2>
+      {{#if this.filterId}}
+        <button
+          class="px-3 py-1 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600"
+          hx-post="/mod/test-filter/clearForm"
+          hx-target="closest #main"
+        >
+          Create New Filter
+        </button>
+      {{/if}}
+    </div>
+
     <form
       class="gap-6 mb-0"
-      hx-post="/mod/test-filter/runFilter/"
+      hx-post="/mod/test-filter/runFilter"
       hx-target="closest #main"
       hx-swap="innerHTML"
     >
-      {{> FormTextarea label="Filter" name="filter" data=this.filter }}
-      {{> FormSubmit label="Run" }}
-    </form>
-  {{/Card}}
-</div>
+      <div class="flex gap-4 mb-4">
+        <div class="flex-grow">
+          <label class="block text-sm font-medium mb-1 text-gray-300">Filter Name</label>
+          <input 
+            type="text"
+            name="filterName"
+            value="{{this.filterName}}"
+            class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            {{#if this.filterId}}placeholder="Editing: {{this.filterName}}"{{/if}}
+          />
+        </div>
+        {{#if this.filterId}}
+          <input type="hidden" name="filterId" value="{{this.filterId}}" />
+        {{/if}}
+      </div>
 
-  <!-- List all data stored in the module namespace of the config database -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1 text-gray-300">Filter Expression</label>
+        <textarea
+          name="filter"
+          rows="12"
+          class="w-full bg-gray-700 border-gray-600 text-gray-100 rounded-md focus:ring-blue-500 focus:border-blue-500"
+        >{{this.filter}}</textarea>
+      </div>
+
+      <div class="flex gap-4 justify-end">
+        <button
+          type="submit"
+          class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600"
+          hx-post="/mod/test-filter/saveFilter"
+        >
+          {{#if this.filterId}}
+            Update Filter
+          {{else}}
+            Save New Filter
+          {{/if}}
+        </button>
+        <button 
+          type="submit" 
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+        >
+          Run
+        </button>
+      </div>
+    </form>
+  </div>
+
   <div class="p-8 mb-6 text-gray-400">
     {{> PersonaTable data=tableData }}
   </div>
+</div>
+
+<script>
+  function toggleFilter(filterId) {
+    const content = document.getElementById(filterId);
+    const icon = document.getElementById(filterId + '-icon');
+    
+    if (content.classList.contains('hidden')) {
+      content.classList.remove('hidden');
+      icon.classList.add('rotate-90');
+    } else {
+      content.classList.add('hidden');
+      icon.classList.remove('rotate-90');
+    }
+  }
+</script>
