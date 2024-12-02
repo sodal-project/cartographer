@@ -1,5 +1,5 @@
 <div class="p-8" x-data="directoryPane">
-  <div class="flex justify-between items-start mb-6" :class="{ 'select-none': isResizing }">
+  <div class="flex justify-between items-start mb-6">
     {{> Headline title="Directory Module" }}
     <div class="flex gap-3">
       <form
@@ -9,7 +9,6 @@
         <button
           type="submit"
           class="bg-indigo-600 py-1 px-4 rounded text-white text-sm"
-
         >
           Backup
         </button>
@@ -35,74 +34,30 @@
           hx-target="closest #main"
           hx-swap="innerHTML"
         >
-        <p>Use caution, you can break things.</p>
+          <p>Use caution, you can break things.</p>
           {{> FormText label="UPN" name="upn" value="" }}
           {{> FormSubmit label="Add Persona" }}
         </form>
       {{/ModalButton}}
 
+      {{#> ModalButtonPane label="Manage CSVs" }}
+        <div 
+          id="directoryCsvPane" 
+          class="p-8"
+          hx-post="/mod/directory/csvPane/"
+          hx-target="#directoryCsvPane"
+          hx-swap="innerHTML"
+          hx-trigger="load"
+        >
+        </div>
+      {{/ModalButtonPane}}
     </div>
   </div>
-  <div class="relative" :class="{ 'select-none': isResizing }">
 
-    <!-- Floating Persona Panel -->
-    <div 
-      x-show="showPersonas"
-      x-transition:enter="transition ease-out duration-300"
-      x-transition:enter-start="translate-x-full"
-      x-transition:enter-end="translate-x-0"
-      x-transition:leave="transition ease-in duration-300"
-      x-transition:leave-start="translate-x-0"
-      x-transition:leave-end="translate-x-full"
-      class="absolute right-0 bg-gray-900 border-l border-t border-gray-700 shadow-2xl z-50 rounded-tl-lg"
-      :style="`width: ${personaWidth}vw`"
-    >
-      <div class="relative">
-        <!-- Resize Handle -->
-        <div 
-          class="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-indigo-500"
-          @mousedown="
-            isResizing = true;
-            const startWidth = personaWidth;
-            const startX = $event.pageX;
-            const onMove = (e) => {
-              const diff = startX - e.pageX;
-              const newWidth = Math.min(Math.max(startWidth + (diff / window.innerWidth) * 100, 30), 70);
-              personaWidth = newWidth;
-            };
-            const onUp = () => {
-              isResizing = false;
-              document.removeEventListener('mousemove', onMove);
-              document.removeEventListener('mouseup', onUp);
-            };
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
-          "
-        ></div>
-
-        <!-- Content -->
-        <div class="p-8">
-          <h2 class="text-white text-lg mb-4">Personas</h2>
-          <div class="flex gap-3 mb-4">
-            <!-- Link -->
-            <button 
-              @click="linkData()" 
-              class="bg-indigo-600 py-1 px-4 rounded text-white text-sm"
-              :disabled="!hasSelections"
-            >
-              Link
-            </button>
-          </div>
-          {{> PersonaTable data=personas.tableData }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Main Directory Table (full width) -->
+  <div class="relative">
     <div class="w-full">
       <h2 class="text-white text-lg mb-4">Directory</h2>
       <div class="flex gap-3 mb-4">
-        <!-- Add Activity Modal -->
         {{#> ModalButton label="Add Activity" }}
           <div x-ref="filterFields">
             <h2 class="text-white text-lg mb-4">Add Activity</h2>
@@ -117,7 +72,6 @@
           </div>
         {{/ModalButton}}
 
-        <!-- Add Participant Modal -->
         {{#> ModalButton label="Add Participant" }}
           <div x-ref="filterFields">
             <h2 class="text-white text-lg mb-4">Add Participant</h2>
@@ -134,64 +88,253 @@
           </div>
         {{/ModalButton}}
 
-        {{#> ModalButtonPane label="Manage CSVs" }}
-          <div 
-            id="directoryCsvPane" 
-            class="p-8"
-            hx-post="/mod/directory/csvPane/"
-            hx-target="#directoryCsvPane"
-            hx-swap="innerHTML"
-            hx-trigger="load"
-          >
-          </div>
-        {{/ModalButtonPane}}
+        <!-- Link Button (not using ModalButton) -->
+        <button 
+          @click="showLinkModal = true"
+          class="bg-indigo-600 py-1 px-4 rounded text-sm transition-colors duration-200"
+          :class="hasDirectorySelections ? 'text-white hover:bg-indigo-700' : 'text-gray-400 bg-indigo-600/50 cursor-not-allowed'"
+          :disabled="!hasDirectorySelections"
+        >
+          Link
+        </button>
       </div>
+
       <div @change="watchSelections()">
         {{> PersonaTable data=directory.tableData }}
       </div>
     </div>
+  </div>
 
+  <!-- Sliding Link Panel -->
+  <div 
+    x-show="showLinkModal" 
+    x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="translate-x-full"
+    x-transition:enter-end="translate-x-0"
+    x-transition:leave="transition ease-in duration-300"
+    x-transition:leave-start="translate-x-0"
+    x-transition:leave-end="translate-x-full"
+    :style="{ width: panelWidth + 'px' }"
+    class="fixed top-0 right-0 h-full bg-gray-900 shadow-lg overflow-y-auto z-50"
+    @click.away="showLinkModal = false"
+  >
+    <!-- Resize Handle -->
+    <div
+      class="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize bg-gray-700 hover:bg-indigo-500"
+      @mousedown="startResize"
+    ></div>
+
+    <!-- Panel Header -->
+    <div class="border-b border-gray-700 px-6 py-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-white text-lg font-medium">Link Personas</h2>
+        <button 
+          @click="showLinkModal = false"
+          class="text-gray-400 hover:text-white transition-colors"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Link Controls -->
+    <div class="px-6 py-4 border-b border-gray-700 space-y-4">
+      <!-- Link Button -->
+      <div>
+        <button 
+          @click="linkData()" 
+          class="bg-indigo-600 py-2 px-4 rounded text-white text-sm hover:bg-indigo-700 transition-colors"
+          :class="hasPersonaSelections ? '' : 'opacity-50 cursor-not-allowed'"
+          :disabled="!hasPersonaSelections || !isValidForm()"
+        >
+          Link Selected
+        </button>
+      </div>
+
+      <!-- Confidence and Level Selection -->
+      <div class="flex gap-6">
+        <!-- Confidence Radio Group -->
+        <div class="shrink-0">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            Confidence Level
+          </label>
+          <div class="flex gap-4">
+            <label class="flex items-center whitespace-nowrap">
+              <input
+                type="radio"
+                name="confidence"
+                value=".75"
+                class="text-indigo-600 focus:ring-indigo-500 h-4 w-4 mr-2"
+              >
+              <span class="text-gray-300">Proven</span>
+            </label>
+            <label class="flex items-center whitespace-nowrap">
+              <input
+                type="radio"
+                name="confidence"
+                value=".5"
+                class="text-indigo-600 focus:ring-indigo-500 h-4 w-4 mr-2"
+                checked
+              >
+              <span class="text-gray-300">Asserted</span>
+            </label>
+            <label class="flex items-center whitespace-nowrap">
+              <input
+                type="radio"
+                name="confidence"
+                value=".25"
+                class="text-indigo-600 focus:ring-indigo-500 h-4 w-4 mr-2"
+              >
+              <span class="text-gray-300">Inferred</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Level Select -->
+        <div class="grow">
+          <label class="block text-sm font-medium text-gray-300 mb-2">
+            Relationship Level
+          </label>
+          <select 
+            name="level" 
+            class="bg-gray-800 text-gray-300 rounded px-3 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none border border-gray-700"
+          >
+            <option value="" disabled selected>Select a level</option>
+            <option value="" disabled class="font-semibold">WILL - Physical/Authority Control</option>
+            <option value="1">1 - POSSESS: Physical control</option>
+            <option value="2">2 - DIRECT: Immediate authority</option>
+            <option value="3">3 - GOVERN: Indirect authority</option>
+            <option value="4">4 - INFORM: Authority considerations</option>
+            <option value="" disabled class="font-semibold">BE - Identity/Existence</option>
+            <option value="5">5 - ALIAS: Presentation of</option>
+            <option value="6">6 - REALIZE: Cause to exist now</option>
+            <option value="7">7 - DEFINE: Establish nature</option>
+            <option value="8">8 - DESCRIBE: Communicate nature</option>
+            <option value="" disabled class="font-semibold">DO - Interaction Control</option>
+            <option value="9">9 - ADMIN: Unrestricted control</option>
+            <option value="10">10 - MANAGE: Change interaction permissions</option>
+            <option value="11">11 - ACT_AS: Cause external interaction</option>
+            <option value="12">12 - ACCESS: Cause self interaction</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persona Table -->
+    <div class="px-6 py-4 border-l border-gray-700">
+      <h3 class="text-white text-md font-medium mb-4">Select Personas to Link</h3>
+      <div @change="watchSelections()">
+        {{> PersonaTable data=personas.tableData }}
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 document.addEventListener('alpine:init', () => {
   Alpine.data('directoryPane', () => ({
-    showPersonas: false, 
-    personaWidth: 50,
-    hasSelections: false,
+    LEVEL: {
+      POSSESS: 1,   // WILL has physical control
+      DIRECT: 2,    // WILL has immediate authority
+      GOVERN: 3,    // WILL has indirect authority
+      INFORM: 4,    // WILL introduce authority considerations
+      ALIAS: 5,     // BE is presentation of
+      REALIZE: 6,   // BE cause to exist right now
+      DEFINE: 7,    // BE establish nature of being
+      DESCRIBE: 8,  // BE communicate nature of being
+      ADMIN: 9,     // DO unrestricted control
+      MANAGE: 10,   // DO change which personas can interact
+      ACT_AS: 11,   // DO cause to interact with other personas
+      ACCESS: 12,   // DO cause to interact with my persona
+    },
+    hasDirectorySelections: false,
+    hasPersonaSelections: false,
+    showLinkModal: false,
+    panelWidth: 800, // Default width in pixels
     isResizing: false,
+    startX: 0,
+    startWidth: 0,
     
+    init() {
+      this.showLinkModal = false;
+      this.watchSelections(); // Initial check
+      
+      // Add global mouse event listeners for resizing
+      window.addEventListener('mousemove', (e) => this.handleResize(e));
+      window.addEventListener('mouseup', () => this.stopResize());
+    },
+
+    startResize(e) {
+      this.isResizing = true;
+      this.startX = e.clientX;
+      this.startWidth = this.panelWidth;
+      
+      // Prevent text selection while resizing
+      document.body.style.userSelect = 'none';
+    },
+
+    handleResize(e) {
+      if (!this.isResizing) return;
+      
+      const diff = this.startX - e.clientX;
+      const newWidth = this.startWidth + diff;
+      
+      // Set minimum and maximum width constraints
+      this.panelWidth = Math.min(Math.max(newWidth, 300), window.innerWidth - 100);
+    },
+
+    stopResize() {
+      this.isResizing = false;
+      document.body.style.userSelect = '';
+    },
+
+    isValidForm() {
+      const levelSelect = document.querySelector('select[name="level"]');
+      const confidenceRadio = document.querySelector('input[name="confidence"]:checked');
+      return levelSelect?.value && confidenceRadio?.value && this.hasPersonaSelections;
+    },
+
     watchSelections() {
-      const form = document.getElementById('directory-table-form');
-      if (!form) return;
-      const checked = form.querySelectorAll('input[type=checkbox]:checked').length > 0;
-      this.showPersonas = checked;
-      this.hasSelections = checked;
+      const directoryForm = document.getElementById('directory-table-form');
+      const personaForm = document.getElementById('persona-table-form');
+      
+      this.hasDirectorySelections = directoryForm?.querySelectorAll('input[type=checkbox]:checked').length > 0;
+      this.hasPersonaSelections = personaForm?.querySelectorAll('input[type=checkbox]:checked').length > 0;
     },
 
     linkData() {
       const directoryTableForm = document.getElementById('directory-table-form');
       const personaTableForm = document.getElementById('persona-table-form');
+      const levelSelect = document.querySelector('select[name="level"]');
+      const confidenceRadio = document.querySelector('input[name="confidence"]:checked');
 
-      if (!directoryTableForm || !personaTableForm) {
-        console.error('One or both forms are missing.');
+      if (!this.isValidForm() || !directoryTableForm || !personaTableForm) {
+        console.error('Required form elements are missing or invalid.');
         return;
       }
 
       const directoryTableData = new FormData(directoryTableForm);
       const personaTableData = new FormData(personaTableForm);
 
-      const combinedData = {
-        directory: [...directoryTableData.values()],
-        persona: [...personaTableData.values()],
-      }
+      const selectedDirectoryUpns = [...directoryTableData.values()];
+      const selectedPersonaUpns = [...personaTableData.values()];
+
+      const payload = {
+        directoryUpns: selectedDirectoryUpns,
+        personaUpns: selectedPersonaUpns,
+        level: parseInt(levelSelect.value),
+        confidence: parseFloat(confidenceRadio.value)
+      };
 
       htmx.ajax('POST', '/mod/directory/linkPersonas/', {
         target: '#main',
         swap: 'innerHTML',
-        values: combinedData,
+        values: payload,
       });
+      
+      this.showLinkModal = false;
     }
   }))
 });

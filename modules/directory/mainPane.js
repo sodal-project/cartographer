@@ -201,15 +201,15 @@ async function deletePersonas(formData) {
  */
 async function linkPersonas(formData) {
 
-  if(!formData.directory || !formData.persona) {
+  if(!formData.directoryUpns || !formData.personaUpns) {
     throw new Error("Both directory and persona must be selected");
   }
 
   // Extract the form data
-  const level = 9 // ADMIN
-  const confidence = .5;
-  const directoryUpns = Array.isArray(formData.directory) ? formData.directory : [formData.directory];
-  const personaUpns = Array.isArray(formData.persona) ? formData.persona : [formData.persona];
+  const level = parseInt(formData.level);
+  const confidence = parseFloat(formData.confidence);
+  const directoryUpns = Array.isArray(formData.directoryUpns) ? formData.directoryUpns : [formData.directoryUpns];
+  const personaUpns = Array.isArray(formData.personaUpns) ? formData.personaUpns : [formData.personaUpns];
   const personas = [];
 
   // Generate link queries; all selected directory upns will be linked to all selected personas
