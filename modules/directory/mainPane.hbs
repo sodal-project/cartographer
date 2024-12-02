@@ -2,103 +2,154 @@
   <div class="flex justify-between items-start mb-6">
     {{> Headline title="Directory Module" }}
     <div class="flex gap-3">
+      <!-- Link Button -->
+      <div class="relative">
+        <button 
+          @click="showLinkModal = true"
+        class="bg-indigo-600 py-1 px-4 rounded text-sm text-white transition-colors whitespace-nowrap"
+        :class="hasDirectorySelections ? 'hover:bg-indigo-700' : 'opacity-50 cursor-not-allowed'"
+        :disabled="!hasDirectorySelections"
+      >
+          Link Personas
+        </button>
+      </div>
+
+      <!-- Participant Button & Form -->
+      <div class="relative">
+        <button
+          @click="toggleForm('participant')"
+          class="bg-indigo-600 py-1 px-4 rounded text-sm text-white hover:bg-indigo-700 transition-colors"
+        >
+          Add Participant
+        </button>
+        
+        <div 
+          x-show="showParticipantForm"
+          x-transition
+          @click.away="showParticipantForm = false"
+          class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
+          style="width: 450px;"
+        >
+          <form
+            hx-post="/mod/directory/addParticipant/"
+            hx-target="closest #main"
+            hx-swap="innerHTML"
+            @submit="showParticipantForm = false"
+          >
+            {{> FormText label="First Name" name="firstName" value="" }}
+            {{> FormText label="Last Name" name="lastName" value="" }}
+            {{> FormText label="Handle" name="handle" value="" }}
+            {{> FormSubmit label="Add Participant" }}
+          </form>
+        </div>
+      </div>
+
+      <!-- Activity Button & Form -->
+      <div class="relative">
+        <button
+          @click="toggleForm('activity')"
+          class="bg-indigo-600 py-1 px-4 rounded text-sm text-white hover:bg-indigo-700 transition-colors"
+        >
+          Add Activity
+        </button>
+        
+        <div 
+          x-show="showActivityForm"
+          x-transition
+          @click.away="showActivityForm = false"
+          class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
+          style="width: 300px;"
+        >
+          <form
+            hx-post="/mod/directory/addActivity/"
+            hx-target="closest #main"
+            hx-swap="innerHTML"
+            @submit="showActivityForm = false"
+          >
+            {{> FormText label="Name" name="name" value="" }}
+            {{> FormSubmit label="Add Activity" }}
+          </form>
+        </div>
+      </div>
+
+      <!-- Add Raw Persona Button & Form -->
+      <div class="relative">
+        <button
+          @click="toggleForm('addPersona')"
+          class="bg-indigo-600 py-1 px-4 rounded text-sm text-white h-[30px] hover:bg-indigo-700 transition-colors"
+        >
+          Add Raw Persona
+        </button>
+        
+        <div 
+          x-show="showAddPersonaForm"
+          x-transition
+          @click.away="showAddPersonaForm = false"
+          class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
+          style="width: 350px;"
+        >
+          <h2 class="text-white text-lg mb-4">Add Raw Persona</h2>
+          <form
+            hx-post="/mod/directory/addPersona"
+            hx-target="closest #main"
+            hx-swap="innerHTML"
+            @submit="showAddPersonaForm = false"
+          >
+            <p class="text-gray-400 text-sm mb-4">Use caution, you can break things.</p>
+            {{> FormText label="UPN" name="upn" value="" }}
+            {{> FormSubmit label="Add Persona" }}
+          </form>
+        </div>
+      </div>
+
       <form
         hx-ext="download-csv"
         hx-post="/mod/directory/backup/download/"
       >
         <button
           type="submit"
-          class="bg-indigo-600 py-1 px-4 rounded text-white text-sm"
+          class="bg-indigo-600 py-1 px-4 rounded text-sm text-white h-[30px] hover:bg-indigo-700 transition-colors"
         >
           Backup
         </button>
       </form>
 
-      {{#> ModalButton label="Restore" }}
-        <h2 class="text-white text-lg mb-4">Restore Directory</h2>
-        <form
-          hx-encoding="multipart/form-data"
-          hx-post="/mod/directory/restore/upload"
-          hx-target="closest #main"
-          hx-swap="innerHTML"
+      <!-- Restore Button & Form -->
+      <div class="relative">
+        <button
+          @click="toggleForm('restore')"
+          class="bg-indigo-600 py-1 px-4 rounded text-sm text-white h-[30px] hover:bg-indigo-700 transition-colors"
         >
-          {{> FormFilePicker label="JSON File" name="file" }}
-          {{> FormSubmit label="Restore" }}
-        </form>
-      {{/ModalButton}}
-
-      {{#> ModalButton label="Add Raw Persona" }}
-        <h2 class="text-white text-lg mb-4">Add Raw Persona</h2>
-        <form
-          hx-post="/mod/directory/addPersona"
-          hx-target="closest #main"
-          hx-swap="innerHTML"
-        >
-          <p>Use caution, you can break things.</p>
-          {{> FormText label="UPN" name="upn" value="" }}
-          {{> FormSubmit label="Add Persona" }}
-        </form>
-      {{/ModalButton}}
-
-      {{#> ModalButtonPane label="Manage CSVs" }}
+          Restore
+        </button>
+        
         <div 
-          id="directoryCsvPane" 
-          class="p-8"
-          hx-post="/mod/directory/csvPane/"
-          hx-target="#directoryCsvPane"
-          hx-swap="innerHTML"
-          hx-trigger="load"
+          x-show="showRestoreForm"
+          x-transition
+          @click.away="showRestoreForm = false"
+          class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
+          style="width: 350px;"
         >
+          <h2 class="text-white text-lg mb-4">Restore Directory</h2>
+          <form
+            hx-encoding="multipart/form-data"
+            hx-post="/mod/directory/restore/upload"
+            hx-target="closest #main"
+            hx-swap="innerHTML"
+            @submit="showRestoreForm = false"
+          >
+            {{> FormFilePicker label="JSON File" name="file" }}
+            {{> FormSubmit label="Restore" }}
+          </form>
         </div>
-      {{/ModalButtonPane}}
+      </div>
     </div>
   </div>
 
   <div class="relative">
     <div class="w-full">
       <h2 class="text-white text-lg mb-4">Directory</h2>
-      <div class="flex gap-3 mb-4">
-        {{#> ModalButton label="Add Activity" }}
-          <div x-ref="filterFields">
-            <h2 class="text-white text-lg mb-4">Add Activity</h2>
-            <form
-              hx-post="/mod/directory/addActivity/"
-              hx-target="closest #main"
-              hx-swap="innerHTML"
-            >
-              {{> FormText label="Name" name="name" value="" }}
-              {{> FormSubmit label="Add Activity" }}
-            </form>
-          </div>
-        {{/ModalButton}}
-
-        {{#> ModalButton label="Add Participant" }}
-          <div x-ref="filterFields">
-            <h2 class="text-white text-lg mb-4">Add Participant</h2>
-            <form
-              hx-post="/mod/directory/addParticipant/"
-              hx-target="closest #main"
-              hx-swap="innerHTML"
-            >
-              {{> FormText label="First Name" name="firstName" value="" }}
-              {{> FormText label="Last Name" name="lastName" value="" }}
-              {{> FormText label="Handle" name="handle" value="" }}
-              {{> FormSubmit label="Add Participant" }}
-            </form>
-          </div>
-        {{/ModalButton}}
-
-        <!-- Link Button (not using ModalButton) -->
-        <button 
-          @click="showLinkModal = true"
-          class="bg-indigo-600 py-1 px-4 rounded text-sm transition-colors duration-200"
-          :class="hasDirectorySelections ? 'text-white hover:bg-indigo-700' : 'text-gray-400 bg-indigo-600/50 cursor-not-allowed'"
-          :disabled="!hasDirectorySelections"
-        >
-          Link
-        </button>
-      </div>
-
+      
       <div @change="watchSelections()">
         {{> PersonaTable data=directory.tableData }}
       </div>
@@ -256,9 +307,17 @@ document.addEventListener('alpine:init', () => {
     isResizing: false,
     startX: 0,
     startWidth: 0,
+    showActivityForm: false,
+    showParticipantForm: false,
+    showRestoreForm: false,
+    showAddPersonaForm: false,
     
     init() {
       this.showLinkModal = false;
+      this.showActivityForm = false;
+      this.showParticipantForm = false;
+      this.showRestoreForm = false;
+      this.showAddPersonaForm = false;
       this.watchSelections(); // Initial check
       
       // Add global mouse event listeners for resizing
@@ -335,7 +394,24 @@ document.addEventListener('alpine:init', () => {
       });
       
       this.showLinkModal = false;
-    }
+    },
+
+    toggleForm(formType) {
+      this.showActivityForm = false;
+      this.showParticipantForm = false;
+      this.showRestoreForm = false;
+      this.showAddPersonaForm = false;
+
+      if (formType === 'activity') {
+        this.showActivityForm = !this.showActivityForm;
+      } else if (formType === 'participant') {
+        this.showParticipantForm = !this.showParticipantForm;
+      } else if (formType === 'restore') {
+        this.showRestoreForm = !this.showRestoreForm;
+      } else if (formType === 'addPersona') {
+        this.showAddPersonaForm = !this.showAddPersonaForm;
+      }
+    },
   }))
 });
 </script>
