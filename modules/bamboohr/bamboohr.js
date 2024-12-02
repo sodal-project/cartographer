@@ -60,6 +60,7 @@ async function sync(instance){
         personas.push(empPersona);
       }
     });
+    getDirectoryActivityAliases(personas).forEach(alias => personas.push(alias));
 
     await core.cache.save(`bamboohr-${subdomain}-${reportId}-personas`, personas);
     await core.graph.syncPersonas(personas, source);
@@ -68,6 +69,28 @@ async function sync(instance){
   } catch (error) {
     return `Error syncing BambooHR instance: ${error.message}`;
   }
+}
+
+function getDirectoryActivityAliases(personas) {
+  return personas.reduce((aliases, persona) => {
+    if(persona.type === 'activity' && persona.platform === 'bamboohr') {
+      const newPersona = { ...persona};
+      newPersona.platform = "directory"
+      newPersona.upn = `upn:directory:activity:${persona.id}`
+      newPersona.control = [{
+        upn: persona.upn,
+        confidence: 1,
+        level: LEVEL["ALIAS"]
+      }]
+      newPersona.obey = [{
+        upn: persona.upn,
+        confidence: 1,
+        level: LEVEL["ALIAS"]
+      }]
+      aliases.push(newPersona);
+    }
+    return aliases;
+  }, []);
 }
 
 function getEmployeePersona(employee, department, division, orgName) {
