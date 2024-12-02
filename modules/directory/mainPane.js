@@ -158,16 +158,12 @@ async function addActivity(formData) {
  * @returns {string} - Compiled HTML content for the Directory pane
  */
 async function deletePersonas(formData) {
-
-  // Extract the form data
-  const upns = Array.isArray(formData.upn) ? formData.upn : [formData.upn];
-
-  console.log(`Deleting personas`, upns);
+  const upns = await core.mod.personaTable.getSelectedUpns(formData.tableFormId);
 
   for(const upn of upns) {
     await core.graph.deletePersona(upn);
   }
-  return redraw();
+  return core.mod.personaTable.update(formData);
 }
 
 /**

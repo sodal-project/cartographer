@@ -440,6 +440,11 @@ async function getTable(config) {
   return core.client.render('mainPane.hbs', data);
 }
 
+const getSelectedUpns = async (tableFormId) => {
+  const data = await core.config.readConfig(`table-config-${tableFormId}`);
+  return data.selectedUpns;
+}
+
 module.exports = {
   mainPane,
   build,
@@ -448,4 +453,5 @@ module.exports = {
   updateSelectedUpns,
   updateAllSelectedUpns,
   getTable,
+  getSelectedUpns,
 };
