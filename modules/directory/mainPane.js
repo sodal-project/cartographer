@@ -163,6 +163,8 @@ async function deletePersonas(formData) {
   for(const upn of upns) {
     await core.graph.deletePersona(upn);
   }
+
+  // TODO: remove the selected upns from the config database
   return core.mod.personaTable.update(formData);
 }
 
@@ -172,18 +174,18 @@ async function deletePersonas(formData) {
  * @param {object} formData - The data from the Link Personas request
  * @returns {string} - Compiled HTML content for the Directory pane
  */
-async function linkPersonas(formData) {
+async function linkPersonas() {
+  const personas = [];
+  const directoryUpns = await core.mod.personaTable.getSelectedUpns("directory-table-form");
+  const personaUpns = await core.mod.personaTable.getSelectedUpns("persona-table-form");
 
-  if(!formData.directory || !formData.persona) {
+  if(directoryUpns.length < 1 || personaUpns.length < 1) {
     throw new Error("Both directory and persona must be selected");
   }
 
-  // Extract the form data
+  // Set the control level and confidence
   const level = 9 // ADMIN
   const confidence = .5;
-  const directoryUpns = Array.isArray(formData.directory) ? formData.directory : [formData.directory];
-  const personaUpns = Array.isArray(formData.persona) ? formData.persona : [formData.persona];
-  const personas = [];
 
   // Generate link queries; all selected directory upns will be linked to all selected personas
   for(const directoryUpn of directoryUpns) {
@@ -199,8 +201,7 @@ async function linkPersonas(formData) {
   }
 
   await core.graph.mergePersonas(personas, directorySource);
-
-  console.log(`Processed ${personas.length} persona links`);
+  consoleLog(`Processed ${personas.length} persona links`);
 
   return redraw();
 }
