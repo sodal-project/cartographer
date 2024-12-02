@@ -111,7 +111,7 @@ async function addParticipant(formData) {
   }
   core.check.personaObject(personaObject);
 
-  console.log(`Adding participant: ${JSON.stringify(personaObject)}`);
+  consoleLog(`Adding participant: ${JSON.stringify(personaObject)}`);
 
   await core.graph.mergePersona(personaObject, directorySource);
 
@@ -160,11 +160,15 @@ async function addActivity(formData) {
 async function deletePersonas(formData) {
   const upns = await core.mod.personaTable.getSelectedUpns(formData.tableFormId);
 
+  // Remove the personas from the graph
   for(const upn of upns) {
     await core.graph.deletePersona(upn);
   }
 
-  // TODO: remove the selected upns from the config database
+  // Remove the deleted persona UPNs from the selectedUPNs array in the config database
+  await core.mod.personaTable.removeSelectedUpns(upns, formData.tableFormId);
+
+  // Update the table
   return core.mod.personaTable.update(formData);
 }
 
@@ -211,7 +215,7 @@ async function unlinkPersonas(formData) {
   const upns = Array.isArray(formData.upn) ? formData.upn : [formData.upn];
   const upn = formData.customValue;
 
-  console.log(`Unlinking ${upn} from personas:`, upns);
+  consoleLog(`Unlinking ${upn} from personas:`, upns);
 
   for(const unlinkUpn of upns) {
     await core.graph.unlinkPersonas(upn, unlinkUpn, directorySource.sid);

@@ -407,6 +407,20 @@ async function updateSelectedUpns(data){
   return newCheckbox;
 }
 
+async function removeSelectedUpns(upnsToRemove, tableFormId){
+  const tableConfig = await core.config.readConfig(`table-config-${tableFormId}`) || {};
+  const selectedUpns = tableConfig.selectedUpns || [];
+
+  // Create a new array of selected UPNs that does not include the UPNs to remove
+  const newSelectedUpns = selectedUpns.filter(item => !upnsToRemove.includes(item));
+
+  // Update the table config with the new selectedUpns
+  tableConfig.selectedUpns = newSelectedUpns;
+
+  // Write the updated selectedUpns to the database
+  const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: tableConfig});
+}
+
 /**
  * @description Add the passed UPNs to the selected UPNs list in the config 
  * database and redraw the entire table
@@ -451,6 +465,7 @@ module.exports = {
   update,
   init,
   updateSelectedUpns,
+  removeSelectedUpns,
   updateAllSelectedUpns,
   getTable,
   getSelectedUpns,
