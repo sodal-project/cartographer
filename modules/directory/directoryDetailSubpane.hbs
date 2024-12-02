@@ -24,14 +24,14 @@
         hx-swap="innerHTML"
         hx-target="#directoryDetailSubpaneStatus"
         hx-vals='{
-          "upn": "{{upn}}"
+          "upn": "{{persona.upn}}"
         }'
       >
         <textarea
           class="rounded-lg border border-gray-600 h-56 w-full p-3 pt-10 bg-gray-900 text-sm text-white resize-none"
           id="directoryDetailSubpaneNote"
           name="note"
-      >{{directoryNote}}</textarea>
+      >{{persona.directoryNote}}</textarea>
       <p id="directoryDetailSubpaneStatus" class="absolute bottom-2 right-2 text-gray-400 text-sm">Status</p>
       <div class="absolute z-10 top-2 right-2 transition-opacity opacity-1">
         {{> FormSubmit label="Save" size="small" }}
