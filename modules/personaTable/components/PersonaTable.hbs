@@ -1,0 +1,298 @@
+<div id="{{tableFormId}}" class="relative persona-table-wrap" x-data="columnVisibility([{{visibility}}])">
+  <!-- Export CSV -->
+  <form
+    class="absolute z-20 right-10 top-1 pr-1 pt-px"
+    hx-ext="download-csv"
+    hx-post="/mod/exportCsv/download/download"
+  >
+    <input type="hidden" name="csvFilter" value='{{graphFiltersString}}'>
+    <button class="text-white" type="submit">
+      <div class="w-5 h-5 text-gray-500 hover:text-white">{{> icons/DownloadFile }}</div>
+    </button>
+  </form>
+
+  <!-- Table Filters -->
+  <form
+    hx-post="/mod/personaTable/update/"
+    hx-target="closest .persona-table-wrap"
+    hx-swap="innerHTML"
+    hx-vals='{
+      "tableFormId": "{{tableFormId}}"
+    }'
+  >
+    <div class="relative flex mb-4">
+
+      <!-- Sort -->
+      <div
+        class="relative border-r border-gray-700 pr-4"
+        x-data="{ open: false }"
+        @click.away="open = false"
+      >
+        <button
+          class="flex gap-1 items-center inline-block h-7 px-3 rounded-full border border-indigo-500 text-indigo-400 bg-indigo-900 bg-opacity-30"
+          type="button"
+          @click="open = !open"
+        >
+         <span class="relative h-3.5 text-indigo-400 inline-block">
+          
+            {{#if (eq sortDirection 'ascending')}}
+              {{> icons/ArrowUp }}
+            {{else}}
+              {{> icons/ArrowDown }}
+            {{/if}}
+          </span>
+          <span class="text-sm capitalize">{{sortField}}</span>
+          <span class="relative w-3.5 h-3.5 text-indigo-400 inline-block">
+            {{> icons/AngleDown }}
+          </span>
+        </button>
+
+        <!-- Sort Form -->
+        <div
+          class="absolute z-10 top-9 left-1/2 w-px h-px"
+          x-show="open"
+        >
+          <div
+            class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+          >
+            <div>
+              <div class="flex gap-3 items-center w-full">
+                {{> FormSelect name="sortField" options=fields selected=sortField }}
+                {{> FormSelect name="sortDirection" options=sortDirections selected=sortDirection }}
+              </div>
+
+              <!-- Add Sort -->
+              <div class="hidden" x-data="{ open: false }">
+                <div class="mt-3" x-show="open">
+                  <div class="flex gap-3 items-center w-full">
+                    {{> FormSelect name="sortNewField" options=fields }}
+                    {{> FormSelect name="sortNewDirection" options=sortDirections }}
+                    <button type="button" @click="open = false" class="text-gray-400 text-sm">
+                      <span class="inline-block w-4 h-4">{{> icons/Trash }}</span>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  @click="open = !open"
+                  x-show="!open"
+                  class="text-gray-400 text-sm flex items-center mt-3"
+                >
+                  <span class="inline-block w-5 h-5 mr-1">{{> icons/Plus }}</span>
+                  Add Sort
+                </button>
+              </div>
+              
+            </div>
+            <div class="mt-4">
+              {{> FormSubmit label="Save" }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Filters -->
+      <div class="flex">
+        {{#each filters}}
+          {{> PersonaTableFilter
+            field=this.field
+            operator=this.operator
+            value=this.value
+            fields=../fields
+            filterOperators=../filterOperators
+          }}
+        {{/each}}
+      </div>
+
+      <!-- New Filter -->
+      <div 
+        class="relative ml-2"
+        x-data="{ open: false }"
+        @click.away="open = false"
+      >
+        <button
+          class="inline-block h-7 px-2 text-gray-500 text-sm rounded-md hover:bg-gray-800"
+          type="button"
+          @click="open = !open"
+        >
+          <span>+ Add filter</span>
+        </button>
+      
+        <!-- New Filter Form -->
+        <div
+          class="absolute z-10 top-9 left-1/2 w-px h-px"
+          x-show="open"
+        >
+          <div
+            class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+          >
+            <div class="flex gap-3 items-center w-full mb-3">
+              {{> FormSelect name="filterNewField" options=fields }}
+              {{> FormSelect name="filterNewOperator" options=filterOperators }}
+            </div>
+            <input type="text" name="filterNewValue" class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
+            <div class="mt-4">
+              {{> FormSubmit label="Save" }}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Hide/Show Columns -->
+      <div
+        class="absolute top-0 right-0"
+        x-data="{ open: false }"
+        @click.away="open = false"
+      >
+        <button
+          class="text-white"
+          type="button"
+          @click="open = !open"
+        >
+          <div class="w-5 h-5 mr-2 mt-1.5 text-gray-500 hover:text-white">{{> icons/Eye }}</div>
+        </button>
+
+        <div
+          class="absolute z-10 top-9 right-48 w-px h-px"
+          x-show="open"
+        >
+          <div
+            class="w-48 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-3"
+          >
+            <ul class="text-white visibility-ui flex flex-col gap-2">
+              {{#each fields}}
+                <label class="flex items-center justify-between pr-2 cursor-pointer rounded-md w-full rounded hover:bg-gray-700">
+                  <input 
+                      class="hidden"
+                      name="visibility" 
+                      type="checkbox" 
+                      value="{{add @index 2}}" 
+                      x-model="hiddenColumns" 
+                  />
+                  <span class="ml-2">{{this.label}}</span>
+                  <div class="checked-icon w-5 h-5 text-gray-500">
+                    {{> icons/EyeSlash }}
+                  </div>
+                  <div class="unchecked-icon w-5 h-5">
+                    {{> icons/Eye }}
+                  </div>  
+                </label>
+              </li>
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Table -->
+  <div class="relative">    
+    {{#if action }}
+      <div
+        class="action-wrap absolute z-50 -top-14 left-0 right-20 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000 hidden" 
+      >
+        <button
+          type="button"
+          class="bg-indigo-600 rounded text-white text-sm p-1 px-6"
+          hx-post="{{action.endpoint}}"
+          hx-target="closest .persona-table-wrap"
+          hx-swap="innerHTML"
+          hx-vals='{
+            "customValue": "{{action.customValue}}",
+            "tableFormId": "{{tableFormId}}"
+          }'
+        >
+          {{action.label}}
+        </button>
+        <span class="text-sm"><span data-selected-count></span> selected items</span>
+      </div>
+    {{/if}}
+
+    <!-- Table -->
+    <div class="overflow-scroll">
+      <table class="min-w-full" :class="getColumnClasses()">
+        <thead class="sticky top-0">
+          <tr>
+            <th
+              class="sticky top-0 p-4 bg-gray-900 text-left w-12"
+            >
+              <div
+                class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+              ></div>
+              <input
+                type="checkbox"
+                hx-post="/mod/personaTable/updateAllSelectedUpns/"
+                hx-vals='{"tableFormId": "{{tableFormId}}"}'
+                hx-target="closest .persona-table-wrap"
+                onchange="PersonaTable.headerCheckboxChange(this)"
+                checked="{{allSelected}}"
+              >
+            </th>
+            {{#each fields}}
+              <th
+                class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+              >
+                <div
+                  class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+                ></div>
+                <span onClick="sort" class="cursor-pointer">
+                  {{this.label}}
+                </span>
+              </th>
+            {{/each}}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800">
+          {{#each rows}}
+            <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
+              <td class="p-4 hover:cursor-pointer">
+                {{#includes ../selectedUpns upn}}
+                  <div class="checkbox-wrap">
+                    <input 
+                      type="checkbox" 
+                      name="upn"
+                      value="{{../upn}}"
+                      hx-post="/mod/personaTable/updateSelectedUpns/"
+                      hx-trigger="change"
+                      hx-target="closest .checkbox-wrap"
+                      hx-vals='{"action": "remove", "tableFormId": "{{../../tableFormId}}", "upn": "{{../upn}}"}'
+                      checked
+                    />
+                  </div>
+                {{else}}
+                  <div class="checkbox-wrap">
+                    <input 
+                      type="checkbox" 
+                      name="upn"
+                      value="{{../upn}}"
+                      hx-post="/mod/personaTable/updateSelectedUpns/"
+                      hx-trigger="change"
+                      hx-target="closest .checkbox-wrap"
+                      hx-vals='{"action": "add", "tableFormId": "{{../../tableFormId}}", "upn": "{{../upn}}"}'
+                    />
+                  </div>
+                {{/includes}}
+              </td>
+              {{#each this}}
+                <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
+                  hx-trigger="click"
+                  hx-post="/mod/detailPane/search/"
+                  hx-target="closest #main"
+                  hx-swap="innerHTML"
+                  hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
+                  hx-vals='{
+                    "upn": "{{../this.upn}}"
+                  }'
+                >
+                  {{this}}
+                </td>
+              {{/each}}
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
