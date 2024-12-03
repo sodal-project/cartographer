@@ -46,24 +46,11 @@ filterArray: [
   }
 ]
 
-filterObject: {
-  field: "<key> <operator> not value",
-  source: "<key> <operator> not value", // key: id | name | lastUpdate
-  agency: {
-    key: control | obey,
-    filter: filterObject || filterArray,
-    levels: number[],
-    depth: number || [min, max],
-    confidence: {
-      min: number,
-      max: number
-    }
-  },
-  not: filterObject || filterArray,
-  or: filterObject || filterArray,
-  in: filterObject || filterArray,
-  set: string[] // array of upns
-}
+filterShorthands: [
+  "field <key> <operator> value",  // converts to a field filter
+  "source <key> <operator> value", // key: id | name | lastUpdate, converts to a source filter
+  [upns] // converts to a set
+]
 
 */
 
@@ -95,17 +82,70 @@ const operators = {
 const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
 
 /**
- * @description Filter the graph database based on the provided filter object
+ * Convert shorthand notation to standard filter format
+ * @param {string|array} shorthand - The shorthand filter notation
+ * @returns {object} - The standardized filter object
+ */
+function convertShorthand(shorthand) {
+  // Handle array of UPNs shorthand
+  if (Array.isArray(shorthand)) {
+    return {
+      type: 'set',
+      upns: shorthand
+    };
+  }
+
+  // Handle string shorthand formats
+  if (typeof shorthand === 'string') {
+    const parts = shorthand.split(' ');
+    
+    // Must have at least 4 parts: type key operator value
+    if (parts.length < 4) {
+      throw new Error('Invalid shorthand filter format');
+    }
+
+    const [type, key, operator, ...valueParts] = parts;
+    const value = valueParts.join(' '); // Rejoin value in case it contains spaces
+
+    if (type === 'field') {
+      return {
+        type: 'field',
+        key,
+        operator,
+        value,
+        not: false
+      };
+    }
+
+    if (type === 'source') {
+      if (!['id', 'name', 'lastUpdate'].includes(key)) {
+        throw new Error('Invalid source filter key (must be id, name, or lastUpdate)');
+      }
+      return {
+        type: 'source',
+        key,
+        operator,
+        value,
+        not: false
+      };
+    }
+  }
+
+  // If it's not a recognized shorthand, return as-is
+  return shorthand;
+}
+
+/**
+ * @description Filter the graph database based on the provided filter
  * 
  * This is the entry point for the graph filter. 
- * It takes a filter object and returns an array of personas that match the filter.
+ * It takes a filter (object, array, or shorthand) and returns an array of personas that match the filter.
  * 
- * @param {object} filter - The filter object
- * @param {object} sort - The sort object
+ * @param {object|array|string} filter - The filter input
+ * @param {object} params - The sort and pagination parameters
  * @returns {object[]} - The query results
  */
-async function graphFilter (filter, params = {}) {
-
+async function graphFilter(filter, params = {}) {
   const defaultParams = { 
     field: "upn", 
     direction: "ASC", 
@@ -114,7 +154,15 @@ async function graphFilter (filter, params = {}) {
   }
   params = { ...defaultParams, ...params };
 
-  const upns = await getUpnsFromFilter(filter);
+  // Ensure we're working with an array
+  const filters = Array.isArray(filter) ? filter : [filter];
+  
+  // Convert shorthands and flatten the result
+  const standardFilters = filters
+    .map(convertShorthand)
+    .flat();
+
+  const upns = await getUpnsFromFilter(standardFilters);
   const sortedResults = await sortResults(upns, params);
   return sortedResults;
 }
