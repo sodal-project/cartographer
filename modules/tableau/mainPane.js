@@ -111,7 +111,7 @@ async function processInstance(instance) {
 }
 
 const callTableauAPI = async (serverUrl, pat) => {
-  const apiUrl = `${serverUrl}/api/3.19/auth/signin`;
+  const apiUrl = `https://${serverUrl}/api/3.19/auth/signin`;
   try {
     // First authenticate with PAT
     const authResponse = await axios.post(apiUrl, {
