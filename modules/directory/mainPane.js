@@ -1,5 +1,6 @@
 const core = require('../../core/core.js');
 const csv = require('./csvPane.js');
+const { consoleLog } = require('../../core/log.js');
 
 // Default Configuration
 // TODO: move this to config database
