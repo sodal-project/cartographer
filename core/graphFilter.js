@@ -352,12 +352,12 @@ async function getUpnsByCompare (compare, upns) {
 
 async function readSingleArray (query, params) {
   const timeStart = new Date();
-  console.log(`--- Running query:\n ${query}`);
+  // console.log(`--- Running query:\n ${query}`);
   const results = await connector.runRawQuery(query, params);
   const timeEnd = new Date();
   const array = results.records.map(node => node._fields[0]);
-  console.log(`--- Found ${array.length} upns...`);
-  console.log(`--- Query time: ${timeEnd - timeStart}ms`);
+  console.log(`graphFilter: returned ${array.length} upns...`);
+  console.log(`graphFilter: processing time: ${timeEnd - timeStart}ms`);
   return array;
 }
 
