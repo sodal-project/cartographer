@@ -431,6 +431,8 @@ async function removeSelectedUpns(upnsToRemove, tableFormId){
 async function updateAllSelectedUpns(data){
   const {tableFormId, upns} = data;
   
+  console.log('updateAllSelectedUpns', tableFormId);
+
   // Get the existing table config and update it's UPNs
   const tableConfig = await core.config.readConfig(`table-config-${tableFormId}`) || {};
   tableConfig.selectedUpns = upns;
@@ -438,7 +440,7 @@ async function updateAllSelectedUpns(data){
   // Write the updated table config to the database
   const response = await core.config.writeConfig({[`table-config-${tableFormId}`]: tableConfig});
   
-  return redraw();
+  return update(data);
 }
 
 /**

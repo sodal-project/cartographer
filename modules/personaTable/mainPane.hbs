@@ -1,4 +1,4 @@
-<div class="relative persona-table-wrap" x-data="columnVisibility([{{visibility}}])">
+<div id="{{tableFormId}}" class="relative persona-table-wrap" x-data="columnVisibility([{{visibility}}])">
   <!-- Export CSV -->
   <form
     class="absolute z-20 right-10 top-1 pr-1 pt-px"
@@ -11,7 +11,7 @@
     </button>
   </form>
 
-  <!-- Filter Table -->
+  <!-- Table Filters -->
   <form
     hx-post="/mod/personaTable/update/"
     hx-target="closest .persona-table-wrap"
@@ -187,11 +187,11 @@
     </div>
   </form>
 
-  <div class="relative" x-data="tableCheckbox()">    
+  <!-- Table -->
+  <div class="relative">    
     {{#if action }}
-      <div 
-        class="absolute z-50 -top-14 left-0 right-20 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
-        x-show="selected.length > 0"
+      <div
+        class="action-wrap absolute z-50 -top-14 left-0 right-20 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000 hidden" 
       >
         <button
           type="button"
@@ -206,13 +206,13 @@
         >
           {{action.label}}
         </button>
-        <span class="text-sm"><span x-text="totalSelectedCheckboxes"></span> selected items</span>
+        <span class="text-sm"><span data-selected-count></span> selected items</span>
       </div>
     {{/if}}
 
     <!-- Table -->
     <div class="overflow-scroll">
-      <table class="min-w-full" :class="getColumnClasses()" x-init="initializeTotalCheckboxes()">
+      <table class="min-w-full" :class="getColumnClasses()">
         <thead class="sticky top-0">
           <tr>
             <th
@@ -226,9 +226,8 @@
                 hx-post="/mod/personaTable/updateAllSelectedUpns/"
                 hx-vals='{"tableFormId": "{{tableFormId}}"}'
                 hx-target="closest .persona-table-wrap"
-                x-model="selectAll"
-                x-ref="headerCheckbox"
-                @change="toggleSelectAll()"
+                onchange="PersonaTable.headerCheckboxChange(this)"
+                checked="{{allSelected}}"
               >
             </th>
             {{#each fields}}

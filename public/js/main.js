@@ -15,12 +15,13 @@ document.body.addEventListener('htmx:afterRequest', (event) => {
   document.getElementById('spinner').style.visibility = 'hidden';
   document.getElementById('main').style.visibility = 'visible';
 
-  // Reinitialize Alpine components after certain HTMX requests
-  // This is necessary to rebind Alpine components to the updated DOM
-  // This cannot be done on the element as HTMX is swapping it out
-  if (event.detail?.pathInfo?.requestPath === '/mod/personaTable/updateSelectedUpns/') {
-    Alpine.initTree(document.body);
-  }
+  // Run the init function for components that need to be re-initialized
+  PersonaTable.init();
+});
+
+// Initial Page Load
+document.addEventListener('DOMContentLoaded', () => {
+  PersonaTable.init();
 });
 
 /**
@@ -114,3 +115,66 @@ function columnVisibility(preCheckedColumns = []) {
     }
   };
 }
+
+
+
+// PERSONA TABLE
+// In the future we should move this to the module so that there is a pattern for authors
+// to follow for adding javascript to their own modules.
+const PersonaTable = {
+  headerCheckboxChange(element) {
+    const table = element.closest('table');
+    const bodyCheckboxes = table.querySelectorAll('tbody input[type="checkbox"][name="upn"]');
+    const checkedCheckboxes = table.querySelectorAll('tbody input[type="checkbox"][name="upn"]:checked');
+    const allSelected = bodyCheckboxes.length === checkedCheckboxes.length;
+    const allUpns = Array.from(bodyCheckboxes).map(checkbox => checkbox.value);
+
+    // Get the hx-vals attribute from the header checkbox 
+    const hxValsString = element.getAttribute('hx-vals');
+    const hxVals = hxValsString ? JSON.parse(hxValsString) : {};
+
+    // Update hx-vals with the upns
+    if (allSelected) {
+      hxVals.upns = [];
+    } else {
+      hxVals.upns = allUpns;
+    }
+
+    // Set the `hx-vals` attribute on the header checkbox to send the upns as a parameter
+    element.setAttribute('hx-vals', JSON.stringify(hxVals));
+
+    // Submit the htmx request
+    element.dispatchEvent(new CustomEvent('htmx:configRequest', {
+      detail: {
+        headers: { 'Content-Type': 'application/json' },
+        bubbles: true,
+      },
+    }));
+  },
+  init() {
+    const table = document.querySelectorAll('.persona-table-wrap');
+    
+    // Update the checkbox in the header row to either be checked, unchecked, or indeterminate based on the state of the checkboxes in the body
+    table.forEach((table) => {
+      const headerCheckbox = table.querySelector('thead input[type="checkbox"]');
+      const bodyCheckboxes = table.querySelectorAll('tbody input[type="checkbox"][name="upn"]');
+      const checkedCheckboxes = table.querySelectorAll('tbody input[type="checkbox"][name="upn"]:checked');
+      const actionWrap = table.querySelector('.action-wrap');
+      const selectedCount = table.querySelector('[data-selected-count]');
+      const totalCheckboxes = table.querySelectorAll('tbody input[type="checkbox"][name="upn"]:checked').length;
+
+      // Set the header checkbox state
+      headerCheckbox.checked = bodyCheckboxes.length === checkedCheckboxes.length;
+      headerCheckbox.indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < bodyCheckboxes.length;
+      
+      // Some tables don't have the action wrap or selected count so we'll return if they're missing
+      if (!actionWrap || !selectedCount) return;
+
+      // Hide or show the action wrap
+      actionWrap.classList.toggle('hidden', checkedCheckboxes.length === 0);
+
+      // Update the selected count
+      selectedCount.textContent = totalCheckboxes;
+    });
+  }
+};
