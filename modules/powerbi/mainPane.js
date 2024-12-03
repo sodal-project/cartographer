@@ -138,6 +138,7 @@ const getAccessToken = async (tenantId, clientId, clientSecret) => {
 
 const callPowerBIAdminAPI = async (accessToken) => {
   const apiUrl = "https://api.powerbi.com/v1.0/myorg/admin/groups?$top=5000";
+  // const apiUrl = "https://api.powerbi.com/v1.0/myorg/datasets";
   try {
     const response = await axios.get(apiUrl, {
       headers: {
