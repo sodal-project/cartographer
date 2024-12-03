@@ -150,8 +150,10 @@ async function getUpnsFromFilter (filter) {
     }
   }
 
-  let upns = await getUpnsByFieldArray(fieldArray);
-
+  let upns;
+  if(fieldArray.length > 0) {
+    upns = await getUpnsByFieldArray(fieldArray);
+  }
   if(setArray.length > 0) {
     upns = await getUpnsBySetArray(setArray, upns);
   }
@@ -199,20 +201,33 @@ async function getUpnsByFieldArray (fieldArray) {
 async function getUpnsBySetArray (setArray, upns) {
   // identify only the upns that are in all sets
   for(const set in setArray) {
-    const upnsInSet = setArray[set].upns;
-    upns = upns.filter(upn => upnsInSet.includes(upn));
+    if(!upns) {
+      upns = setArray[set].upns;  
+    } else {
+      const upnsInSet = setArray[set].upns;
+      upns = upns.filter(upn => upnsInSet.includes(upn));
+    }
   }
   return upns;
 }
 
 async function getUpnsBySourceArray (sourceArray, upns) {
-  let query = `MATCH (source:Source)-[:DECLARE]->(persona:Persona)
-  WHERE persona.upn IN $upns\n`;
+  let query = `MATCH (source:Source)-[:DECLARE]->(persona:Persona)\n`;
+  let firstQuery = true;
 
   for(const source in sourceArray) {
     const filter = sourceArray[source];
 
-    query += `AND `;
+    if(firstQuery) {
+      firstQuery = false;
+      if(upns) {  
+        query += `WHERE persona.upn IN $upns\nAND `;
+      } else {
+        query += `WHERE `;
+      }
+    } else {
+      query += `AND `;
+    }
 
     const operator = operators[filter.operator];
     const fieldKey = filter.key;
@@ -255,46 +270,47 @@ async function getUpnsByAgency (agency, upns) {
   const filter = agency.filter;
   const filterUpns = await getUpnsFromFilter(filter);
 
-  let indexUpnString = "";
-  let filterUpnString = "";
+  let indexRel = "";
+  let filterRel = "";
 
-  const direction = agency.key;
-  if(direction === 'control') {
-    indexUpnString = "control.upn"
-    filterUpnString = "obey.upn"
-  } else if(direction === 'obey') {
-    indexUpnString = "obey.upn"
-    filterUpnString = "control.upn"
+  if(agency.key === 'control') {
+    indexRel = "control"
+    filterRel = "obey"
+  } else if(agency.key === 'obey') {
+    indexRel = "obey"
+    filterRel = "control"
   } else {
     throw new Error('Invalid agency direction (must be control or obey)');
   }
 
-  let depthString = "*";  // search all depths by default
-  if(agency.depth && Array.isArray(agency.depth)) {
-    if(agency.depth.length !== 2) {
-      throw new Error('Invalid agency depth array (must be [min, max])');
-    } 
-    depthString = `{${agency.depth[0]},${agency.depth[1]}}`;        // search between the specified depths
-  } else if(agency.depth) {
-    if(agency.depth === 1) { depthString = `{,1}` }                // search only immediate relationships
-    if(agency.depth > 1) { depthString = `{,${agency.depth}}` }  // search up to the specified depth
+  // Convert agency.depth into a Neo4j path length pattern (*min..max)
+  const depth = agency.depth;
+  let depthString = "*0.."; // Default: search all depths
+
+  if (depth) {
+    if (Array.isArray(depth)) {
+      if (depth.length !== 2) {
+        throw new Error('Depth array must contain [min, max] values');
+      }
+      depthString = `*${depth[0]}..${depth[1]}`; // Range: min to max depth
+    } else {
+      depthString = `*${parseInt(depth)}`; // Fixed depth
+    }
   }
 
   // Find all nonredundant paths between the control and obey personas
-  let query = `MATCH SHORTEST 1 ((control:Persona) (()-[rList:CONTROL]->())${depthString} (obey:Persona))\n`;
+  let query = `
+  MATCH path = shortestPath((control:Persona)-[rList:CONTROL ${depthString}]->(obey:Persona))
+  WHERE ${filterRel}.upn IN $filterUpns
+  ${upns ? `AND ${indexRel}.upn IN $upns` : ''}
+  WITH control, obey, relationships(path) as rList
+  WHERE ALL(r IN rList WHERE 
+    r.level IN $levels AND 
+    r.confidence >= $confidence.min AND 
+    r.confidence <= $confidence.max
+  )\n`;
 
-  // Filter control and obey personas based on the control direction
-  query += `WHERE ${indexUpnString} IN $upns AND ${filterUpnString} IN $filterUpns\n`;
-
-  // Filter control relationships based on the levels and confidence
-  query += `WITH control,obey,[r IN rList | r.level ] AS relLevels, [r IN rList | r.confidence ] AS relConfidences
-  WHERE ALL(level IN relLevels WHERE level IN $levels)\n`;
-
-  // Omit the confidence filter if the confidence is full range
-  if(confidence.min > 0 || confidence.max < 1) {
-    query += `AND ALL(confidence IN relConfidences WHERE confidence >= $confidence.min AND confidence <= $confidence.max)\n`;
-  }
-  query += `RETURN DISTINCT ${indexUpnString}`;
+  query += `RETURN DISTINCT ${indexRel}.upn`;
 
   const params = {
     upns,
@@ -313,21 +329,35 @@ async function getUpnsByCompare (compare, upns) {
   const subfilterUpns = await getUpnsFromFilter(filter);
 
   if(action === 'in') {
-    upns = upns.filter(upn => subfilterUpns.includes(upn));
-  } else if(filter === 'not') {
+    if(upns) {  
+      upns = upns.filter(upn => subfilterUpns.includes(upn));
+    } else {
+      upns = subfilterUpns;
+    }
+  } else if(action === 'not') { 
+    if(!upns) {
+      upns = await getUpnsFromFilter();
+    }
     upns = upns.filter(upn => !subfilterUpns.includes(upn));
-  } else if(filter === 'or') {
-    upns = [...new Set([...upns, ...subfilterUpns])];
+  } else if(action === 'or') {  
+    if(upns) {
+      upns = [...new Set([...upns, ...subfilterUpns])];
+    } else {
+      upns = subfilterUpns;
+    }
   }
 
   return upns;
 }
 
 async function readSingleArray (query, params) {
-  // console.log(`--- Running query:\n ${query}`);
+  const timeStart = new Date();
+  console.log(`--- Running query:\n ${query}`);
   const results = await connector.runRawQuery(query, params);
+  const timeEnd = new Date();
   const array = results.records.map(node => node._fields[0]);
-  // console.log(`--- Found ${array.length} upns...`);
+  console.log(`--- Found ${array.length} upns...`);
+  console.log(`--- Query time: ${timeEnd - timeStart}ms`);
   return array;
 }
 
