@@ -182,6 +182,8 @@ async function read(tableConfig, tableForm) {
   const graphSort = tableConfig.forceSort || {
     field: tableForm?.sortField ? tableForm.sortField : "upn",
     direction: tableForm?.sortDirection ? tableForm.sortDirection : "ASC",
+    number: 1,
+    size: 2
   }
  
   // Get the filters defined by the table form
@@ -232,6 +234,7 @@ async function read(tableConfig, tableForm) {
     filters: getTableFilterArray(tableForm),
     visibility: visibility,
     graphFiltersString: JSON.stringify(allGraphFilters),
+    totalCount: rawPersonas.records.length,
   };
 
   return data;
