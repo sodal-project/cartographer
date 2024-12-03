@@ -24,7 +24,7 @@ const namespaces = {
 
 // Core Imports
 const { getCallingFolder } = require('./utilities.js');
-const { writeLog } = require('./log.js');
+const { consoleLog, writeLog } = require('./log.js');
 
 // Core Data
 // TODO: move this to config database
@@ -147,7 +147,7 @@ function initNamespaces() {
 
           // get the calling module name
           const callingModule = getCallingFolder(new Error().stack)
-          console.log(`Calling core.${namespace}.${call} from ${callingModule}`)
+          consoleLog(`Calling core.${namespace}.${call} from ${callingModule}`)
 
           /**
            * Some calls need to know the calling module, in which case we pass
@@ -177,7 +177,7 @@ function initNamespaces() {
     }
   }
 
-  console.log(`Core: loaded ${counter} internal namespace calls`)
+  consoleLog(`Core: loaded ${counter} internal namespace calls`)
 }
 
 /**
@@ -201,7 +201,7 @@ async function initModules(moduleArray) {
     calls.mod[module] = await require(`../modules/${module}/mainPane.js`);
     core.mod[module] = {};
 
-    console.log("Core: loading external module: ", module)
+    consoleLog(`Core: loading external module: ${module}`)
 
     // for each exported function in the module, add it to the core object
     for(const call in calls.mod[module]) {
@@ -230,7 +230,7 @@ async function initModules(moduleArray) {
           // add the function to the core object
           core.mod[module][call] = (...params) => {
             const callingModule = getCallingFolder(new Error().stack);
-            console.log(`Calling core.mod.${module}.${call} from ${callingModule}`)
+            consoleLog(`Calling core.mod.${module}.${call} from ${callingModule}`)
             return calls.mod[module][call](...params);
           }
 
@@ -245,7 +245,7 @@ async function initModules(moduleArray) {
       }
     }
   }
-  console.log(`Core: loaded ${counter} external module calls`)
+  consoleLog(`Core: loaded ${counter} external module calls`)
 }
 
 /**
@@ -261,9 +261,9 @@ async function initModules(moduleArray) {
  * @returns {object} - The initialized core object
  */
 async function init() {
-  console.log("Core: initializing")
+  consoleLog("Core: initializing")
   if(core.ready) {
-    console.log("Core: already initialized")
+    consoleLog("Core: already initialized")
     return core;
   }
 
@@ -289,7 +289,7 @@ async function init() {
   // finalize core and freeze it
   core.ready = true;
   Object.freeze(core);
-  console.log("Core: initialized")
+  consoleLog("Core: initialized")
   return core;
 }
 
