@@ -1,4 +1,4 @@
-<div class="p-8" x-data="formHandler">
+<div class="p-8">
   <div class="flex justify-between items-start mb-6">
     {{> Headline title="Directory Module" }}
     <div class="flex gap-3">    
@@ -53,19 +53,29 @@
           </div>
         {{/ModalButtonPane}}
       </div>
-      {{> PersonaTable data=directory.tableData }}
+      {{{ directoryTableHtml }}}
     </div>
     <div class="absolute top-0 left-1/2 right-0 pl-4">
       <h2 class="text-white text-lg mb-4">Personas</h2>
         <div class="flex gap-3 mb-4">
           <!-- Link -->
-          {{> Button click="linkData()" label="Link" }}
+         
+          <button
+            type="button"
+            class="bg-indigo-600 py-1 px-4 rounded text-white text-sm"
+            hx-trigger="click"
+            hx-post="/mod/directory/linkPersonas/"
+            hx-target="closest #main"
+            hx-swap="innerHTML"
+          >
+            Link
+          </button>
         </div>
-      {{> PersonaTable data=personas.tableData }}
+      {{{ personaTableHtml }}}
     </div>
   </div>
 </div>
-
+{{!-- 
 <script>
 document.addEventListener('alpine:init', () => {
   Alpine.data('formHandler', () => ({
@@ -94,4 +104,4 @@ document.addEventListener('alpine:init', () => {
     }
   }));
 });
-</script>
+</script> --}}
