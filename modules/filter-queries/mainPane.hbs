@@ -22,7 +22,7 @@
               <div class="flex gap-2">
                 <button
                   class="px-3 py-1 text-sm font-medium text-blue-100 bg-blue-600 hover:bg-blue-700 rounded-md"
-                  hx-post="/mod/test-filter/runSavedFilter"
+                  hx-post="/mod/filter-queries/runSavedFilter"
                   hx-target="closest #main"
                   hx-vals='{"filterId": "{{id}}"}'
                 >
@@ -30,7 +30,7 @@
                 </button>
                 <button
                   class="px-3 py-1 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600"
-                  hx-post="/mod/test-filter/loadFilter"
+                  hx-post="/mod/filter-queries/loadFilter"
                   hx-target="closest #main"
                   hx-vals='{"filterId": "{{id}}"}'
                 >
@@ -38,7 +38,7 @@
                 </button>
                 <button
                   class="px-3 py-1 text-sm font-medium text-red-100 bg-red-600 hover:bg-red-700 rounded-md"
-                  hx-post="/mod/test-filter/deleteFilter"
+                  hx-post="/mod/filter-queries/deleteFilter"
                   hx-target="closest #main"
                   hx-vals='{"filterId": "{{id}}"}'
                 >
@@ -70,7 +70,7 @@
       {{#if this.filterId}}
         <button
           class="px-3 py-1 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600"
-          hx-post="/mod/test-filter/clearForm"
+          hx-post="/mod/filter-queries/clearForm"
           hx-target="closest #main"
         >
           Create New Filter
@@ -80,7 +80,7 @@
 
     <form
       class="gap-6 mb-0"
-      hx-post="/mod/test-filter/runFilter"
+      hx-post="/mod/filter-queries/runFilter"
       hx-target="closest #main"
       hx-swap="innerHTML"
     >
@@ -113,7 +113,7 @@
         <button
           type="submit"
           class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600"
-          hx-post="/mod/test-filter/saveFilter"
+          hx-post="/mod/filter-queries/saveFilter"
         >
           {{#if this.filterId}}
             Update Filter
