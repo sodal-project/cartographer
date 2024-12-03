@@ -21,7 +21,6 @@
     }'
   >
     <div class="relative flex mb-4">
-
       <!-- Sort -->
       <div
         class="relative border-r border-gray-700 pr-4"
@@ -34,8 +33,7 @@
           @click="open = !open"
         >
          <span class="relative h-3.5 text-indigo-400 inline-block">
-          
-            {{#if (eq sortDirection 'ascending')}}
+            {{#if (eq sortDirection 'ASC')}}
               {{> icons/ArrowUp }}
             {{else}}
               {{> icons/ArrowDown }}
