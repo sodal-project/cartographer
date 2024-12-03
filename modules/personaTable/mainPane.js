@@ -342,7 +342,7 @@ async function update(tableForm) {
   data.selectedUpns = tableConfig.selectedUpns || [];
 
   // Build the table markup
-  const markup = await core.client.render('personaTable.hbs', data);
+  const markup = await core.client.render('embedPane.hbs', data);
 
   return markup;
 }
@@ -453,7 +453,7 @@ async function getTable(config) {
   const data = await build(config)
 
   // Render the main template
-  return core.client.render('personaTable.hbs', data);
+  return core.client.render('embedPane.hbs', data);
 }
 
 const getSelectedUpns = async (tableFormId) => {
