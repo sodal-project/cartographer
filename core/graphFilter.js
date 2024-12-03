@@ -285,7 +285,7 @@ async function getUpnsByAgency (agency, upns) {
 
   // Convert agency.depth into a Neo4j path length pattern (*min..max)
   const depth = agency.depth;
-  let depthString = "*0.."; // Default: search all depths
+  let depthString = "*1.."; // Default: search all depths
 
   if (depth) {
     if (Array.isArray(depth)) {
@@ -302,6 +302,7 @@ async function getUpnsByAgency (agency, upns) {
   let query = `
   MATCH path = shortestPath((control:Persona)-[rList:CONTROL ${depthString}]->(obey:Persona))
   WHERE ${filterRel}.upn IN $filterUpns
+  AND control <> obey
   ${upns ? `AND ${indexRel}.upn IN $upns` : ''}
   WITH control, obey, relationships(path) as rList
   WHERE ALL(r IN rList WHERE 
