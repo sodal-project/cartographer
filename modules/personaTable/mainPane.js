@@ -196,10 +196,10 @@ async function read(tableConfig, tableForm) {
   const allGraphFilters = [...graphFilters, ...forceFilters]
 
   // Get the personas from the graph based on the current filters and sort
-  const rawPersonas = await core.graph.readPersonas(allGraphFilters, graphSort);
+  const result = await core.graph.readPersonas(allGraphFilters, graphSort);
 
   // Get table rows based on the returned personas
-  const tableRows = rowsFromRawQuery(rawPersonas, tableConfig.forceVisibility);
+  const tableRows = rowsFromRawQuery(result.raw, tableConfig.forceVisibility);
 
   // Get a list of the table's fields
   let keys = [];

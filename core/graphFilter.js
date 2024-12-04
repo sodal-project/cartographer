@@ -82,6 +82,52 @@ const operators = {
 const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
 
 /**
+ * @description Filter the graph database based on the provided filter
+ * 
+ * This is the entry point for the graph filter. 
+ * It takes a filter (object, array, or shorthand) and returns an array of personas that match the filter.
+ * 
+ * @param {object|array|string} filter - The filter input
+ * @param {object} params - The sort and pagination parameters
+ * @returns {object[]} - The query results
+ */
+async function graphFilter(filter, params = {}, asUpnArray = false) {
+  const timeStart = new Date();
+
+  const defaultParams = { 
+    field: "upn", 
+    direction: "ASC", 
+    number: 1, 
+    size: 500
+  }
+  params = { ...defaultParams, ...params };
+
+  // Ensure we're working with an array
+  const filters = Array.isArray(filter) ? filter : [filter];
+  
+  // Convert shorthands and flatten the result
+  const standardFilters = filters
+    .map(convertShorthand)
+    .flat();
+
+  const upns = await getUpnsFromFilter(standardFilters);
+
+  if(asUpnArray) {
+    return upns;
+  } else {
+    const sortedResults = await sortResults(upns, params);
+
+    return {
+      raw: sortedResults,
+      personas: sortedResults.records.map(node => node._fields[0].properties),
+      totalCount: upns.length,
+      currentCount: sortedResults.records.length,
+      time: new Date() - timeStart
+    }
+  }
+}
+
+/**
  * Convert shorthand notation to standard filter format
  * @param {string|array} shorthand - The shorthand filter notation
  * @returns {object} - The standardized filter object
@@ -133,38 +179,6 @@ function convertShorthand(shorthand) {
 
   // If it's not a recognized shorthand, return as-is
   return shorthand;
-}
-
-/**
- * @description Filter the graph database based on the provided filter
- * 
- * This is the entry point for the graph filter. 
- * It takes a filter (object, array, or shorthand) and returns an array of personas that match the filter.
- * 
- * @param {object|array|string} filter - The filter input
- * @param {object} params - The sort and pagination parameters
- * @returns {object[]} - The query results
- */
-async function graphFilter(filter, params = {}) {
-  const defaultParams = { 
-    field: "upn", 
-    direction: "ASC", 
-    number: 1, 
-    size: 500
-  }
-  params = { ...defaultParams, ...params };
-
-  // Ensure we're working with an array
-  const filters = Array.isArray(filter) ? filter : [filter];
-  
-  // Convert shorthands and flatten the result
-  const standardFilters = filters
-    .map(convertShorthand)
-    .flat();
-
-  const upns = await getUpnsFromFilter(standardFilters);
-  const sortedResults = await sortResults(upns, params);
-  return sortedResults;
 }
 
 /**
@@ -400,25 +414,20 @@ async function getUpnsByCompare (compare, upns) {
 }
 
 async function readSingleArray (query, params) {
-  const timeStart = new Date();
-  // console.log(`--- Running query:\n ${query}`);
   const results = await connector.runRawQuery(query, params);
-  const timeEnd = new Date();
   const array = results.records.map(node => node._fields[0]);
-  console.log(`graphFilter: returned ${array.length} upns...`);
-  console.log(`graphFilter: processing time: ${timeEnd - timeStart}ms`);
   return array;
 }
 
 async function sortResults (upns, params) {
+
   let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
   query += `RETURN DISTINCT persona 
   ORDER BY persona.${params.field} ${params.direction}
   SKIP ${(params.number - 1) * params.size}
   LIMIT ${params.size}`;
 
-  const results = await connector.runRawQuery(query, { upns });
-  return results;
+  return await connector.runRawQuery(query, { upns });
 }
 
 module.exports = graphFilter;

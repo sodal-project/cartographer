@@ -24,9 +24,9 @@
         </button>
         
         <div 
-          x-show="showParticipantForm"
+          x-show="formStates.participant"
           x-transition
-          @click.away="showParticipantForm = false"
+          @click.away="formStates.participant = false"
           class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
           style="width: 450px;"
         >
@@ -34,7 +34,7 @@
             hx-post="/mod/directory/addParticipant/"
             hx-target="closest #main"
             hx-swap="innerHTML"
-            @submit="showParticipantForm = false"
+            @submit="formStates.participant = false"
           >
             {{> FormText label="First Name" name="firstName" value="" }}
             {{> FormText label="Last Name" name="lastName" value="" }}
@@ -54,9 +54,9 @@
         </button>
         
         <div 
-          x-show="showActivityForm"
+          x-show="formStates.activity"
           x-transition
-          @click.away="showActivityForm = false"
+          @click.away="formStates.activity = false"
           class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
           style="width: 300px;"
         >
@@ -64,7 +64,7 @@
             hx-post="/mod/directory/addActivity/"
             hx-target="closest #main"
             hx-swap="innerHTML"
-            @submit="showActivityForm = false"
+            @submit="formStates.activity = false"
           >
             {{> FormText label="Name" name="name" value="" }}
             {{> FormSubmit label="Add Activity" }}
@@ -82,9 +82,9 @@
         </button>
         
         <div 
-          x-show="showAddPersonaForm"
+          x-show="formStates.addPersona"
           x-transition
-          @click.away="showAddPersonaForm = false"
+          @click.away="formStates.addPersona = false"
           class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
           style="width: 350px;"
         >
@@ -93,7 +93,7 @@
             hx-post="/mod/directory/addPersona"
             hx-target="closest #main"
             hx-swap="innerHTML"
-            @submit="showAddPersonaForm = false"
+            @submit="formStates.addPersona = false"
           >
             <p class="text-gray-400 text-sm mb-4">Use caution, you can break things.</p>
             {{> FormText label="UPN" name="upn" value="" }}
@@ -124,9 +124,9 @@
         </button>
         
         <div 
-          x-show="showRestoreForm"
+          x-show="formStates.restore"
           x-transition
-          @click.away="showRestoreForm = false"
+          @click.away="formStates.restore = false"
           class="absolute right-0 z-10 mt-2 p-4 bg-gray-800 rounded shadow-lg border border-gray-700"
           style="width: 350px;"
         >
@@ -136,7 +136,7 @@
             hx-post="/mod/directory/restore/upload"
             hx-target="closest #main"
             hx-swap="innerHTML"
-            @submit="showRestoreForm = false"
+            @submit="formStates.restore = false"
           >
             {{> FormFilePicker label="JSON File" name="file" }}
             {{> FormSubmit label="Restore" }}
@@ -304,29 +304,45 @@ document.addEventListener('alpine:init', () => {
       ACT_AS: 11,   // DO cause to interact with other personas
       ACCESS: 12,   // DO cause to interact with my persona
     },
-    hasDirectorySelections: false,
-    hasPersonaSelections: false,
+    formStates: {
+      activity: false,
+      participant: false,
+      restore: false,
+      addPersona: false,
+      link: false
+    },
     showLinkModal: false,
-    panelWidth: 800, // Default width in pixels
+    panelWidth: 800,
     isResizing: false,
     startX: 0,
     startWidth: 0,
-    showActivityForm: false,
-    showParticipantForm: false,
-    showRestoreForm: false,
-    showAddPersonaForm: false,
+    hasDirectorySelections: false,
+    hasPersonaSelections: false,
     
     init() {
-      this.showLinkModal = false;
-      this.showActivityForm = false;
-      this.showParticipantForm = false;
-      this.showRestoreForm = false;
-      this.showAddPersonaForm = false;
-      this.watchSelections(); // Initial check
+      this.resetAllForms();
       
-      // Add global mouse event listeners for resizing
+      this.$nextTick(() => {
+        this.watchSelections();
+      });
+      
       window.addEventListener('mousemove', (e) => this.handleResize(e));
       window.addEventListener('mouseup', () => this.stopResize());
+    },
+
+    resetAllForms() {
+      Object.keys(this.formStates).forEach(key => {
+        this.formStates[key] = false;
+      });
+      this.showLinkModal = false;
+    },
+
+    toggleForm(formType) {
+      this.resetAllForms();
+      
+      if (Object.hasOwn(this.formStates, formType)) {
+        this.formStates[formType] = true;
+      }
     },
 
     startResize(e) {
@@ -334,7 +350,6 @@ document.addEventListener('alpine:init', () => {
       this.startX = e.clientX;
       this.startWidth = this.panelWidth;
       
-      // Prevent text selection while resizing
       document.body.style.userSelect = 'none';
     },
 
@@ -344,7 +359,6 @@ document.addEventListener('alpine:init', () => {
       const diff = this.startX - e.clientX;
       const newWidth = this.startWidth + diff;
       
-      // Set minimum and maximum width constraints
       this.panelWidth = Math.min(Math.max(newWidth, 300), window.innerWidth - 100);
     },
 
@@ -360,28 +374,13 @@ document.addEventListener('alpine:init', () => {
     },
 
     watchSelections() {
-      const directoryForm = document.getElementById('directory-table-form');
-      const personaForm = document.getElementById('persona-table-form');
-      
-      this.hasDirectorySelections = directoryForm?.querySelectorAll('input[type=checkbox]:checked').length > 0;
-      this.hasPersonaSelections = personaForm?.querySelectorAll('input[type=checkbox]:checked').length > 0;
-    },
-
-    toggleForm(formType) {
-      this.showActivityForm = false;
-      this.showParticipantForm = false;
-      this.showRestoreForm = false;
-      this.showAddPersonaForm = false;
-
-      if (formType === 'activity') {
-        this.showActivityForm = !this.showActivityForm;
-      } else if (formType === 'participant') {
-        this.showParticipantForm = !this.showParticipantForm;
-      } else if (formType === 'restore') {
-        this.showRestoreForm = !this.showRestoreForm;
-      } else if (formType === 'addPersona') {
-        this.showAddPersonaForm = !this.showAddPersonaForm;
-      }
+      this.$nextTick(() => {
+        const directoryForm = document.getElementById('directory-table-form');
+        const personaForm = document.getElementById('persona-table-form');
+        
+        this.hasDirectorySelections = Boolean(directoryForm?.querySelectorAll('input[type=checkbox]:checked').length);
+        this.hasPersonaSelections = Boolean(personaForm?.querySelectorAll('input[type=checkbox]:checked').length);
+      });
     },
   }))
 });

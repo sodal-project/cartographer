@@ -257,7 +257,7 @@ async function nextId(type) {
   let nextId = await core.config.readConfig(`next${type}Id`) || 10000; 
 
   // Verify that graph does not have a lower ID
-  const rawPersonas = await core.graph.readPersonas([{ 
+  const results = await core.graph.readPersonas([{ 
     type: "field",
     key: "platform",
     value: "directory",
@@ -271,7 +271,7 @@ async function nextId(type) {
     not: false
   }]);
 
-  const personas = rawPersonas.records.map(node => node._fields[0].properties);
+  const personas = results.raw.records.map(node => node._fields[0].properties);
 
   for(const persona of personas) {
     const id = parseInt(persona.id);
