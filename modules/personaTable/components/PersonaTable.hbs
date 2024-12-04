@@ -1,27 +1,26 @@
-<div class="relative persona-table-wrap" x-data="columnVisibility([{{data.visibility}}])">
+<div id="{{tableFormId}}" class="relative persona-table-wrap" x-data="columnVisibility([{{visibility}}])">
   <!-- Export CSV -->
   <form
     class="absolute z-10 right-10 top-1 pr-1 pt-px"
     hx-ext="download-csv"
     hx-post="/mod/exportCsv/download/download"
   >
-    <input type="hidden" name="csvFilter" value='{{data.graphFiltersString}}'>
+    <input type="hidden" name="csvFilter" value='{{graphFiltersString}}'>
     <button class="text-white" type="submit">
       <div class="w-5 h-5 text-gray-500 hover:text-white">{{> icons/DownloadFile }}</div>
     </button>
   </form>
 
-  <!-- Filter Table -->
+  <!-- Table Filters -->
   <form
     hx-post="/mod/personaTable/update/"
     hx-target="closest .persona-table-wrap"
     hx-swap="innerHTML"
     hx-vals='{
-      "tableFormId": "{{data.tableFormId}}"
+      "tableFormId": "{{tableFormId}}"
     }'
   >
     <div class="relative flex mb-4">
-
       <!-- Sort -->
       <div
         class="relative border-r border-gray-700 pr-4"
@@ -34,14 +33,13 @@
           @click="open = !open"
         >
          <span class="relative h-3.5 text-indigo-400 inline-block">
-          
-            {{#if (eq data.sortDirection 'ascending')}}
+            {{#if (eq sortDirection 'ASC')}}
               {{> icons/ArrowUp }}
             {{else}}
               {{> icons/ArrowDown }}
             {{/if}}
           </span>
-          <span class="text-sm capitalize">{{data.sortField}}</span>
+          <span class="text-sm capitalize">{{sortField}}</span>
           <span class="relative w-3.5 h-3.5 text-indigo-400 inline-block">
             {{> icons/AngleDown }}
           </span>
@@ -57,16 +55,16 @@
           >
             <div>
               <div class="flex gap-3 items-center w-full">
-                {{> FormSelect name="sortField" options=data.fields selected=data.sortField }}
-                {{> FormSelect name="sortDirection" options=data.sortDirections selected=data.sortDirection }}
+                {{> FormSelect name="sortField" options=fields selected=sortField }}
+                {{> FormSelect name="sortDirection" options=sortDirections selected=sortDirection }}
               </div>
 
               <!-- Add Sort -->
               <div class="hidden" x-data="{ open: false }">
                 <div class="mt-3" x-show="open">
                   <div class="flex gap-3 items-center w-full">
-                    {{> FormSelect name="sortNewField" options=data.fields }}
-                    {{> FormSelect name="sortNewDirection" options=data.sortDirections }}
+                    {{> FormSelect name="sortNewField" options=fields }}
+                    {{> FormSelect name="sortNewDirection" options=sortDirections }}
                     <button type="button" @click="open = false" class="text-gray-400 text-sm">
                       <span class="inline-block w-4 h-4">{{> icons/Trash }}</span>
                     </button>
@@ -93,13 +91,13 @@
 
       <!-- Active Filters -->
       <div class="flex">
-        {{#each data.filters}}
+        {{#each filters}}
           {{> PersonaTableFilter
             field=this.field
             operator=this.operator
             value=this.value
-            fields=../data.fields
-            filterOperators=../data.filterOperators
+            fields=../fields
+            filterOperators=../filterOperators
           }}
         {{/each}}
       </div>
@@ -127,8 +125,8 @@
             class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
           >
             <div class="flex gap-3 items-center w-full mb-3">
-              {{> FormSelect name="filterNewField" options=data.fields }}
-              {{> FormSelect name="filterNewOperator" options=data.filterOperators }}
+              {{> FormSelect name="filterNewField" options=fields }}
+              {{> FormSelect name="filterNewOperator" options=filterOperators }}
             </div>
             <input type="text" name="filterNewValue" class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
             <div class="mt-4">
@@ -161,7 +159,7 @@
             class="w-48 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-3"
           >
             <ul class="text-white visibility-ui flex flex-col gap-2">
-              {{#each data.fields}}
+              {{#each fields}}
                 <label class="flex items-center justify-between pr-2 cursor-pointer rounded-md w-full rounded hover:bg-gray-700">
                   <input 
                       class="hidden"
@@ -187,86 +185,116 @@
     </div>
   </form>
 
-  <div class="relative" x-data="tableCheckbox()" >
-    <form
-      id="{{data.tableFormId}}"
-      hx-post="{{data.action.endpoint}}"
-      hx-target="closest .persona-table-wrap"
-      hx-swap="innerHTML"
-      hx-vals='{
-        "customValue": "{{data.action.customValue}}",
-        "tableFormId": "{{data.tableFormId}}"
-      }'
-      @keydown.enter.prevent
-    >
-      <!-- Delete Selected -->
-      {{#if data.action }}
-        <div 
-          class="absolute z-10 -top-14 left-0 right-12 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000" 
-          x-show="selected.length > 0"
+  <!-- Table -->
+  <div class="relative">    
+    {{#if action }}
+      <div
+        class="action-wrap absolute z-50 -top-14 left-0 right-20 flex items-center gap-3 py-3 text-gray-300 bg-gray-1000 hidden" 
+      >
+        <button
+          type="button"
+          class="bg-indigo-600 rounded text-white text-sm p-1 px-6"
+          hx-post="{{action.endpoint}}"
+          hx-target="closest .persona-table-wrap"
+          hx-swap="innerHTML"
+          hx-vals='{
+            "customValue": "{{action.customValue}}",
+            "tableFormId": "{{tableFormId}}"
+          }'
         >
-          {{> FormSubmit label=data.action.label }}
-          <span class="text-sm">{{ selected }} selected items</span>
-        </div>
-      {{/if}}
+          {{action.label}}
+        </button>
+        <span class="text-sm"><span data-selected-count></span> selected items</span>
+      </div>
+    {{/if}}
 
-      <!-- Table -->
-      <div class="overflow-scroll">
-        <table class="min-w-full" :class="getColumnClasses()" x-init="initializeTotalCheckboxes()">
-          <thead class="sticky top-0">
-            <tr>
+    <!-- Table -->
+    <div class="overflow-scroll">
+      <table class="min-w-full" :class="getColumnClasses()">
+        <thead class="sticky top-0">
+          <tr>
+            <th
+              class="sticky top-0 p-4 bg-gray-900 text-left w-12"
+            >
+              <div
+                class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
+              ></div>
+              <input
+                type="checkbox"
+                hx-post="/mod/personaTable/updateAllSelectedUpns/"
+                hx-vals='{"tableFormId": "{{tableFormId}}"}'
+                hx-target="closest .persona-table-wrap"
+                onchange="PersonaTable.headerCheckboxChange(this)"
+                checked="{{allSelected}}"
+              >
+            </th>
+            {{#each fields}}
               <th
-                class="sticky top-0 p-4 bg-gray-900 text-left w-12"
+                class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
               >
                 <div
                   class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
                 ></div>
-                <input
-                  type="checkbox"
-                  x-model="selectAll"
-                  @click="toggleSelectAll()"
-                  x-ref="headerCheckbox"
-                >
+                <span onClick="sort" class="cursor-pointer">
+                  {{this.label}}
+                </span>
               </th>
-              {{#each data.fields}}
-                <th
-                  class="sticky top-0 py-4 text-left text-sm font-semibold bg-gray-900 text-white"
+            {{/each}}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-800">
+          {{#each rows}}
+            <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
+              <td class="p-4 hover:cursor-pointer">
+                {{#includes ../selectedUpns upn}}
+                  <div class="checkbox-wrap">
+                    <input 
+                      type="checkbox" 
+                      name="upn"
+                      value="{{../upn}}"
+                      hx-post="/mod/personaTable/updateSelectedUpns/"
+                      hx-trigger="change"
+                      hx-target="closest .checkbox-wrap"
+                      hx-vals='{"action": "remove", "tableFormId": "{{../../tableFormId}}", "upn": "{{../upn}}"}'
+                      checked
+                    />
+                  </div>
+                {{else}}
+                  <div class="checkbox-wrap">
+                    <input 
+                      type="checkbox" 
+                      name="upn"
+                      value="{{../upn}}"
+                      hx-post="/mod/personaTable/updateSelectedUpns/"
+                      hx-trigger="change"
+                      hx-target="closest .checkbox-wrap"
+                      hx-vals='{"action": "add", "tableFormId": "{{../../tableFormId}}", "upn": "{{../upn}}"}'
+                    />
+                  </div>
+                {{/includes}}
+              </td>
+              {{#each this}}
+                <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
+                  hx-trigger="click"
+                  hx-post="/mod/detailPane/search/"
+                  hx-target="closest #main"
+                  hx-swap="innerHTML"
+                  hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
+                  hx-vals='{
+                    "upn": "{{../this.upn}}"
+                  }'
                 >
-                  <div
-                    class="absolute bottom-0 left-0 right-0 border-b border-gray-700"
-                  ></div>
-                  <span onClick="sort" class="cursor-pointer">
-                    {{this.label}}
-                  </span>
-                </th>
+                  {{this}}
+                </td>
               {{/each}}
             </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-800">
-            {{#each data.rows}}
-              <tr class="hover:bg-indigo-600 hover:bg-opacity-20">
-                <td class="p-4 hover:cursor-pointer">
-                  <input type="checkbox" name="upn" value="{{this.upn}}" x-model="selected" @change="updateSelectAllState()">
-                </td>
-                {{#each this}}
-                  <td class="whitespace-nowrap p-4 pl-0 text-sm font-medium text-white hover:cursor-pointer"
-                    hx-trigger="click"
-                    hx-post="/mod/detailPane/search/"
-                    hx-target="closest #main"
-                    hx-swap="innerHTML"
-                    hx-push-url="/detailPane/mainPane/?upn={{urlEncode ../this.upn}}"
-                    hx-vals='{
-                      "upn": "{{../this.upn}}"
-                    }'
-                  >
-                    {{this}}
-                  </td>
-                {{/each}}
-              </tr>
-            {{/each}}
-          </tbody>
-        </table>
-      </div>
-    </form>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Count -->
+  <div class="text-gray-500 text-sm mt-4">
+    Showing {{rows.length}} of {{totalCount}} results
   </div>
 </div>

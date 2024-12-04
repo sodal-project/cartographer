@@ -151,7 +151,7 @@
       <h2 class="text-white text-lg mb-4">Directory</h2>
       
       <div @change="watchSelections()">
-        {{> PersonaTable data=directory.tableData }}
+        {{{ directoryTableHtml }}}
       </div>
     </div>
   </div>
@@ -194,11 +194,15 @@
     <div class="px-6 py-4 border-b border-gray-700 space-y-4">
       <!-- Link Button -->
       <div>
-        <button 
-          @click="linkData()" 
+        <button
+          type="button"
           class="bg-indigo-600 py-2 px-4 rounded text-white text-sm hover:bg-indigo-700 transition-colors"
           :class="hasPersonaSelections ? '' : 'opacity-50 cursor-not-allowed'"
           :disabled="!hasPersonaSelections || !isValidForm()"
+          hx-trigger="click"
+          hx-post="/mod/directory/linkPersonas/"
+          hx-target="closest #main"
+          hx-swap="innerHTML"
         >
           Link Selected
         </button>
@@ -277,7 +281,7 @@
     <div class="px-6 py-4 border-l border-gray-700">
       <h3 class="text-white text-md font-medium mb-4">Select Personas to Link</h3>
       <div @change="watchSelections()">
-        {{> PersonaTable data=personas.tableData }}
+        {{{ personaTableHtml }}}
       </div>
     </div>
   </div>
@@ -363,39 +367,6 @@ document.addEventListener('alpine:init', () => {
       this.hasPersonaSelections = personaForm?.querySelectorAll('input[type=checkbox]:checked').length > 0;
     },
 
-    linkData() {
-      const directoryTableForm = document.getElementById('directory-table-form');
-      const personaTableForm = document.getElementById('persona-table-form');
-      const levelSelect = document.querySelector('select[name="level"]');
-      const confidenceRadio = document.querySelector('input[name="confidence"]:checked');
-
-      if (!this.isValidForm() || !directoryTableForm || !personaTableForm) {
-        console.error('Required form elements are missing or invalid.');
-        return;
-      }
-
-      const directoryTableData = new FormData(directoryTableForm);
-      const personaTableData = new FormData(personaTableForm);
-
-      const selectedDirectoryUpns = [...directoryTableData.values()];
-      const selectedPersonaUpns = [...personaTableData.values()];
-
-      const payload = {
-        directoryUpns: selectedDirectoryUpns,
-        personaUpns: selectedPersonaUpns,
-        level: parseInt(levelSelect.value),
-        confidence: parseFloat(confidenceRadio.value)
-      };
-
-      htmx.ajax('POST', '/mod/directory/linkPersonas/', {
-        target: '#main',
-        swap: 'innerHTML',
-        values: payload,
-      });
-      
-      this.showLinkModal = false;
-    },
-
     toggleForm(formType) {
       this.showActivityForm = false;
       this.showParticipantForm = false;
@@ -415,4 +386,3 @@ document.addEventListener('alpine:init', () => {
   }))
 });
 </script>
-
