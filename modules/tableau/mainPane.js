@@ -100,8 +100,9 @@ async function processInstance(instance) {
 
     const source = core.source.getSourceObject('tableau', instanceId, orgName);
 
-    const response = await callTableauAPI(serverUrl, pat, patName);
-    await core.cache.save(`tableau-response`, response);
+    const endpoint = 'users';
+    const userResponse = await callTableauAPI(serverUrl, endpoint, pat, patName);
+    await core.cache.save(`tableau-response-${endpoint}`, userResponse);
 
     const personas = [];
     // Process users here...
@@ -112,7 +113,49 @@ async function processInstance(instance) {
   }
 }
 
-const callTableauAPI = async (serverUrl, pat, patName) => {
+function mapSitePersona(siteName) {
+
+}
+
+function mapUserPersonas(userResponse) {
+  const users = userResponse.users.user;
+  const personas = [];
+
+  const siteRoleAccessMap = {
+    'ServerAdministrator': 'admin',
+    'SiteAdministrator': 'admin',
+    'SiteAdministratorCreator': 'admin',
+    'SiteAdministratorExplorer': 'manage',
+    'SiteCreator': 'act_as',
+    'Explorer': 'act_as',
+    'Publisher': 'act_as',
+    'Creator': 'act_as',
+    'Interactor': 'access',
+    'Viewer': 'access',
+    'ReadOnly': 'access',
+    'Unlicensed': null,
+  }
+
+  for(const user of users) {
+    const persona = {
+      platform: 'tableau',
+      type: 'account',
+      id: user.id,
+      name: user.name,
+      fullName: user.fullName,
+      externalAuthUserId: user.externalAuthUserId,
+      lastLogin: user.lastLogin,
+      authSetting: user.authSetting,
+    }
+
+    const access = siteRoleAccessMap[user.siteRole];
+    if(access) {
+      
+    }
+  }
+}
+
+const callTableauAPI = async (serverUrl, endpoint, pat, patName) => {
   const apiUrl = `${serverUrl}/api/3.19/auth/signin`;
   try {
     // First authenticate with PAT
@@ -135,14 +178,13 @@ const callTableauAPI = async (serverUrl, pat, patName) => {
     const siteId = authResponse.data.credentials.site.id;
 
     // Then get users
-    const usersResponse = await axios.get(`${serverUrl}/api/3.19/sites/${siteId}/users`, {
+    const response = await axios.get(`${serverUrl}/api/3.19/sites/${siteId}/${endpoint}`, {
       headers: {
         'X-Tableau-Auth': token
       }
     });
+    return response.data;
 
-    console.log("Tableau API Response:", usersResponse.data);
-    return usersResponse.data;
   } catch (error) {
     console.error("Error calling Tableau API:", error.response?.data || error.message);
     throw new Error(`Tableau API Error: ${error.response?.data?.error?.message || error.message}`);

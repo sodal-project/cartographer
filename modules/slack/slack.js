@@ -445,7 +445,7 @@ const loadUsers = async (client, itemId) => {
 }
 
 const loadUserAccessLogs = async (client) => {
-  const callIterations = 250;
+  const callIterations = 100;
 
   let cursor = "";
   let count = 0;
