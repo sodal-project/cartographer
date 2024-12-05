@@ -13,7 +13,6 @@ async function redraw() {
   const tableHeaders = [
     "ID",
     "Name",
-    "Channel",
     "Status",
     "Actions"
   ];
@@ -22,7 +21,6 @@ async function redraw() {
     columns: [
       instance.id,
       instance.name,
-      instance.channel,
       instance.ready ? 'Ready' : 'Processing'
     ],
     actions: true,
