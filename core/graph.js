@@ -364,7 +364,6 @@ const readPersona = async (module, upn) => {
  * @param {string} module - automatically passed by core
  * @param {object} filter - OPTIONAL, a filter object
  * @param {object} params - OPTIONAL, a sort and pagination object
- * @param {boolean} asUpnArray - OPTIONAL, if true, return an array of upns instead of persona objects
  * @returns {
  *  raw: object[] - An array of raw query results
  *  personas: object[] - An array of persona objects from the graph
@@ -374,8 +373,8 @@ const readPersona = async (module, upn) => {
  *  time: number - The time it took to execute the full query in milliseconds
  * } - The result
  */
-const readPersonas = async (module, filter, params, asUpnArray) => {
-  const results = await graphFilter(filter, params, asUpnArray);
+const readPersonas = async (module, filter, params) => {
+  const results = await graphFilter(filter, params);
 
   return results;
 }

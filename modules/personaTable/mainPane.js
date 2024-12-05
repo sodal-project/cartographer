@@ -234,7 +234,6 @@ async function read(tableConfig, tableForm) {
     filters: getTableFilterArray(tableForm),
     visibility: visibility,
     graphFiltersString: JSON.stringify(allGraphFilters),
-    currentCount: result.currentCount,
     totalCount: result.totalCount,
   };
 
