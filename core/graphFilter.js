@@ -212,7 +212,12 @@ async function getUpnsFromFilter (filter) {
     }
   }
 
-  let upns;
+  /*
+    The array of upns to return
+    To improve performance, treat "undefined" as all upns
+  */
+  let upns; 
+
   if(fieldArray.length > 0) {
     upns = await getUpnsByFieldArray(fieldArray);
   }
@@ -228,6 +233,8 @@ async function getUpnsFromFilter (filter) {
   for(const compare of compareArray) {
     upns = await getUpnsByCompare(compare, upns);
   }
+  
+  if(!upns) { upns = await getUpnsByFieldArray(); }
 
   return upns;
 }

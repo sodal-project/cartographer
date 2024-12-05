@@ -183,7 +183,7 @@ async function read(tableConfig, tableForm) {
     field: tableForm?.sortField ? tableForm.sortField : "upn",
     direction: tableForm?.sortDirection ? tableForm.sortDirection : "ASC",
     number: 1,
-    size: 2
+    size: 500,
   }
  
   // Get the filters defined by the table form
@@ -234,7 +234,8 @@ async function read(tableConfig, tableForm) {
     filters: getTableFilterArray(tableForm),
     visibility: visibility,
     graphFiltersString: JSON.stringify(allGraphFilters),
-    totalCount: rawPersonas.records.length,
+    currentCount: result.currentCount,
+    totalCount: result.totalCount,
   };
 
   return data;
