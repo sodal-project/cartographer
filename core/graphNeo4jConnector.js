@@ -17,6 +17,8 @@ const HealthQueries = {
   "setIndexType": "CREATE INDEX index_persona_type IF NOT EXISTS FOR (n:Persona) ON (n.type)",
   "setIndexPlatform": "CREATE INDEX index_persona_platform IF NOT EXISTS FOR (n:Persona) ON (n.platform)",
   "setIndexRelationship": "CREATE INDEX index_relationship_id IF NOT EXISTS FOR ()-[r:CONTROL]->() ON (r.sid)",
+  "setIndexRelationshipLevel": "CREATE INDEX index_relationship_level IF NOT EXISTS FOR ()-[r:CONTROL]->() ON (r.level)",
+  "setIndexRelationshipConfidence": "CREATE INDEX index_relationship_confidence IF NOT EXISTS FOR ()-[r:CONTROL]->() ON (r.confidence)",
 }
 
 /**
@@ -51,6 +53,8 @@ const healthCheck = async () => {
       await session.run(HealthQueries.setIndexType);
       await session.run(HealthQueries.setIndexPlatform);
       await session.run(HealthQueries.setIndexRelationship);
+      await session.run(HealthQueries.setIndexRelationshipLevel);
+      await session.run(HealthQueries.setIndexRelationshipConfidence);
       consoleLog('Health Check: OK - Constraints and Indexes are set on the database');
 
       // return true if all checks pass

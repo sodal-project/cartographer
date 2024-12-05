@@ -1,6 +1,7 @@
 const tokenMap = {
   "Airtable": "airtable",
   "AliExpress": "aliexpress",
+  "BambooHR": "bamboohr",
   "Brex Dashboard": "brex",
   "Checkr Dashboard": "checkr",
   "Clerky": "clerky",

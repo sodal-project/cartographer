@@ -1,17 +1,16 @@
-<div class="p-8" >
-  {{> Headline title="Slack Integration" }}
+<div class="p-8">
+  {{> Headline title="BambooHR Integration" }}
 
-  <!-- List all data stored in the module namespace of the config database -->
   {{#> TableList 
     headers=this.tableHeaders
-    items=this.slackInstances
+    items=this.instances
   }}
     {{!-- Actions block --}}
     {{#if this.ready }}
       <div class="flex gap-4 items-center">
         <button
           class="text-gray-600 hover:text-indigo-600"
-          hx-post="/mod/slack/sync/"
+          hx-post="/mod/bamboohr/sync/"
           hx-target="closest #main"
           hx-swap="innerHTML"
           hx-vals='{"id": "{{this.id}}"}'
@@ -21,7 +20,7 @@
         
         <button
           class="text-gray-600 hover:text-indigo-600"
-          hx-post="/mod/slack/deleteInstance/"
+          hx-post="/mod/bamboohr/deleteInstance/"
           hx-target="closest #main"
           hx-swap="innerHTML"
           hx-vals='{"id": "{{this.id}}"}'
@@ -41,17 +40,17 @@
     {{/if}}
   {{/TableList}}
 
-  <!-- Post data to the config database, redraw module on completion -->
   {{#> Card style="w-1/2"}}
     <form
       class="mb-0"
-      hx-post="/mod/slack/addInstance/"
+      hx-post="/mod/bamboohr/addInstance/"
       hx-target="closest #main"
       hx-swap="innerHTML"
     >
       <div class="mb-4">{{> FormText label="Instance Name" name="name" }}</div>
-      <div class="mb-4">{{> FormText label="Slack Team ID" name="teamId" }}</div>
-      <div class="mb-4">{{> FormText label="Slack Token" name="token" }}</div>
+      <div class="mb-4">{{> FormText label="Team Subdomain" name="subdomain" }}</div>
+      <div class="mb-4">{{> FormText label="Report ID" name="reportId" }}</div>
+      <div class="mb-4">{{> FormText label="API Token" name="token" }}</div>
       {{> FormSubmit label="Add" }}
     </form>
   {{/Card}}

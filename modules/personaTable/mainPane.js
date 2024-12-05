@@ -92,7 +92,7 @@ function rowsFromRawQuery(rawPersonas, forceVisibility) {
   const data = rawPersonas.records.map(node => node._fields[0].properties);
 
   // Get the fields from the data
-  const defaultFields = ["upn", "platform", "type", "id", "friendlyName"]
+  const defaultFields = ["id", "name", "type", "platform"]
   const actualFields = data.map(row => Object.keys(row)).flat().sort();
   const fields = forceVisibility || new Set([...defaultFields, ...actualFields]);
 
@@ -183,7 +183,7 @@ async function read(tableConfig, tableForm) {
     field: tableForm?.sortField ? tableForm.sortField : "upn",
     direction: tableForm?.sortDirection ? tableForm.sortDirection : "ASC",
     number: 1,
-    size: 2
+    size: 500,
   }
  
   // Get the filters defined by the table form
@@ -196,10 +196,10 @@ async function read(tableConfig, tableForm) {
   const allGraphFilters = [...graphFilters, ...forceFilters]
 
   // Get the personas from the graph based on the current filters and sort
-  const rawPersonas = await core.graph.readPersonas(allGraphFilters, graphSort);
+  const result = await core.graph.readPersonas(allGraphFilters, graphSort);
 
   // Get table rows based on the returned personas
-  const tableRows = rowsFromRawQuery(rawPersonas, tableConfig.forceVisibility);
+  const tableRows = rowsFromRawQuery(result.raw, tableConfig.forceVisibility);
 
   // Get a list of the table's fields
   let keys = [];
@@ -234,7 +234,7 @@ async function read(tableConfig, tableForm) {
     filters: getTableFilterArray(tableForm),
     visibility: visibility,
     graphFiltersString: JSON.stringify(allGraphFilters),
-    totalCount: rawPersonas.records.length,
+    totalCount: result.totalCount,
   };
 
   return data;

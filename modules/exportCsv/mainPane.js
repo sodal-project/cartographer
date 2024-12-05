@@ -54,11 +54,14 @@ async function mainPane() {
 async function download(formData) {
   const filter = formData.csvFilter ? JSON.parse(formData.csvFilter) : [];
 
+  const params = {
+    size: 100000, // Get up to 100,000 rows
+  }
   // Get the persona data from the graph
-  const response = await core.graph.readPersonas(filter);
+  const results = await core.graph.readPersonas(filter, params);
 
   // Extract the properties from the raw data
-  const personas = response.records.map(node => node._fields[0].properties);
+  const personas = results.raw.records.map(node => node._fields[0].properties);
 
   // Loop through all the personas and extract all unique properties
   const fields = getUniqueProperties(personas);

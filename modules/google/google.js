@@ -4,67 +4,74 @@ const tokenMap = require('./googleTokens.js');
 const LEVEL = core.constants.LEVEL;
 
 const sync = async (instance) => {
-  console.log('Syncing Google instance:', instance.name);
+  try {
+    console.log('Syncing Google instance:', instance.name);
 
-  // Extract the instance properties
-  const instanceId = instance.id
-  const name = instance.name
-  const source = core.source.getSourceObject('google', instanceId, name);
+    // Extract the instance properties
+    const instanceId = instance.id
+    const name = instance.name
+    const source = core.source.getSourceObject('google', instanceId, name);
 
-  const subjectEmail = instance.subjectEmail
-  const customerId = instance.customerId
-  const encryptedFile = instance.encryptedFile
-  const rawFile = await core.crypto.decrypt(encryptedFile);
-  const jsonFile = JSON.parse(rawFile);
+    const subjectEmail = instance.subjectEmail
+    const customerId = instance.customerId
+    const encryptedFile = instance.encryptedFile
+    const rawFile = await core.crypto.decrypt(encryptedFile);
+    const jsonFile = JSON.parse(rawFile);
 
-  // Create a new Google API client
-  const auth = new google.auth.JWT({
-    key: jsonFile.private_key,
-    email: jsonFile.client_email,
-    subject: subjectEmail,
-    scopes:[
-      'https://www.googleapis.com/auth/admin.directory.user.readonly',
-      'https://www.googleapis.com/auth/admin.directory.domain.readonly',
-      'https://www.googleapis.com/auth/admin.directory.group.readonly',
-      'https://www.googleapis.com/auth/admin.directory.user.security'
-    ]
-  });
-  const client = google.admin({ version: 'directory_v1', auth });
+    // Create a new Google API client
+    const auth = new google.auth.JWT({
+      key: jsonFile.private_key,
+      email: jsonFile.client_email,
+      subject: subjectEmail,
+      scopes:[
+        'https://www.googleapis.com/auth/admin.directory.user.readonly',
+        'https://www.googleapis.com/auth/admin.directory.domain.readonly',
+        'https://www.googleapis.com/auth/admin.directory.group.readonly',
+        'https://www.googleapis.com/auth/admin.directory.user.security'
+      ]
+    });
+    const client = google.admin({ version: 'directory_v1', auth });
 
-  // Get raw data for this instance
-  const workspaces = [{
-    id: customerId,
-    name: name,
-  }]
-  const users = await loadCached(loadUsers, client, instanceId, customerId);
-  const groups = await loadCached(loadGroups, client, instanceId, customerId);
-  const groupMemberSets = await Promise.all(groups.map(async (group) => {
-    return {
-      members: await loadCached(loadGroupMembers, client, instanceId, customerId, group.id),
-      id: group.id
-    }
-  }));
+    // Get raw data for this instance
+    const workspaces = [{
+      id: customerId,
+      name: name,
+    }]
+    const users = await loadCached(loadUsers, client, instanceId, customerId);
+    const groups = await loadCached(loadGroups, client, instanceId, customerId);
+    const groupMemberSets = await Promise.all(groups.map(async (group) => {
+      const members = await loadCached(loadGroupMembers, client, instanceId, customerId, group.id);
+      return {
+        members: members,
+        id: group.id
+      }
+    }));
 
-  const userTokens = await Promise.all(users.map(async (user) => {
-    const userTokens = await loadCached(loadAuthTokens, client, instanceId, customerId, user.id);
-    return {
-      userTokens: userTokens,
-      userEmail: user.primaryEmail,
-      userId: user.id,
-    }
-  }));
+    const userTokens = await Promise.all(users.map(async (user) => {
+      const userTokens = await loadCached(loadAuthTokens, client, instanceId, customerId, user.id);
+      return {
+        userTokens: userTokens,
+        userEmail: user.primaryEmail,
+        userId: user.id,
+      }
+    }));
 
-  // Map the data to persona objects
-  let personas = [];
-  personas = personas.concat(mapWorkspacePersonas(workspaces));
-  personas = personas.concat(mapUserPersonas(users, customerId));
-  personas = personas.concat(mapGroupPersonas(groups, customerId));
-  personas = personas.concat(mapGroupMemberPersonas(groupMemberSets));
-  personas = personas.concat(mapAuthTokenPersonas(userTokens));
+    // Map the data to persona objects
+    let personas = [];
+    personas = personas.concat(mapWorkspacePersonas(workspaces));
+    personas = personas.concat(mapUserPersonas(users, customerId));
+    personas = personas.concat(mapGroupPersonas(groups, customerId));
+    personas = personas.concat(mapGroupMemberPersonas(groupMemberSets));
+    personas = personas.concat(mapAuthTokenPersonas(userTokens));
 
-  await core.cache.save(`allPersonas-${instanceId}`, personas);
-  // Save the personas to the graph
-  await core.graph.syncPersonas(personas, source);
+    await core.cache.save(`allPersonas-${instanceId}`, personas);
+    // Save the personas to the graph
+    await core.graph.syncPersonas(personas, source);
+
+    return `Google instance synced: ${name}`;
+  } catch (error) {
+    return `Error syncing Google instance: ${error.message}`;
+  }
 }
 
 //
@@ -78,7 +85,7 @@ const mapWorkspacePersonas = (workspaces) => {
       id: workspace.id,
       platform: 'google',
       type: 'workspace',
-      friendlyName: workspace.name,
+      name: workspace.name,
     }
     return newWorkspace;
   })
@@ -99,6 +106,8 @@ const mapUserPersonas = (users, customerId) => {
   }
 
   users.forEach(user => {
+    if(!user) { return; }
+
     const firstName = user.name?.givenName
     const lastName = user.name?.familyName
     const level = user.isAdmin ? 'superAdmin' : user.isDelegatedAdmin ? 'delegatedAdmin' : 'member';
@@ -108,7 +117,7 @@ const mapUserPersonas = (users, customerId) => {
       id: user.id,
       platform: 'google',
       type: 'account',
-      friendlyName: user.name.fullName,
+      name: user.name.fullName,
       firstName: firstName,
       lastName: lastName,
       authenticationMin: user.isEnrolledIn2Sv ? 2: 1,
@@ -146,6 +155,8 @@ const mapUserPersonas = (users, customerId) => {
     if(user.nonEditableAliases) { allAliases = allAliases.concat(user.nonEditableAliases) }
 
     allAliases.forEach(email => {
+      if(!email) { return; }
+
       const rel = {
         upn: `upn:email:account:${email}`,
         level: LEVEL["ALIAS"],
@@ -169,12 +180,14 @@ const mapGroupPersonas = (groups, customerId) => {
   let personas = [];
 
   groups.forEach(group => {
+    if(!group) { return; }
+
     const newGroup = {
       upn: `upn:google:group:${group.id}`,
       id: group.id,
       platform: 'google',
       type: 'group',
-      friendlyName: `${group.name} (${group.email})`,
+      name: `${group.name} (${group.email})`,
       name: group.name,
       email: group.email,
       description: group.description,
@@ -200,8 +213,10 @@ const mapGroupPersonas = (groups, customerId) => {
     if(group.aliases) { allAliases = allAliases.concat(group.aliases) }
 
     allAliases.forEach(email => {
+      if(!email) { return; }
+
       const rel = {
-        upn: `upn:email:account:${email}`,
+        upn: `upn:email:account:${email.toLowerCase()}`,
         level: LEVEL["ALIAS"],
         confidence: 1
       }
@@ -233,12 +248,16 @@ const mapGroupMemberPersonas = (groupMemberSets) => {
   }
 
   groupMemberSets.forEach(set => {
+    if(!set) { return; }
+
     const groupId = set.id;
     if(!groupId) { throw new Error('groupId is required') }
 
     const groupUpn = `upn:google:group:${groupId}`;
 
     set.members.forEach(member => {
+      if(!member) { return; }
+
       const type = typeMap[member.type];
 
       const newMember = {
@@ -257,14 +276,16 @@ const mapGroupMemberPersonas = (groupMemberSets) => {
           role: member.role,
           confidence: 1
         })
-    
-        const alias = {
-          upn: `upn:email:account:${member.email}`,
-          level: LEVEL["ALIAS"],
-          confidence: 1
+        
+        if(member.email) {
+          const alias = {
+            upn: `upn:email:account:${member.email.toLowerCase()}`,
+            level: LEVEL["ALIAS"],
+            confidence: 1
+          }
+          newMember.control.push(alias);
+          newMember.obey.push(alias);
         }
-        newMember.control.push(alias);
-        newMember.obey.push(alias);
       }
       personas.push(newMember);
     }); // end groupMembers.forEach
@@ -284,6 +305,8 @@ const mapAuthTokenPersonas = (authTokenSets) => {
     const tokens = set.userTokens;
 
     tokens.forEach(token => {
+      if(!token) { return; }
+
       const name = token.displayText;
       const platform = tokenMap[name];
       if(!platform) { 
@@ -372,6 +395,8 @@ const apiCall = async (client, path, call, request) => {
     const response = await client[path][call](request);
     responses.push(response);
     pageToken = response.data.nextPageToken;
+    request.pageToken = pageToken;
+    await new Promise(resolve => setTimeout(resolve, 200))
   } while(pageToken);
 
   return responses;

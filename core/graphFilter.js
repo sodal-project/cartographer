@@ -1,13 +1,16 @@
 const connector = require('./graphNeo4jConnector');
 const CC = require('./constants');
+const consoleLog = require('./log').consoleLog;
 
 /* 
-sort: {
+params: {
   field: string
   direction: ASC | DESC
+  number: number
+  size: number
 }
 
-filter: [
+filterArray: [
   {
     type: field
     key: string
@@ -43,6 +46,13 @@ filter: [
     upns: string[] // array of upns
   }
 ]
+
+filterShorthands: [
+  "field <key> <operator> value",  // converts to a field filter
+  "source <key> <operator> value", // key: id | name | lastUpdate, converts to a source filter
+  [upns] // converts to a set
+]
+
 */
 
 // Operators for filtering
@@ -73,29 +83,119 @@ const operators = {
 const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
 
 /**
- * @description Filter the graph database based on the provided filter object
+ * @description Filter the graph database based on the provided filter
  * 
  * This is the entry point for the graph filter. 
- * It takes a filter object and returns an array of personas that match the filter.
+ * It takes a filter (object, array, or shorthand) and returns an array of personas that match the filter.
  * 
- * @param {object} filter - The filter object
- * @param {object} sort - The sort object
+ * @param {object|array|string} filter - The filter input
+ * @param {object} params - The sort and pagination parameters
  * @returns {object[]} - The query results
  */
-async function graphFilter (filter, sort = { field: "upn", direction: "ASC"}) {
+async function graphFilter(filter, params = {}) {
+  const timeStart = new Date();
 
-  const upns = await getUpnsFromFilter(filter);
-  const sortedResults = await sortResults(upns, sort);
-  return sortedResults;
+  const defaultParams = { 
+    field: "upn", 
+    direction: "ASC", 
+    number: 1, 
+    size: 500
+  }
+  params = { ...defaultParams, ...params };
+
+  // Ensure we're working with an array
+  const filters = Array.isArray(filter) ? filter : [filter];
+  
+  // Convert shorthands and flatten the result
+  const standardFilters = filters
+    .map(convertShorthand)
+    .flat();
+
+  let upns = [];
+
+  if(standardFilters.length > 0) {
+    upns = await getUpnsFromFilter(standardFilters);
+  } else {
+    upns = await getAllUpns();
+  }
+
+  const sortedResults = await sortResults(upns, params);
+
+  const time = new Date() - timeStart;
+  consoleLog(`Graph filter processing time: ${time}ms`);
+
+  return {
+    raw: sortedResults,
+    personas: sortedResults.records.map(node => node._fields[0].properties),
+    totalCount: upns.length,
+    upns,
+    time
+  }
+}
+
+/**
+ * Convert shorthand notation to standard filter format
+ * @param {string|array} shorthand - The shorthand filter notation
+ * @returns {object} - The standardized filter object
+ */
+function convertShorthand(shorthand) {
+  // Handle array of UPNs shorthand
+  if (Array.isArray(shorthand)) {
+    return {
+      type: 'set',
+      upns: shorthand
+    };
+  }
+
+  // Handle string shorthand formats
+  if (typeof shorthand === 'string') {
+    const parts = shorthand.split(' ');
+    
+    // Must have at least 4 parts: type key operator value
+    if (parts.length < 4) {
+      throw new Error('Invalid shorthand filter format');
+    }
+
+    const [type, key, operator, ...valueParts] = parts;
+    const value = valueParts.join(' '); // Rejoin value in case it contains spaces
+
+    if (type === 'field') {
+      return {
+        type: 'field',
+        key,
+        operator,
+        value,
+        not: false
+      };
+    }
+
+    if (type === 'source') {
+      if (!['id', 'name', 'lastUpdate'].includes(key)) {
+        throw new Error('Invalid source filter key (must be id, name, or lastUpdate)');
+      }
+      return {
+        type: 'source',
+        key,
+        operator,
+        value,
+        not: false
+      };
+    }
+  }
+
+  // If it's not a recognized shorthand, return as-is
+  return shorthand;
 }
 
 /**
  * @description Get the upns from the filter object
  * 
  * @param {object} filter - The filter object
- * @returns {string[]} - An array of upns
+ * @returns {string[]} - An array of upns, or null if no filtering occured (implies all upns)
  */
 async function getUpnsFromFilter (filter) {
+
+  if(!filter) { return await getAllUpns(); }
 
   const setArray = [];
   const fieldArray = [];
@@ -120,8 +220,11 @@ async function getUpnsFromFilter (filter) {
     }
   }
 
-  let upns = await getUpnsByFieldArray(fieldArray);
+  let upns = null; // null until we have a filter to apply; implies all upns
 
+  if(fieldArray.length > 0) {
+    upns = await getUpnsByFieldArray(fieldArray);
+  }
   if(setArray.length > 0) {
     upns = await getUpnsBySetArray(setArray, upns);
   }
@@ -136,6 +239,10 @@ async function getUpnsFromFilter (filter) {
   }
 
   return upns;
+}
+
+async function getAllUpns () {
+  return await readSingleArray(`MATCH (persona:Persona) RETURN DISTINCT persona.upn`);
 }
 
 async function getUpnsByFieldArray (fieldArray) {
@@ -168,22 +275,22 @@ async function getUpnsByFieldArray (fieldArray) {
 
 async function getUpnsBySetArray (setArray, upns) {
   // identify only the upns that are in all sets
-  for(const set in setArray) {
-    const upnsInSet = setArray[set].upns;
-    upns = upns.filter(upn => upnsInSet.includes(upn));
+  for(const set of setArray) {
+    if(!upns) {
+      upns = set.upns;
+    } else {
+      upns = upns.filter(upn => set.upns.includes(upn));
+    }
   }
   return upns;
 }
 
 async function getUpnsBySourceArray (sourceArray, upns) {
-  let query = `MATCH (source:Source)-[:DECLARE]->(persona:Persona)
-  WHERE persona.upn IN $upns\n`;
+  let query = `MATCH (source:Source)-[:DECLARE]->(persona:Persona) WHERE 1=1 \n`;
 
   for(const source in sourceArray) {
+
     const filter = sourceArray[source];
-
-    query += `AND `;
-
     const operator = operators[filter.operator];
     const fieldKey = filter.key;
     const fieldValue = filter.value;
@@ -195,7 +302,10 @@ async function getUpnsBySourceArray (sourceArray, upns) {
       throw new Error('Invalid source filter key (must be name, id, or lastUpdate)');
     }
 
-    query += `${modifier}source.${fieldKey} ${operator} "${fieldValue}"\n`;
+    query += `AND ${modifier}source.${fieldKey} ${operator} "${fieldValue}"\n`;
+  }
+  if(upns) {
+    query += `AND persona.upn IN $upns\n`;
   }
   query += `RETURN DISTINCT persona.upn`;
   return await readSingleArray(query, { upns });
@@ -203,6 +313,7 @@ async function getUpnsBySourceArray (sourceArray, upns) {
 
 async function getUpnsByAgency (agency, upns) {
 
+  // Convert agency.confidence into a min and max
   const confidence = agency.confidence || { min: 0, max: 1 };
   confidence.min = parseFloat(confidence.min);
   confidence.max = parseFloat(confidence.max);
@@ -210,61 +321,75 @@ async function getUpnsByAgency (agency, upns) {
     throw new Error('Invalid confidence range');
   }
 
-  let levels = [];
+  // Convert agency.levels into an array of levels
+  const levels = [];
   if(!agency.levels || agency.levels.length === 0) {
-    levels = allLevels;
+    levels.push(CC.LEVEL.ALIAS); // default to ALIAS only
   } else {
-    for(const level of agency.levels) {
-      if(!CC.LEVEL[level]) {
-        throw new Error('Invalid level');
+    if(agency.levels.includes('*')) {
+      for(const level of allLevels) {
+        if(CC.LEVEL[level]) {
+          levels.push(CC.LEVEL[level]);
+        }
       }
-      levels.push(CC.LEVEL[level]);
+    } else {
+      for(const level of agency.levels) {
+        if(!CC.LEVEL[level]) {
+          throw new Error('Invalid level');
+        }
+        levels.push(CC.LEVEL[level]);
+      }
     }
   }
 
-  const filter = agency.filter;
-  const filterUpns = await getUpnsFromFilter(filter);
+  // Identify the filtering control pattern
+  let indexRel = "";
+  let filterRel = "";
 
-  let indexUpnString = "";
-  let filterUpnString = "";
-
-  const direction = agency.key;
-  if(direction === 'control') {
-    indexUpnString = "control.upn"
-    filterUpnString = "obey.upn"
-  } else if(direction === 'obey') {
-    indexUpnString = "obey.upn"
-    filterUpnString = "control.upn"
+  if(agency.key === 'control') {
+    indexRel = "control"
+    filterRel = "obey"
+  } else if(agency.key === 'obey') {
+    indexRel = "obey"
+    filterRel = "control"
   } else {
     throw new Error('Invalid agency direction (must be control or obey)');
   }
 
-  let depthString = "*";  // search all depths by default
-  if(agency.depth && Array.isArray(agency.depth)) {
-    if(agency.depth.length !== 2) {
-      throw new Error('Invalid agency depth array (must be [min, max])');
-    } 
-    depthString = `{${agency.depth[0]},${agency.depth[1]}}`;        // search between the specified depths
-  } else if(agency.depth) {
-    if(agency.depth === 1) { depthString = `{,1}` }                // search only immediate relationships
-    if(agency.depth > 1) { depthString = `{,${agency.depth}}` }  // search up to the specified depth
+  // Convert agency.depth into a Neo4j path length pattern (*min..max)
+  // Default is all depths (including zero depth)
+  const depth = agency.depth;
+  let depthString = "*0..";
+  let isZeroDepth = true;
+
+  if (depth) {
+    if (Array.isArray(depth)) {
+      if (depth.length !== 2) {
+        throw new Error('Depth array must contain [min, max] values');
+      }
+      depthString = `*${depth[0]}..${depth[1]}`; // Range: min to max depth
+      isZeroDepth = parseInt(depth[0]) === 0;
+    } else {
+      depthString = `*0..${parseInt(depth)}`; // to a max depth
+    }
   }
+
+  // Get the upns to filter on
+  const filterUpns = agency.filter ? await getUpnsFromFilter(agency.filter) : null;
 
   // Find all nonredundant paths between the control and obey personas
-  let query = `MATCH SHORTEST 1 ((control:Persona) (()-[rList:CONTROL]->())${depthString} (obey:Persona))\n`;
-
-  // Filter control and obey personas based on the control direction
-  query += `WHERE ${indexUpnString} IN $upns AND ${filterUpnString} IN $filterUpns\n`;
-
-  // Filter control relationships based on the levels and confidence
-  query += `WITH control,obey,[r IN rList | r.level ] AS relLevels, [r IN rList | r.confidence ] AS relConfidences
-  WHERE ALL(level IN relLevels WHERE level IN $levels)\n`;
-
-  // Omit the confidence filter if the confidence is full range
-  if(confidence.min > 0 || confidence.max < 1) {
-    query += `AND ALL(confidence IN relConfidences WHERE confidence >= $confidence.min AND confidence <= $confidence.max)\n`;
-  }
-  query += `RETURN DISTINCT ${indexUpnString}`;
+  let query = `
+  MATCH path = shortestPath((control:Persona)-[rList:CONTROL ${depthString}]->(obey:Persona))
+  WHERE control <> obey 
+  ${filterUpns ? `AND ${filterRel}.upn IN $filterUpns` : ''}
+  ${upns ? `AND ${indexRel}.upn IN $upns` : ''}
+  WITH control, obey, relationships(path) as rList
+  WHERE ALL(r IN rList WHERE 
+    r.level IN $levels AND 
+    r.confidence >= $confidence.min AND 
+    r.confidence <= $confidence.max
+  )\n`;
+  query += `RETURN DISTINCT ${indexRel}.upn`;
 
   const params = {
     upns,
@@ -272,7 +397,17 @@ async function getUpnsByAgency (agency, upns) {
     levels,
     confidence
   }
-  return await readSingleArray(query, params);
+
+  const results = await readSingleArray(query, params);
+
+  // If we're filtering on zero depth, we need to include the upns that are in both filtersUpns and upns
+  let selfUpns = [];
+  if(isZeroDepth) {
+    if(filterUpns && upns) { selfUpns = filterUpns.filter(upn => upns.includes(upn)); }
+    else if(upns) { selfUpns = upns; }
+    else if(filterUpns) { selfUpns = filterUpns; }
+  } 
+  return [...new Set([...results, ...selfUpns])];
 }
 
 async function getUpnsByCompare (compare, upns) {
@@ -283,30 +418,42 @@ async function getUpnsByCompare (compare, upns) {
   const subfilterUpns = await getUpnsFromFilter(filter);
 
   if(action === 'in') {
-    upns = upns.filter(upn => subfilterUpns.includes(upn));
-  } else if(filter === 'not') {
+    if(upns) {  
+      upns = upns.filter(upn => subfilterUpns.includes(upn));
+    } else {
+      upns = subfilterUpns;
+    }
+  } else if(action === 'not') { 
+    if(!upns) {
+      upns = await getUpnsFromFilter();
+    }
     upns = upns.filter(upn => !subfilterUpns.includes(upn));
-  } else if(filter === 'or') {
-    upns = [...new Set([...upns, ...subfilterUpns])];
+  } else if(action === 'or') {  
+    if(upns) {
+      upns = [...new Set([...upns, ...subfilterUpns])];
+    } else {
+      upns = subfilterUpns;
+    }
   }
 
   return upns;
 }
 
 async function readSingleArray (query, params) {
-  // console.log(`--- Running query:\n ${query}`);
   const results = await connector.runRawQuery(query, params);
   const array = results.records.map(node => node._fields[0]);
-  // console.log(`--- Found ${array.length} upns...`);
   return array;
 }
 
-async function sortResults (upns, sort) {
-  let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
-  query += `RETURN DISTINCT persona ORDER BY persona.${sort.field} ${sort.direction}`;
+async function sortResults (upns, params) {
 
-  const results = await connector.runRawQuery(query, { upns });
-  return results;
+  let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
+  query += `RETURN DISTINCT persona 
+  ORDER BY persona.${params.field} ${params.direction}
+  SKIP ${(params.number - 1) * params.size}
+  LIMIT ${params.size}`;
+
+  return await connector.runRawQuery(query, { upns });
 }
 
 module.exports = graphFilter;

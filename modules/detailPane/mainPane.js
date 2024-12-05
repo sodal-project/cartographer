@@ -12,8 +12,8 @@ async function getNameFromPersona(persona) {
   let name = '';
   if (persona.firstName || persona.lastName) {
     name = `${persona.firstName} ${persona.lastName}`;
-  } else if (persona.friendlyName) {
-    name = persona.friendlyName;
+  } else if (persona.name) {
+    name = persona.name;
   } else if (persona.id) {
     name = persona.id;
   }

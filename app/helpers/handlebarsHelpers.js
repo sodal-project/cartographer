@@ -5,6 +5,21 @@ const Handlebars = require('handlebars');
  */
 
 /**
+ * Handlebars helper that creates an array from the provided arguments
+ * @returns {Array} Array containing all provided arguments
+ * 
+ * Usage: 
+ * {{array "item1" "item2" "item3"}}
+ * or
+ * headers=(array "ID" "Name" "Server URL")
+ */
+const array = (...args) => {
+  // Convert the arguments object to a proper array, excluding the last item
+  // which is the Handlebars options object
+  return args.slice(0, -1);
+};
+
+/**
  * Compares two values for strict equality.
  *
  * @param {*} a - The first value to compare.
@@ -154,4 +169,5 @@ module.exports = {
   json,
   urlEncode,
   includes,
+  array,
 };

@@ -3,7 +3,6 @@ const core = require('../../core/core');
 
 async function sync(instance){
   try {
-
     const source = {
       sid: `source:slack:${instance.id}`,
       name: instance.name,
@@ -21,10 +20,10 @@ async function sync(instance){
 
     console.log(`Process Complete for ${instance.name}`);
     
-  } catch(e) {
-    console.log(e);
+    return `Slack instance synced: ${instance.name}`;
+  } catch (error) {
+    return `Error syncing Slack instance: ${error.message}`;
   }
-  return true;
 }
 
 const getInstancePersonas = async (instance) => {
@@ -34,7 +33,7 @@ const getInstancePersonas = async (instance) => {
     const token = await core.crypto.decrypt(instance.secret);
     const client = new WebClient(token);
     const teamId = instance.teamId;
-    const friendlyName = instance.name;
+    const name = instance.name;
     
     // 
     // load cache with raw data
@@ -88,7 +87,7 @@ const getInstancePersonas = async (instance) => {
     // generate personas
     // 
     const userPersonas = mapUserPersonas(users, teamId);
-    const channelPersonas = mapChannelPersonas(channels, teamId, friendlyName);
+    const channelPersonas = mapChannelPersonas(channels, teamId, name);
     const groupPersonas = mapUsergroupPersonas(groups, teamId);
     const teamPersonas = mapTeamPersonas(teams);
     const userPersonaLastAccess = mapUserPersonaLastAccess(logs);
@@ -111,7 +110,6 @@ const mapTeamPersonas = (teams) => {
       id: team.id,
       platform: "slack",
       type: "team",
-      friendlyName: `${team.name}`,
       name: team.name,
       domain: team.domain,
       emailDomain: team.email_domain,
@@ -166,7 +164,7 @@ const mapUserPersonas = (users, slackTeamId) => {
       id: user.id,
       platform: "slack",
       type: "account",
-      friendlyName: `${handle}`,
+      name: `${handle}`,
       handle: handle,
       name: user.name,
       realName: user.profile.real_name,
@@ -193,7 +191,7 @@ const mapUserPersonas = (users, slackTeamId) => {
     }
     personas.push(persona);
 
-    const email = user.profile.email;
+    const email = user.profile.email?.toLowerCase();
     if(email && status == "active") {
       const authPersona = {
         upn: "upn:slack:account:" + email,
@@ -209,7 +207,7 @@ const mapUserPersonas = (users, slackTeamId) => {
         ], 
         obey: [
           {
-            upn: "upn:email:account:" + email,
+            upn: "upn:email:account:" + email.toLowerCase(),
             level: core.constants.LEVEL["ADMIN"],
             confidence: core.constants.CONFIDENCE["MAX-SYSTEM"],
           }
@@ -252,7 +250,7 @@ const mapUserPersonaLastAccess = (logs) => {
   return personas;
 }
 
-const mapChannelPersonas = (channels, slackTeamId, slackTeamFriendlyName) => {
+const mapChannelPersonas = (channels, slackTeamId, slackTeamName) => {
 
   const channelPersonas = [];
   const slackTeamUpn = getTeamUpn(slackTeamId);
@@ -269,8 +267,8 @@ const mapChannelPersonas = (channels, slackTeamId, slackTeamFriendlyName) => {
       id: channel.id,
       platform: "slack",
       type: "channel",
-      friendlyName: `${channel.name} (${slackTeamFriendlyName})`,
-      name: channel.name,
+      name: `${channel.name} (${slackTeamName})`,
+      channelName: channel.name,
       visibility: channel.is_private ? "private" : "public",
       connect: channel.is_shared ? "shared" : "unshared",
       topic: channel.topic.value,
@@ -330,8 +328,8 @@ const mapUsergroupPersonas = (groups, slackTeamId) => {
       status: "active",
       platform: "slack",
       type: "group",
-      friendlyName: `${group.name} (@${group.handle})`,
-      name: group.name,
+      name: `${group.name} (@${group.handle})`,
+      groupName: group.name,
       description: group.description,
       handle: group.handle,
       obey: [
@@ -447,7 +445,7 @@ const loadUsers = async (client, itemId) => {
 }
 
 const loadUserAccessLogs = async (client) => {
-  const callIterations = 250;
+  const callIterations = 100;
 
   let cursor = "";
   let count = 0;

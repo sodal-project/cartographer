@@ -27,23 +27,26 @@ const personaTableConfig = {
   tableFormId: "persona-table-form",
   forceFilters: [
     {
-      type: "field",
-      key: "type",
-      value: "participant",
-      operator: "<>",
-      not: false
+      type: "compare",
+      key: "not",
+      filter: [
+        {
+          type: "field",
+          key: "platform",
+          value: "directory",
+          operator: "=",
+          not: false
+        },
+        {
+          type: "field",
+          key: "type",
+          value: "participant",
+          operator: "=",
+          not: false
+        }
+      ]
     }
   ],
-  forceVisibility: [
-    "upn",
-    "type",
-    "platform",
-    "id",
-    "friendlyName",
-    "firstName",
-    "lastName",
-    "handle",
-  ]
 }
 
 /**
@@ -97,9 +100,9 @@ async function addParticipant(formData) {
   const id = await nextId("Participant");
 
   // Build a friendly name from the form data
-  let friendlyName = (data.firstName ? `${data.firstName}` : "");
-  friendlyName += (data.lastName ? ` ${data.lastName}` : "");
-  friendlyName += (data.handle ? ` (${data.handle})` : "");
+  let name = (data.firstName ? `${data.firstName}` : "");
+  name += (data.lastName ? ` ${data.lastName}` : "");
+  name += (data.handle ? ` (${data.handle})` : "");
 
   // Build the persona object
   const personaObject = {
@@ -107,7 +110,7 @@ async function addParticipant(formData) {
     type: "participant",
     platform: "directory",
     id: id.toString(),
-    friendlyName: friendlyName,
+    name: name,
     ...data
   }
   core.check.personaObject(personaObject);
@@ -128,7 +131,7 @@ async function addParticipant(formData) {
 async function addActivity(formData) {
   // Extract the form data
   const data = { 
-    friendlyName: formData.name,
+    name: formData.name,
   };
 
   // Generate a new ID for the activity
@@ -148,6 +151,25 @@ async function addActivity(formData) {
   console.log(`Adding activity: ${JSON.stringify(activityObject)}`);
 
   await core.graph.mergePersona(activityObject, directorySource);
+
+  return redraw();
+}
+
+async function addPersona(formData) {
+  const data = {
+    upn: formData.upn,
+  }
+
+  if(!data.upn) {
+    console.error("No UPN provided");
+    return redraw();
+  }
+
+  console.log(`Adding persona: ${data.upn}`);
+
+  const persona = core.persona.newFromUpn(data.upn);
+
+  await core.graph.mergePersona(persona, directorySource);
 
   return redraw();
 }
@@ -196,7 +218,7 @@ async function linkPersonas() {
   for(const directoryUpn of directoryUpns) {
     for(const personaUpn of personaUpns) {
       const persona = core.persona.newFromUpn(personaUpn);
-      persona.control.push({
+      persona.obey.push({
         upn: directoryUpn,
         level: level,
         confidence: confidence,
@@ -235,7 +257,7 @@ async function nextId(type) {
   let nextId = await core.config.readConfig(`next${type}Id`) || 10000; 
 
   // Verify that graph does not have a lower ID
-  const rawPersonas = await core.graph.readPersonas([{ 
+  const results = await core.graph.readPersonas([{ 
     type: "field",
     key: "platform",
     value: "directory",
@@ -249,7 +271,7 @@ async function nextId(type) {
     not: false
   }]);
 
-  const personas = rawPersonas.records.map(node => node._fields[0].properties);
+  const personas = results.raw.records.map(node => node._fields[0].properties);
 
   for(const persona of personas) {
     const id = parseInt(persona.id);
@@ -370,7 +392,8 @@ async function getDetailSubpane(upn) {
       {
         "type":"agency",
         "key":"obey",
-        "depth": [1,1],
+        "depth": [1, 1],
+        "levels": ["*"],
         "filter": [
           {
             "type":"agency",
@@ -407,7 +430,8 @@ async function getDetailSubpane(upn) {
       {
         "type":"agency",
         "key":"control",
-        "depth": [1,1],
+        "levels": ["*"],
+        "depth": [1, 1],
         "filter": [
           {
             "type":"agency",
@@ -465,6 +489,32 @@ async function setDetailSubpaneNote(formData) {
   return `Updated at ${new Date().toISOString().slice(11, 19)}`;
 }
 
+async function backup(clientData) {
+    const file = await core.graph.backupSource(directorySource.sid);
+    const fileName = `directory_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    
+    // Definte the file type
+    const type = "application/json";
+  
+    return {file, fileName, type};
+}
+
+async function restore(clientData) {
+  const file = clientData.file.buffer.toString();
+  // const file = clientData.file;
+  const json = JSON.parse(file);
+  
+  core.check.sourceStoreObject(json);
+
+  if(!json.source || !json.source.sid || json.source.sid !== directorySource.sid) {
+    throw new Error("Invalid source in backup file");
+  }
+
+  await core.graph.restoreSource(json);
+
+  return redraw();
+}
+
 /**
  * @description Initialize the module and register partials
  * @returns {void}
@@ -480,11 +530,14 @@ module.exports = {
   csvDeleteFile,
   csvMerge,
   addParticipant,
+  addPersona,
   addActivity,
   deletePersonas,
   linkPersonas,
   unlinkPersonas,
   getDetailSubpane,
   setDetailSubpaneNote,
+  backup,
+  restore,
   init,
 };

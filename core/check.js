@@ -154,7 +154,7 @@ const platformString = (platform) => {
  */
 const simpleValue = (property) => {
   try {
-    if(property !== undefined){
+    if(property !== undefined && property !== null) {
       switch(typeof property) {
         case 'string':
         case 'number':

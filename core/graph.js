@@ -5,26 +5,6 @@ const sourceStore = require('./sourceStore');
 const personaUtils = require('./persona');
 const graphFilter = require('./graphFilter');
 
-/* TODO: enable pagination
-
-optionalParams.page = optionalParams.page || 1;
-const pageSize = optionalParams?.pageSize || 1500;
-const orderBy = optionalParams?.orderBy || "upn";
-const orderByDirection = optionalParams?.orderByDirection || "ASC";
-
-const skip = neo4j.int((page - 1) * pageSize);
-const limit = neo4j.int(pageSize);
-const optionalParams = { skip, limit, ...optionalParams};
-
-const defaultPageParams = {
-  page: 1,
-  pageSize: 1500, 
-  orderBy: "upn",
-  orderByDirection: "ASC",
-}
-
-*/
-
 /**
  * Delete Personas that are not declared by any source
  * 
@@ -383,10 +363,18 @@ const readPersona = async (module, upn) => {
  * 
  * @param {string} module - automatically passed by core
  * @param {object} filter - OPTIONAL, a filter object
- * @param {object} sort - OPTIONAL, a sort object
+ * @param {object} params - OPTIONAL, a sort and pagination object
+ * @returns {
+ *  raw: object[] - An array of raw query results
+ *  personas: object[] - An array of persona objects from the graph
+ *  upns: string[] - An array of upns
+ *  currentCount: number - The number of personas that match the filter
+ *  totalCount: number - The total number of personas that match the filter
+ *  time: number - The time it took to execute the full query in milliseconds
+ * } - The result
  */
-const readPersonas = async (module, filter, sort, asUpnArray) => {
-  const results = await graphFilter(filter, sort, asUpnArray);
+const readPersonas = async (module, filter, params) => {
+  const results = await graphFilter(filter, params);
 
   return results;
 }
@@ -570,8 +558,31 @@ const unlinkPersonas = async (module, upn1, upn2, sid) => {
   return response;
 }
 
+const backupSource = async (module, sid) => {
+  return await readSourceStore(module, sid);
+}
+
+const restoreSource = async (module, sourceStoreObject) => {
+  check.sourceStoreObject(sourceStoreObject);
+
+  const source = sourceStoreObject.source;
+  await deleteSource(module, source.sid);
+  await mergeSource(module, source);
+
+  const queries = await sourceStore.getSyncQueries(sourceStoreObject, null);
+
+  // execute the merge queries
+  if(queries.length > 0) {
+    console.log(`Restore Source with ${queries.length} queries`);
+    return await connector.runRawQueryArray(queries);
+  } else {
+    console.log(`Restore Source found ${queries.length} queries, no changes to process`);
+  }
+}
+
 
 module.exports = {
+  backupSource,
   deleteOrphanedPersonas,
   deletePersona,
   removePersona,
@@ -585,6 +596,7 @@ module.exports = {
   readSource,
   readSourcePersonas,
   readSourceRelationships,
+  restoreSource,
   runRawQuery,
   runRawQueryArray,
   syncPersonas,
