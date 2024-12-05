@@ -37,6 +37,7 @@ async function addInstance(formData) {
     name: formData.name,
     serverUrl: formData.serverUrl.replace(/\/$/, ''),
     pat: pat,
+    patName: formData.patName,
     ready: true,
   }
 
@@ -95,10 +96,11 @@ async function processInstance(instance) {
     const orgName = instance.name;
     const serverUrl = instance.serverUrl;
     const pat = await core.crypto.decrypt(instance.pat);
+    const patName = instance.patName;
 
     const source = core.source.getSourceObject('tableau', instanceId, orgName);
 
-    const response = await callTableauAPI(serverUrl, pat);
+    const response = await callTableauAPI(serverUrl, pat, patName);
     await core.cache.save(`tableau-response`, response);
 
     const personas = [];
@@ -110,13 +112,13 @@ async function processInstance(instance) {
   }
 }
 
-const callTableauAPI = async (serverUrl, pat) => {
-  const apiUrl = `https://${serverUrl}/api/3.19/auth/signin`;
+const callTableauAPI = async (serverUrl, pat, patName) => {
+  const apiUrl = `${serverUrl}/api/3.19/auth/signin`;
   try {
     // First authenticate with PAT
     const authResponse = await axios.post(apiUrl, {
       credentials: {
-        personalAccessTokenName: "AdminToken",
+        personalAccessTokenName: patName,
         personalAccessTokenSecret: pat,
         site: {
           contentUrl: ""

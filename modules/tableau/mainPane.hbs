@@ -1,25 +1,27 @@
-<div class="p-8" style="max-width: 1200px">
+<div class="p-8">
   {{> Headline title="Tableau Integration" }}
 
   <!-- List all data stored in the module namespace of the config database -->
   <div class="p-8 mb-6">
     <ul class="text-white border-t border-gray-700">
       <li class="group relative border-b border-gray-800 py-2 flex items-center">
-        <span class="flex-grow text-white-200">ID</span>
-        <span class="flex-grow text-white-200">Name</span>
-        <span class="flex-grow text-white-200">Server URL</span>
-        <span class="flex-grow text-white-200">Status</span>
-        <span class="flex-grow text-white-200 w-24">Actions</span>
+        <span class="text-white-200 w-1/6">ID</span>
+        <span class="text-white-200 w-1/6">Name</span>
+        <span class="text-white-200 w-1/6">Server URL</span>
+        <span class="text-white-200 w-1/6">PAT Name</span>
+        <span class="text-white-200 w-1/6">Status</span>
+        <span class="text-white-200 w-1/6">Actions</span>
       </li> 
       {{#each this.instances }}
         <li class="group relative border-b border-gray-800 py-2 flex items-center">
-          <span class="flex-grow text-gray-400">{{this.id}}</span>
-          <span class="flex-grow text-gray-400">{{this.name}}</span>
-          <span class="flex-grow text-gray-400">{{this.serverUrl}}</span>
-          <span class="flex-grow text-gray-400">{{#if this.ready}}Ready{{else}}Processing{{/if}}</span>
+          <span class="text-gray-400 w-1/6">{{this.id}}</span>
+          <span class="text-gray-400 w-1/6">{{this.name}}</span>
+          <span class="text-gray-400 w-1/6">{{this.serverUrl}}</span>
+          <span class="text-gray-400 w-1/6">{{this.patName}}</span>
+          <span class="text-gray-400 w-1/6">{{#if this.ready}}Ready{{else}}Processing{{/if}}</span>
 
           {{#if this.ready }}
-          <div class="flex-grow flex">
+          <div class="flex-grow flex w-1/6">
             <div class="flex-grow opacity-0 group-hover:opacity-100 w-12">
               <form
                 class="flex-grow"
@@ -73,6 +75,7 @@
     >
       <div class="mb-4">{{> FormText label="Instance Name" name="name" }}</div>
       <div class="mb-4">{{> FormText label="Server URL" name="serverUrl" placeholder="https://your-server.tableau.com" }}</div>
+      <div class="mb-4">{{> FormText label="Personal Access Token Name" name="patName" }}</div>
       <div class="mb-4">{{> FormText label="Personal Access Token Secret" name="pat" type="password" }}</div>
       {{> FormSubmit label="Add" }}
     </form>
