@@ -392,7 +392,8 @@ async function getDetailSubpane(upn) {
       {
         "type":"agency",
         "key":"obey",
-        "depth": [1,1],
+        "depth": [1, 1],
+        "levels": ["*"],
         "filter": [
           {
             "type":"agency",
@@ -429,7 +430,8 @@ async function getDetailSubpane(upn) {
       {
         "type":"agency",
         "key":"control",
-        "depth": [1,1],
+        "levels": ["*"],
+        "depth": [1, 1],
         "filter": [
           {
             "type":"agency",

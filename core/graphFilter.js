@@ -189,6 +189,8 @@ function convertShorthand(shorthand) {
  */
 async function getUpnsFromFilter (filter) {
 
+  if(!filter) { return await getAllUpns(); }
+
   const setArray = [];
   const fieldArray = [];
   const sourceArray = [];
@@ -212,15 +214,8 @@ async function getUpnsFromFilter (filter) {
     }
   }
 
-  /*
-    The array of upns to return
-    To improve performance, treat "undefined" as all upns
-  */
-  let upns; 
+  let upns = await getUpnsByFieldArray(fieldArray);
 
-  if(fieldArray.length > 0) {
-    upns = await getUpnsByFieldArray(fieldArray);
-  }
   if(setArray.length > 0) {
     upns = await getUpnsBySetArray(setArray, upns);
   }
@@ -233,10 +228,12 @@ async function getUpnsFromFilter (filter) {
   for(const compare of compareArray) {
     upns = await getUpnsByCompare(compare, upns);
   }
-  
-  if(!upns) { upns = await getUpnsByFieldArray(); }
 
   return upns;
+}
+
+async function getAllUpns () {
+  return await readSingleArray(`MATCH (persona:Persona) RETURN DISTINCT persona.upn`);
 }
 
 async function getUpnsByFieldArray (fieldArray) {
@@ -269,13 +266,8 @@ async function getUpnsByFieldArray (fieldArray) {
 
 async function getUpnsBySetArray (setArray, upns) {
   // identify only the upns that are in all sets
-  for(const set in setArray) {
-    if(!upns) {
-      upns = setArray[set].upns;  
-    } else {
-      const upnsInSet = setArray[set].upns;
-      upns = upns.filter(upn => upnsInSet.includes(upn));
-    }
+  for(const set of setArray) {
+    upns = upns.filter(upn => set.upns.includes(upn));
   }
   return upns;
 }
@@ -288,12 +280,8 @@ async function getUpnsBySourceArray (sourceArray, upns) {
     const filter = sourceArray[source];
 
     if(firstQuery) {
+      query += `WHERE `;
       firstQuery = false;
-      if(upns) {  
-        query += `WHERE persona.upn IN $upns\nAND `;
-      } else {
-        query += `WHERE `;
-      }
     } else {
       query += `AND `;
     }
@@ -324,20 +312,25 @@ async function getUpnsByAgency (agency, upns) {
     throw new Error('Invalid confidence range');
   }
 
-  let levels = [];
+  const levels = [];
   if(!agency.levels || agency.levels.length === 0) {
-    levels = allLevels;
+    levels.push(CC.LEVEL.ALIAS); // default to ALIAS only
   } else {
-    for(const level of agency.levels) {
-      if(!CC.LEVEL[level]) {
-        throw new Error('Invalid level');
+    if(agency.levels.includes('*')) {
+      for(const level of allLevels) {
+        if(CC.LEVEL[level]) {
+          levels.push(CC.LEVEL[level]);
+        }
       }
-      levels.push(CC.LEVEL[level]);
+    } else {
+      for(const level of agency.levels) {
+        if(!CC.LEVEL[level]) {
+          throw new Error('Invalid level');
+        }
+        levels.push(CC.LEVEL[level]);
+      }
     }
   }
-
-  const filter = agency.filter;
-  const filterUpns = await getUpnsFromFilter(filter);
 
   let indexRel = "";
   let filterRel = "";
@@ -354,7 +347,8 @@ async function getUpnsByAgency (agency, upns) {
 
   // Convert agency.depth into a Neo4j path length pattern (*min..max)
   const depth = agency.depth;
-  let depthString = "*1.."; // Default: search all depths
+  let depthString = "*0.."; // Default: search all depths
+  let isZeroDepth = true;
 
   if (depth) {
     if (Array.isArray(depth)) {
@@ -362,16 +356,19 @@ async function getUpnsByAgency (agency, upns) {
         throw new Error('Depth array must contain [min, max] values');
       }
       depthString = `*${depth[0]}..${depth[1]}`; // Range: min to max depth
+      isZeroDepth = parseInt(depth[0]) === 0;
     } else {
-      depthString = `*${parseInt(depth)}`; // Fixed depth
+      depthString = `*0..${parseInt(depth)}`; // to a max depth
     }
   }
+
+  const filterUpns = agency.filter ? await getUpnsFromFilter(agency.filter) : null;
 
   // Find all nonredundant paths between the control and obey personas
   let query = `
   MATCH path = shortestPath((control:Persona)-[rList:CONTROL ${depthString}]->(obey:Persona))
-  WHERE ${filterRel}.upn IN $filterUpns
-  AND control <> obey
+  WHERE control <> obey 
+  ${filterUpns ? `AND ${filterRel}.upn IN $filterUpns` : ''}
   ${upns ? `AND ${indexRel}.upn IN $upns` : ''}
   WITH control, obey, relationships(path) as rList
   WHERE ALL(r IN rList WHERE 
@@ -388,7 +385,16 @@ async function getUpnsByAgency (agency, upns) {
     levels,
     confidence
   }
-  return await readSingleArray(query, params);
+
+  const results = await readSingleArray(query, params);
+
+  if(isZeroDepth) { 
+    // find all upns that in both filtersUpns and upns
+    const sharedUpns = filterUpns.filter(upn => upns.includes(upn));
+    return [...new Set([...results, ...sharedUpns])];
+  } else {  
+    return results;
+  }
 }
 
 async function getUpnsByCompare (compare, upns) {
@@ -421,6 +427,7 @@ async function getUpnsByCompare (compare, upns) {
 }
 
 async function readSingleArray (query, params) {
+  console.log(query, params);
   const results = await connector.runRawQuery(query, params);
   const array = results.records.map(node => node._fields[0]);
   return array;
