@@ -8,6 +8,31 @@ const crypto = require('crypto');
  */
 async function redraw() {
   const data = await core.config.readConfig();
+
+  const rawInstances = data.instances || {};
+  const tableHeaders = [
+    "ID",
+    "Name",
+    "Channel",
+    "Status",
+    "Actions"
+  ];
+
+  const instances = Object.values(rawInstances).map(instance => ({
+    columns: [
+      instance.id,
+      instance.name,
+      instance.channel,
+      instance.ready ? 'Ready' : 'Processing'
+    ],
+    actions: true,
+    ready: instance.ready,
+    id: instance.id
+  }));
+
+  data.slackInstances = instances;
+  data.tableHeaders = tableHeaders;
+
   return core.client.render('mainPane.hbs', data);
 }
 

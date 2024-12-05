@@ -1,0 +1,19 @@
+<div class="p-8 mb-6">
+  <ul class="text-white border-t border-gray-700">
+    <li class="group relative border-b border-gray-800 py-2 flex items-center">
+      {{#each headers}}
+        <span class="text-white-200 w-1/6">{{this}}</span>
+      {{/each}}
+    </li> 
+    {{#each items}}
+      <li class="group relative border-b border-gray-800 py-2 flex items-center">
+        {{#each this.columns}}
+          <span class="text-gray-400 w-1/6">{{this}}</span>
+        {{/each}}
+        {{#if this.actions}}
+          <div class="w-1/6">{{> @partial-block}}</div>
+        {{/if}}
+      </li>
+    {{/each}}
+  </ul>
+</div> 

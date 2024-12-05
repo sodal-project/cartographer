@@ -1,70 +1,44 @@
 <div class="p-8">
   {{> Headline title="Tableau Integration" }}
 
-  <!-- List all data stored in the module namespace of the config database -->
-  <div class="p-8 mb-6">
-    <ul class="text-white border-t border-gray-700">
-      <li class="group relative border-b border-gray-800 py-2 flex items-center">
-        <span class="text-white-200 w-1/6">ID</span>
-        <span class="text-white-200 w-1/6">Name</span>
-        <span class="text-white-200 w-1/6">Server URL</span>
-        <span class="text-white-200 w-1/6">PAT Name</span>
-        <span class="text-white-200 w-1/6">Status</span>
-        <span class="text-white-200 w-1/6">Actions</span>
-      </li> 
-      {{#each this.instances }}
-        <li class="group relative border-b border-gray-800 py-2 flex items-center">
-          <span class="text-gray-400 w-1/6">{{this.id}}</span>
-          <span class="text-gray-400 w-1/6">{{this.name}}</span>
-          <span class="text-gray-400 w-1/6">{{this.serverUrl}}</span>
-          <span class="text-gray-400 w-1/6">{{this.patName}}</span>
-          <span class="text-gray-400 w-1/6">{{#if this.ready}}Ready{{else}}Processing{{/if}}</span>
-
-          {{#if this.ready }}
-          <div class="flex-grow flex w-1/6">
-            <div class="flex-grow opacity-0 group-hover:opacity-100 w-12">
-              <form
-                class="flex-grow"
-                hx-post="/mod/tableau/sync/"
-                hx-target="closest #main"
-                hx-swap="innerHTML"
-                hx-vals='{"id": "{{this.id}}"}'
-              >
-                <button
-                  class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
-                  type="submit"
-                >
-                Sync
-                </button>
-              </form>
-            </div>
-            <div class="flex-grow opacity-0 group-hover:opacity-100 w-12">
-              <form
-                class="flex-grow"
-                hx-post="/mod/tableau/deleteInstance/"
-                hx-target="closest #main"
-                hx-swap="innerHTML"
-                hx-vals='{"id": "{{this.id}}"}'
-              >
-                <button
-                  class="h-3.5 w-3.5 inline text-gray-600 hover:text-indigo-600"
-                  type="submit"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
-                    <path
-                      fill="currentColor"
-                      d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
-                    />
-                  </svg>
-                </button>
-              </form>
-            </div>
-          </div>
-          {{/if}}
-        </li>
-      {{/each}}
-    </ul>
-  </div>
+  {{#> TableList 
+    headers=(array "ID" "Name" "Server URL" "PAT Name" "Status" "Actions")
+    items=this.instances
+  }}
+    {{!-- Actions block --}}
+    {{#if this.ready }}
+      <div class="flex gap-4 items-center">
+        <button
+          class="text-gray-600 hover:text-indigo-600"
+          hx-post="/mod/tableau/sync/"
+          hx-target="closest #main"
+          hx-swap="innerHTML"
+          hx-vals='{"id": "{{this.id}}"}'
+        >
+          Sync
+        </button>
+        
+        <button
+          class="text-gray-600 hover:text-indigo-600"
+          hx-post="/mod/tableau/deleteInstance/"
+          hx-target="closest #main"
+          hx-swap="innerHTML"
+          hx-vals='{"id": "{{this.id}}"}'
+        >
+          <svg 
+            class="h-4 w-4" 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 448 512"
+          >
+            <path
+              fill="currentColor"
+              d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
+            />
+          </svg>
+        </button>
+      </div>
+    {{/if}}
+  {{/TableList}}
 
   {{#> Card style="w-1/2"}}
     <form

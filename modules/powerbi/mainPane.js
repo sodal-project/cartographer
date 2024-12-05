@@ -9,6 +9,32 @@ const LEVEL = core.constants.LEVEL;
  */
 async function redraw() {
   const data = await core.config.readConfig();
+
+  const rawInstances = data.instances || {};
+  const tableHeaders = [
+    "ID",
+    "Name",
+    "Tenant ID",
+    "Status",
+    "Actions"
+  ];
+
+  const instances = Object.values(rawInstances).map(instance => ({
+    columns: [
+      instance.id,
+      instance.name,
+      instance.tenantId,
+      instance.ready ? 'Ready' : 'Processing'
+    ],
+    actions: true,
+    ready: instance.ready,
+    id: instance.id
+  }));
+
+  // Pass both the instances and the table headers
+  data.instances = instances;
+  data.tableHeaders = tableHeaders;
+
   return core.client.render('mainPane.hbs', data);
 }
 

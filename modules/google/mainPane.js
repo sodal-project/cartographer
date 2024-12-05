@@ -9,6 +9,35 @@ const { Readable } = require('stream');
  */
 async function redraw() {
   const data = await core.config.readConfig();
+
+  const rawInstances = data.instances || {};
+  const tableHeaders = [
+    "ID",
+    "Name", 
+    "Email",
+    "Customer",
+    "Last Synced",
+    "Status",
+    "Actions"
+  ];
+
+  const instances = Object.values(rawInstances).map(instance => ({
+    columns: [
+      instance.id,
+      instance.name,
+      instance.subjectEmail,
+      instance.customerId,
+      instance.lastSynced,
+      instance.ready ? 'Ready' : 'Processing'
+    ],
+    actions: true,
+    ready: instance.ready,
+    id: instance.id
+  }));
+
+  data.googleInstances = instances;
+  data.tableHeaders = tableHeaders;
+
   return core.client.render('mainPane.hbs', data);
 }
 
