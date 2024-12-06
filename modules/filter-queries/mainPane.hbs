@@ -22,7 +22,7 @@
               <div class="flex gap-2">
                 <button
                   class="px-3 py-1 text-sm font-medium text-blue-100 bg-blue-600 hover:bg-blue-700 rounded-md"
-                  hx-post="/mod/filter-queries/runSavedFilter"
+                  hx-post="/mod/filter-queries/handleFilter"
                   hx-target="closest #main"
                   hx-vals='{"filterId": "{{id}}"}'
                 >
@@ -30,7 +30,7 @@
                 </button>
                 <button
                   class="px-3 py-1 text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 rounded-md border border-gray-600"
-                  hx-post="/mod/filter-queries/loadFilter"
+                  hx-post="/mod/filter-queries/handleFilter"
                   hx-target="closest #main"
                   hx-vals='{"filterId": "{{id}}"}'
                 >
@@ -80,7 +80,7 @@
 
     <form
       class="gap-6 mb-0"
-      hx-post="/mod/filter-queries/runFilter"
+      hx-post="/mod/filter-queries/handleFilter"
       hx-target="closest #main"
       hx-swap="innerHTML"
     >
@@ -132,7 +132,7 @@
   </div>
 
   <div class="p-8 mb-6 text-gray-400">
-    {{> PersonaTable data=tableData }}
+    {{{ tableHtml }}}
   </div>
 </div>
 

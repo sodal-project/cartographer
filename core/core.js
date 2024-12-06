@@ -118,69 +118,6 @@ const coreData = {
 const calls = {};
 
 /**
- * Initialize Core Namespaces
- * This function initializes the core namespaces and adds them to the core object
- * 
- * NOTE - this is a temporary solution to speed development; future versions will use traditional functions
- * 
- * Core namepaces use the form: core.namespace.function() 
- */
-function initNamespaces() {
-  let counter = 0;
-
-  // Map exported calls from each namespace to core
-  for(const namespace in namespaces) {
-    calls[namespace] = namespaces[namespace]
-    core[namespace] = {};
-
-    // For each exported function in the namespace, add it to the core object
-    for(const call in calls[namespace]) {
-
-      // skip the default export
-      if(call === 'default') { continue; }
-
-      counter++;
-
-      // if this is a function, add it to the core object
-      if(typeof calls[namespace][call] === 'function') {
-        core[namespace][call] = (...params) => {
-
-          // get the calling module name
-          const callingModule = getCallingFolder(new Error().stack)
-          consoleLog(`Calling core.${namespace}.${call} from ${callingModule}`)
-
-          /**
-           * Some calls need to know the calling module, in which case we pass
-           * the calling module name as the first parameter
-           * 
-           * Currently required for:
-           * - cache: module name is used to prevent modules from overwriting each other's cache
-           * - config: module name is used to prevent modules from overwriting each other's config
-           * - client: module name is used to reference the correct location for the Handlebars template
-           */ 
-          if(namespace === 'cache' ||
-             namespace === 'config' ||
-             namespace === 'client' ||
-             namespace === 'source' ||
-             namespace === 'graph' ||
-             namespace === 'crypto') {
-            return calls[namespace][call](callingModule, ...params);
-          } else {
-            return calls[namespace][call](...params);
-          }
-        }
-      } else {
-
-        // if this is an object instead of a function, add it to core as is
-        core[namespace][call] = calls[namespace][call];
-      }
-    }
-  }
-
-  consoleLog(`Core: loaded ${counter} internal namespace calls`)
-}
-
-/**
  * Initialize External Modules
  * This function initializes external modules and adds them to the core object
  * 
@@ -248,18 +185,23 @@ async function initModules(moduleArray) {
   consoleLog(`Core: loaded ${counter} external module calls`)
 }
 
-/**
- * Initialize Core
- * 
- * Before core can be used, it must be initialized
- * 
- * This function initializes the core object by:
- * - initializing core namespaces
- * - initializing external modules
- * - finalizing core and freezing it
- * 
- * @returns {object} - The initialized core object
- */
+const wrapWithModule = (func) => {
+  return async (...params) => {
+    const callingModule = getCallingFolder(new Error().stack);
+    consoleLog(`Calling ${func.name} from ${callingModule}`);
+    return await func(callingModule, ...params);
+  }
+}
+
+const wrapWithoutModule = (func) => {
+  return async (...params) => {
+    const callingModule = getCallingFolder(new Error().stack);
+    consoleLog(`Calling ${func.name} from ${callingModule}`);
+    return await func(...params);
+  }
+}
+
+// Initialize core and freeze it
 async function init() {
   consoleLog("Core: initializing")
   if(core.ready) {
@@ -269,16 +211,12 @@ async function init() {
 
   client.registerPartials();
 
-  // Initialize core's namespaced internal calls
-  initNamespaces();
-
   // Initialize core's external module calls
   await initModules(coreData.modules);
 
-
   // Group modules by category
   coreData.modulesByCategory = coreData.modules.reduce((acc, module) => {
-    const category = module.category || ''; // Empty string for uncategorized
+    const category = module.category || '';
     if (!acc[category]) {
       acc[category] = [];
     }
@@ -322,6 +260,89 @@ const core = {
   coreData,
   init,
   log,
+
+  // Cache namespace
+  cache: {
+    save: wrapWithModule(cache.save),
+    load: wrapWithModule(cache.load)
+  },
+
+  // Check namespace
+  check: {
+    confidenceNumber: wrapWithoutModule(check.confidenceNumber),
+    idString: wrapWithoutModule(check.idString),
+    levelNumber: wrapWithoutModule(check.levelNumber),
+    personaObject: wrapWithoutModule(check.personaObject),
+    personaRelsArray: wrapWithoutModule(check.personaRelsArray),
+    platformString: wrapWithoutModule(check.platformString),
+    relationshipObject: wrapWithoutModule(check.relationshipObject),
+    sidString: wrapWithoutModule(check.sidString),
+    simpleValue: wrapWithoutModule(check.simpleValue),
+    sourceObject: wrapWithoutModule(check.sourceObject),
+    sourceStoreModifiedPersonaObject: wrapWithoutModule(check.sourceStoreModifiedPersonaObject),
+    sourceStoreModifiedPersonaRelationshipsObject: wrapWithoutModule(check.sourceStoreModifiedPersonaRelationshipsObject),
+    sourceStoreObject: wrapWithoutModule(check.sourceStoreObject),
+    typeString: wrapWithoutModule(check.typeString),
+    upnString: wrapWithoutModule(check.upnString)
+  },
+
+  // Client namespace
+  client: {
+    render: wrapWithModule(client.render),
+    registerPartials: wrapWithModule(client.registerPartials)
+  },
+
+  // Config namespace
+  config: {
+    readConfig: wrapWithModule(config.readConfig),
+    writeConfig: wrapWithModule(config.writeConfig),
+    deleteConfig: wrapWithModule(config.deleteConfig)
+  },
+
+  // Constants namespace (direct assignment)
+  constants: constants,
+
+  // Crypto namespace
+  crypto: {
+    encrypt: wrapWithModule(crypto.encrypt),
+    decrypt: wrapWithModule(crypto.decrypt)
+  },
+
+  // Graph namespace
+  graph: {
+    backupSource: wrapWithModule(graph.backupSource),
+    deleteOrphanedPersonas: wrapWithModule(graph.deleteOrphanedPersonas),
+    deletePersona: wrapWithModule(graph.deletePersona),
+    deleteSource: wrapWithModule(graph.deleteSource),
+    mergePersona: wrapWithModule(graph.mergePersona),
+    mergePersonas: wrapWithModule(graph.mergePersonas),
+    mergeSource: wrapWithModule(graph.mergeSource),
+    readOrphanedPersonas: wrapWithModule(graph.readOrphanedPersonas),
+    readPersona: wrapWithModule(graph.readPersona),
+    readPersonas: wrapWithModule(graph.readPersonas),
+    readSource: wrapWithModule(graph.readSource),
+    readSourcePersonas: wrapWithModule(graph.readSourcePersonas),
+    readSourceRelationships: wrapWithModule(graph.readSourceRelationships),
+    removePersona: wrapWithModule(graph.removePersona),
+    restoreSource: wrapWithModule(graph.restoreSource),
+    runRawQuery: wrapWithModule(graph.runRawQuery),
+    runRawQueryArray: wrapWithModule(graph.runRawQueryArray),
+    syncPersonas: wrapWithModule(graph.syncPersonas),
+    unlinkPersonas: wrapWithModule(graph.unlinkPersonas)
+  },
+
+  // Persona namespace
+  persona: {
+    generateUpnRaw: wrapWithoutModule(persona.generateUpnRaw),
+    getFromRelationships: wrapWithoutModule(persona.getFromRelationships),
+    getProps: wrapWithoutModule(persona.getProps),
+    newFromUpn: wrapWithoutModule(persona.newFromUpn)
+  },
+
+  // Source namespace
+  source: {
+    getSourceObject: wrapWithModule(source.getSourceObject)
+  }
 };
 
 module.exports = core;

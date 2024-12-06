@@ -22,122 +22,67 @@ async function mainPane() {
   return redraw({ savedFilters });
 }
 
-async function runFilter(formData) {
-  const filter = JSON.parse(formData.filter);
-  const tableData = await core.mod.personaTable.build({
+async function getFilterTableHtml(forceFilters = null) {
+  const tableConfig = {
     tableFormId: "filter-table-form",
-    forceFilters: filter,
-  });
-  return redraw({ 
-    filterName: formData.filterName,
-    filterId: formData.filterId,
-    filter: JSON.stringify(filter, null, 2),
-    tableData,
-  });
-}
-
-async function runSavedFilter(formData) {
-  const filters = await core.config.readConfig("filters") || {};
-  const filter = filters[formData.filterId];
-  
-  if (!filter) {
-    throw new Error('Filter not found');
-  }
-
-  const parsedFilter = JSON.parse(filter.expression);
-  const tableData = await core.mod.personaTable.build({
-    tableFormId: "filter-table-form",
-    forceFilters: parsedFilter,
-  });
-
-  const savedFilters = Object.values(filters)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-
-  return redraw({
-    filterId: filter.id,
-    filterName: filter.name,
-    filter: filter.expression,
-    tableData,
-    savedFilters,
-  });
-}
-
-async function saveFilter(formData) {
-  const filters = await core.config.readConfig("filters") || {};
-  const filterId = formData.filterId || crypto.randomUUID();
-  
-  filters[filterId] = {
-    id: filterId,
-    name: formData.filterName,
-    expression: formData.filter,
-    updatedAt: new Date().toISOString(),
+    ...(forceFilters && { forceFilters }),
   };
-
-  await core.config.writeConfig({filters});
-
-  const savedFilters = Object.values(filters)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-
-  return redraw({ 
-    filter: formData.filter,
-    savedFilters,
-  });
+  return core.mod.personaTable.getTable(tableConfig);
 }
 
-async function loadFilter(formData) {
+async function getSortedFilters() {
   const filters = await core.config.readConfig("filters") || {};
-  const filter = filters[formData.filterId];
-  
-  if (!filter) {
-    throw new Error('Filter not found');
+  return Object.values(filters)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+async function handleFilter(formData) {
+  let filter, parsedFilter;
+
+  // Handle saved filter case
+  if (formData.filterId && !formData.filter) {
+    const filters = await core.config.readConfig("filters") || {};
+    filter = filters[formData.filterId];
+    if (!filter) {
+      throw new Error('Filter not found');
+    }
+    parsedFilter = JSON.parse(filter.expression);
+    formData.filter = filter.expression;
+    formData.filterName = filter.name;
+  }
+  // Handle new/edited filter case
+  else if (formData.filter) {
+    parsedFilter = JSON.parse(formData.filter);
   }
 
-  const tableData = await core.mod.personaTable.build({
-    tableFormId: "filter-table-form",
-    forceFilters: JSON.parse(filter.expression),
-  });
-
-  const savedFilters = Object.values(filters)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const [tableHtml, savedFilters] = await Promise.all([
+    getFilterTableHtml(parsedFilter),
+    getSortedFilters()
+  ]);
 
   return redraw({
-    filterId: filter.id,
-    filterName: filter.name,
-    filter: filter.expression,
-    tableData,
+    filterId: formData.filterId,
+    filterName: formData.filterName,
+    filter: formData.filter,
+    tableHtml,
     savedFilters,
   });
-}
-
-async function deleteFilter(formData) {
-  const filters = await core.config.readConfig("filters") || {};
-  delete filters[formData.filterId];
-  
-  await core.config.writeConfig({filters});
-
-  const savedFilters = Object.values(filters)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  
-  return redraw({ savedFilters });
 }
 
 async function clearForm() {
-  const filters = await core.config.readConfig("filters") || {};
-  const savedFilters = Object.values(filters)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const [tableHtml, savedFilters] = await Promise.all([
+    getFilterTableHtml(),
+    getSortedFilters()
+  ]);
 
   return redraw({
     savedFilters,
-    tableData: await core.mod.personaTable.build({ tableFormId: "filter-table-form" })
+    tableHtml
   });
 }
 
 module.exports = {
   mainPane,
-  runFilter,
-  runSavedFilter,
-  saveFilter,
-  loadFilter,
-  deleteFilter,
+  handleFilter,
   clearForm,
 };
