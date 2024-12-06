@@ -92,7 +92,7 @@
       <!-- Active Filters -->
       <div class="flex">
         {{#each filters}}
-          {{> PersonaTableFilter
+          {{> ./filter
             field=this.field
             operator=this.operator
             value=this.value

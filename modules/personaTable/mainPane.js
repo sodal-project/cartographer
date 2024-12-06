@@ -347,17 +347,6 @@ async function update(tableForm) {
 }
 
 /**
- * @description Initialize the module
- * 
- * Register PersonaTable partials
- * 
- * @returns {void}
- */
-async function init(){
-  await core.client.registerPartials();
-}
-
-/**
  * @description Add the passed UPN to the selected UPNs list in the config 
  * database and return a new checkbox
  * 
@@ -462,7 +451,6 @@ module.exports = {
   mainPane,
   build,
   update,
-  init,
   updateSelectedUpns,
   removeSelectedUpns,
   updateAllSelectedUpns,
