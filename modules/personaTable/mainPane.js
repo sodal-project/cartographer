@@ -242,14 +242,19 @@ async function read(tableConfig, tableForm) {
 }
 
 /**
- * @description Render the Persona Table main pane
- * 
- * @param {object} formData - Form data from a Persona Table
+ * @description Generate the HTML for a PersonaTable component
+ * @param {object} data - The table data object 
  * @returns {string} - Compiled HTML content
  */
-async function redraw(formData) {
+async function generatePersonaTableHtml(data) {
+  return await core.client.render('embedPane.hbs', data);
+}
 
-  // Example configuration
+/**
+ * @description The main interface for the module.
+ * @returns {string} - Compiled HTML content
+ */
+async function mainPane() {
   const tableConfig = {
     tableFormId: 'personaTable',
     action: {
@@ -258,23 +263,16 @@ async function redraw(formData) {
     }
   }
 
-  const data = await build(tableConfig);
+  const personaTableHtml = await getTable(tableConfig);
 
-  // Render the main template
-  return core.client.render('mainPane.hbs', data);
+  return core.client.render('mainPane.hbs', {
+    personaTableHtml
+  });
 }
 
 //----------------------------------------------------------------
 // Public Functions
 //----------------------------------------------------------------
-
-/**
- * @description The main interface for the module.
- * @returns {string} - Compiled HTML content
- */
-async function mainPane() {
-  return redraw();
-}
 
 /**
  * @description Build a Persona Table from a TableConfig object
@@ -345,21 +343,7 @@ async function update(tableForm) {
   // Add selected upn list to the table data
   data.selectedUpns = tableConfig.selectedUpns || [];
 
-  // Build the table markup
-  const markup = await core.client.render('embedPane.hbs', data);
-
-  return markup;
-}
-
-/**
- * @description Initialize the module
- * 
- * Register PersonaTable partials
- * 
- * @returns {void}
- */
-async function init(){
-  await core.client.registerPartials();
+  return generatePersonaTableHtml(data);
 }
 
 /**
@@ -454,10 +438,8 @@ async function updateAllSelectedUpns(data){
  * @returns {string} - Compiled HTML content
  */
 async function getTable(config) {
-  const data = await build(config)
-
-  // Render the main template
-  return core.client.render('embedPane.hbs', data);
+  const data = await build(config);
+  return generatePersonaTableHtml(data);
 }
 
 const getSelectedUpns = async (tableFormId) => {
@@ -469,7 +451,6 @@ module.exports = {
   mainPane,
   build,
   update,
-  init,
   updateSelectedUpns,
   removeSelectedUpns,
   updateAllSelectedUpns,
