@@ -88,24 +88,39 @@ function graphFiltersFromTableForm(tableForm) {
  * @returns {object[]} - An array of table row objects
  */
 function rowsFromRawQuery(rawPersonas, forceVisibility) {
+  if (!rawPersonas?.records?.length) {
+    console.warn('No records found in rawPersonas');
+    return [];
+  }
 
-  const data = rawPersonas.records.map(node => node._fields[0].properties);
+  try {
+    const data = rawPersonas.records.map(node => node._fields[0].properties);
 
-  // Get the fields from the data
-  const defaultFields = ["id", "name", "type", "platform"]
-  const actualFields = data.map(row => Object.keys(row)).flat().sort();
-  const fields = forceVisibility || new Set([...defaultFields, ...actualFields]);
+    // Get the fields from the data
+    const defaultFields = ["id", "name", "type", "platform"];
+    const actualFields = data.map(row => Object.keys(row)).flat().sort();
+    
+    // Convert to array if forceVisibility provided, otherwise create from fields
+    const fields = Array.isArray(forceVisibility) 
+      ? forceVisibility 
+      : Array.from(new Set([...defaultFields, ...actualFields]));
 
-  // Ensure that all rows have all fields
-  const prepRows = data.map(row => { 
-    const newRow = {};
-    for(const field of fields) {
-      newRow[field] = row[field] || '';
-    }
-    return newRow;
-  })
+    // Ensure that all rows have all fields
+    const prepRows = data.map(row => { 
+      const newRow = {};
+      for(const field of fields) {
+        newRow[field] = row[field] || '';
+      }
+      return newRow;
+    });
 
-  return prepRows;
+    console.log('Processed rows:', prepRows); // Debug log
+    return prepRows;
+
+  } catch (error) {
+    console.error('Error processing raw query results:', error);
+    return [];
+  }
 }
 
 /**
@@ -241,14 +256,19 @@ async function read(tableConfig, tableForm) {
 }
 
 /**
- * @description Render the Persona Table main pane
- * 
- * @param {object} formData - Form data from a Persona Table
+ * @description Generate the HTML for a PersonaTable component
+ * @param {object} data - The table data object 
  * @returns {string} - Compiled HTML content
  */
-async function redraw(formData) {
+async function generatePersonaTableHtml(data) {
+  return await core.client.render('embedPane.hbs', data);
+}
 
-  // Example configuration
+/**
+ * @description The main interface for the module.
+ * @returns {string} - Compiled HTML content
+ */
+async function mainPane() {
   const tableConfig = {
     tableFormId: 'personaTable',
     action: {
@@ -257,23 +277,16 @@ async function redraw(formData) {
     }
   }
 
-  const data = await build(tableConfig);
+  const personaTableHtml = await getTable(tableConfig);
 
-  // Render the main template
-  return core.client.render('mainPane.hbs', data);
+  return core.client.render('mainPane.hbs', {
+    personaTableHtml
+  });
 }
 
 //----------------------------------------------------------------
 // Public Functions
 //----------------------------------------------------------------
-
-/**
- * @description The main interface for the module.
- * @returns {string} - Compiled HTML content
- */
-async function mainPane() {
-  return redraw();
-}
 
 /**
  * @description Build a Persona Table from a TableConfig object
@@ -344,10 +357,7 @@ async function update(tableForm) {
   // Add selected upn list to the table data
   data.selectedUpns = tableConfig.selectedUpns || [];
 
-  // Build the table markup
-  const markup = await core.client.render('embedPane.hbs', data);
-
-  return markup;
+  return generatePersonaTableHtml(data);
 }
 
 /**
@@ -453,10 +463,8 @@ async function updateAllSelectedUpns(data){
  * @returns {string} - Compiled HTML content
  */
 async function getTable(config) {
-  const data = await build(config)
-
-  // Render the main template
-  return core.client.render('embedPane.hbs', data);
+  const data = await build(config);
+  return generatePersonaTableHtml(data);
 }
 
 const getSelectedUpns = async (tableFormId) => {
