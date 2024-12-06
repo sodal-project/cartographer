@@ -2,14 +2,16 @@ require('dotenv').config();
 const express = require("express");
 const Handlebars = require('handlebars');
 const { engine } = require('express-handlebars');
+const path = require('path');
 const config = require('./config');
 
 // Import core functions
 const core = require('./core/core.js');
 
 // Import middlewares and helpers
-const cookieParser = require('cookie-parser'); // Parse cookies
-const handlebarsHelpers = require('./app/helpers/handlebarsHelpers'); // Register the handlebars helpers
+const cookieParser = require('cookie-parser');
+const moduleStatics = require('./app/middlewares/moduleStatics');
+const handlebarsHelpers = require('./app/helpers/handlebarsHelpers');
 
 // Import routes
 const authRoutes = require("./app/routes/authRoutes");
@@ -33,10 +35,13 @@ Object.keys(handlebarsHelpers).forEach((helperName) => {
 });
 
 // Middleware configuration
-app.use(express.urlencoded({ extended: true })); // Parse form data
-app.use(express.json()); // Parse JSON bodies
-app.use(cookieParser()); // Access cookies
-app.use(express.static(config.publicPath)); // Serve static files
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.static(config.publicPath));
+
+// Set up module static files
+moduleStatics(path.join(__dirname, 'modules'))(app);
 
 // Route configuration
 app.use("/", authRoutes);
