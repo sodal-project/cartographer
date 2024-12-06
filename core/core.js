@@ -9,18 +9,7 @@ const constants = require('./constants.js')
 const graph = require('./graph.js')
 const persona = require('./persona.js')
 const source = require('./source.js')
-
-const namespaces = {
-  cache,
-  check,
-  client,
-  config,
-  constants,
-  crypto,
-  graph,
-  persona,
-  source,
-};
+const types = require('./types.js')
 
 // Core Imports
 const { getCallingFolder } = require('./utilities.js');
