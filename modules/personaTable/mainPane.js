@@ -87,40 +87,26 @@ function graphFiltersFromTableForm(tableForm) {
  * @param {string[]} forceVisibility - Optional: force visibility of a subset of fields
  * @returns {object[]} - An array of table row objects
  */
-function rowsFromRawQuery(rawPersonas, forceVisibility) {
-  if (!rawPersonas?.records?.length) {
-    console.warn('No records found in rawPersonas');
-    return [];
-  }
+function rowsFromPersonaArray(personas, forceVisibility) {
+  // Get the fields from the data
+  const defaultFields = ["id", "name", "type", "platform"]
+  
+  // Use Set to get unique fields from all personas
+  const actualFields = [...new Set(personas.map(row => Object.keys(row)).flat())].sort();
 
-  try {
-    const data = rawPersonas.records.map(node => node._fields[0].properties);
+  // Convert forceVisibility to array if provided, otherwise combine default and actual fields
+  const fields = forceVisibility?.length > 0 ? forceVisibility : [...new Set([...defaultFields, ...actualFields])];
 
-    // Get the fields from the data
-    const defaultFields = ["id", "name", "type", "platform"];
-    const actualFields = data.map(row => Object.keys(row)).flat().sort();
-    
-    // Convert to array if forceVisibility provided, otherwise create from fields
-    const fields = Array.isArray(forceVisibility) 
-      ? forceVisibility 
-      : Array.from(new Set([...defaultFields, ...actualFields]));
+  // Ensure that all rows have all fields
+  const prepRows = personas.map(row => { 
+    const newRow = {};
+    for(const field of fields) {
+      newRow[field] = row[field] || '';
+    }
+    return newRow;
+  });
 
-    // Ensure that all rows have all fields
-    const prepRows = data.map(row => { 
-      const newRow = {};
-      for(const field of fields) {
-        newRow[field] = row[field] || '';
-      }
-      return newRow;
-    });
-
-    console.log('Processed rows:', prepRows); // Debug log
-    return prepRows;
-
-  } catch (error) {
-    console.error('Error processing raw query results:', error);
-    return [];
-  }
+  return prepRows;
 }
 
 /**
@@ -197,8 +183,8 @@ async function read(tableConfig, tableForm) {
   const graphSort = tableConfig.forceSort || {
     field: tableForm?.sortField ? tableForm.sortField : "upn",
     direction: tableForm?.sortDirection ? tableForm.sortDirection : "ASC",
-    number: 1,
-    size: 500,
+    pageNum: 1,
+    pageSize: 500,
   }
  
   // Get the filters defined by the table form
@@ -214,7 +200,7 @@ async function read(tableConfig, tableForm) {
   const result = await core.graph.readPersonas(allGraphFilters, graphSort);
 
   // Get table rows based on the returned personas
-  const tableRows = rowsFromRawQuery(result.raw, tableConfig.forceVisibility);
+  const tableRows = rowsFromPersonaArray(result.personas, tableConfig.forceVisibility);
 
   // Get a list of the table's fields
   let keys = [];

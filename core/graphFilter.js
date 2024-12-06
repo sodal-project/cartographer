@@ -6,8 +6,8 @@ const consoleLog = require('./log').consoleLog;
 params: {
   field: string
   direction: ASC | DESC
-  number: number
-  size: number
+  pageNum: number
+  pageSize: number
 }
 
 filterArray: [
@@ -47,12 +47,6 @@ filterArray: [
   }
 ]
 
-filterShorthands: [
-  "field <key> <operator> value",  // converts to a field filter
-  "source <key> <operator> value", // key: id | name | lastUpdate, converts to a source filter
-  [upns] // converts to a set
-]
-
 */
 
 // Operators for filtering
@@ -85,10 +79,7 @@ const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
 /**
  * @description Filter the graph database based on the provided filter
  * 
- * This is the entry point for the graph filter. 
- * It takes a filter (object, array, or shorthand) and returns an array of personas that match the filter.
- * 
- * @param {object|array|string} filter - The filter input
+ * @param {object[]} filter - Array of filter objects
  * @param {object} params - The sort and pagination parameters
  * @returns {object[]} - The query results
  */
@@ -98,24 +89,13 @@ async function graphFilter(filter, params = {}) {
   const defaultParams = { 
     field: "upn", 
     direction: "ASC", 
-    number: 1, 
-    size: 500
+    pageNum: 1, 
+    pageSize: 500
   }
   params = { ...defaultParams, ...params };
-
-  // Ensure we're working with an array
-  const filters = Array.isArray(filter) ? filter : [filter];
   
-  // Convert shorthands and flatten the result
-  const standardFilters = filters
-    .map(convertShorthand)
-    .flat();
-
-  let upns = [];
-
-  if(standardFilters.length > 0) {
-    upns = await getUpnsFromFilter(standardFilters);
-  } else {
+  let upns = await getUpnsFromFilter(filter);
+  if(upns === null) {
     upns = await getAllUpns();
   }
 
@@ -124,67 +104,14 @@ async function graphFilter(filter, params = {}) {
   const time = new Date() - timeStart;
   consoleLog(`Graph filter processing time: ${time}ms`);
 
-  return {
+  const graphFilterResponse = {
     raw: sortedResults,
     personas: sortedResults.records.map(node => node._fields[0].properties),
     totalCount: upns.length,
     upns,
     time
   }
-}
-
-/**
- * Convert shorthand notation to standard filter format
- * @param {string|array} shorthand - The shorthand filter notation
- * @returns {object} - The standardized filter object
- */
-function convertShorthand(shorthand) {
-  // Handle array of UPNs shorthand
-  if (Array.isArray(shorthand)) {
-    return {
-      type: 'set',
-      upns: shorthand
-    };
-  }
-
-  // Handle string shorthand formats
-  if (typeof shorthand === 'string') {
-    const parts = shorthand.split(' ');
-    
-    // Must have at least 4 parts: type key operator value
-    if (parts.length < 4) {
-      throw new Error('Invalid shorthand filter format');
-    }
-
-    const [type, key, operator, ...valueParts] = parts;
-    const value = valueParts.join(' '); // Rejoin value in case it contains spaces
-
-    if (type === 'field') {
-      return {
-        type: 'field',
-        key,
-        operator,
-        value,
-        not: false
-      };
-    }
-
-    if (type === 'source') {
-      if (!['id', 'name', 'lastUpdate'].includes(key)) {
-        throw new Error('Invalid source filter key (must be id, name, or lastUpdate)');
-      }
-      return {
-        type: 'source',
-        key,
-        operator,
-        value,
-        not: false
-      };
-    }
-  }
-
-  // If it's not a recognized shorthand, return as-is
-  return shorthand;
+  return graphFilterResponse;
 }
 
 /**
@@ -450,8 +377,8 @@ async function sortResults (upns, params) {
   let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
   query += `RETURN DISTINCT persona 
   ORDER BY persona.${params.field} ${params.direction}
-  SKIP ${(params.number - 1) * params.size}
-  LIMIT ${params.size}`;
+  SKIP ${(params.pageNum - 1) * params.pageSize}
+  LIMIT ${params.pageSize}`;
 
   return await connector.runRawQuery(query, { upns });
 }
