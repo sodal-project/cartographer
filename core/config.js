@@ -1,11 +1,25 @@
+/**
+ * @fileoverview Persistent Module Configuration Management
+ * @module Core/config
+ * @description
+ * Provides functions to read, write, and delete persistent configuration data for modules.
+ * Data is stored in MongoDB with module-specific namespaces.
+ */
+
 const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
 
 /**
- * Read Persistent Module Configuration Data 
+ * Read persistent module configuration data
  * 
  * @param {string} moduleName - The name of the module associated with the configuration data
- * @param {string} optionalKey - The optional key to read from the configuration data
- * @returns {object} - The configuration data
+ * @param {string} [optionalKey] - OPTIONAL, specific key to read from the configuration data
+ * @returns {Promise<Object|any|null>} The configuration data, specific value if key provided, or null if not found
+ * @example
+ * // Read entire config
+ * const config = await readConfig('myModule');
+ * 
+ * // Read specific key
+ * const value = await readConfig('myModule', 'apiKey');
  */
 async function readConfig(moduleName, optionalKey) {
   const data = await readFromMongo(moduleName);
@@ -18,11 +32,17 @@ async function readConfig(moduleName, optionalKey) {
 }
 
 /**
- * Write Persistent Module Configuration Data
+ * Write persistent module configuration data
  * 
  * @param {string} moduleName - The name of the module associated with the configuration data
- * @param {object} data - The data to write to the config file
- * @returns {object|boolean} - The response from the database, or false if an error occurred
+ * @param {Object} data - The configuration data to write
+ * @returns {Promise<Object|boolean>} The response from the database, or false if an error occurred
+ * @example
+ * // Write config data
+ * await writeConfig('myModule', {
+ *   apiKey: 'abc123',
+ *   endpoint: 'https://api.example.com'
+ * });
  */
 async function writeConfig(moduleName, data) {
   try {
@@ -35,11 +55,14 @@ async function writeConfig(moduleName, data) {
 }
 
 /**
- * Delete Persistent Module Configuration Data
+ * Delete persistent module configuration data
  * 
  * @param {string} moduleName - The name of the module associated with the configuration data
- * @param {string} property - The property to delete from the namespace
- * @returns {object|boolean} - The response from the database, or false if an error occurred
+ * @param {string} property - The property to delete from the configuration
+ * @returns {Promise<Object|boolean>} The response from the database, or false if an error occurred
+ * @example
+ * // Delete a specific config property
+ * await deleteConfig('myModule', 'apiKey');
  */
 async function deleteConfig(moduleName, property) {
   try {

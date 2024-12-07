@@ -1,14 +1,25 @@
+/**
+ * @fileoverview Persona management and relationship handling
+ * @module Core/persona
+ */
+
 const CC = require('./constants');
 const check = require('./check');
 
+/** @typedef {import('./types').PersonaObject} PersonaObject */
+/** @typedef {import('./types').PersonaRelationship} PersonaRelationship */
+/** @typedef {import('./types').PersonaPlatform} PersonaPlatform */
+/** @typedef {import('./types').PersonaType} PersonaType */
+/** @typedef {import('./types').ControlLevel} ControlLevel */
+/** @typedef {import('./types').ControlConfidence} ControlConfidence */
+
 /**
  * Create a valid UPN string from a platform, type, and id
- * 
- * @param {string} platform 
- * @param {string} type 
+ * @param {PersonaPlatform} platform 
+ * @param {PersonaType} type 
  * @param {string} id 
- * @returns {string} - The generated UPN string
- * @throws {Error} - If the generated UPN string is invalid
+ * @returns {string} The generated UPN string
+ * @throws {Error} If the generated UPN string is invalid
  */
 const generateUpnRaw = (platform, type, id) => {
   const newUpn = "upn:" + platform + ":" + type + ":" + id;
@@ -16,6 +27,11 @@ const generateUpnRaw = (platform, type, id) => {
   return newUpn;
 }
 
+/**
+ * Create persona objects from relationship array
+ * @param {PersonaRelationship[]} relationships
+ * @returns {PersonaObject[]} Array of persona objects
+ */
 const getFromRelationships = (relationships) => {
   if(!relationships) { return null; }
 
@@ -39,10 +55,8 @@ const getFromRelationships = (relationships) => {
 
 /**
  * Get the simple properties of a persona object (no relationships)
- * 
- * @param {object} persona 
- * @returns {object} - The simple properties of the persona object
- * @throws {Error} - If the persona object is invalid
+ * @param {PersonaObject} persona 
+ * @returns {Omit<PersonaObject, 'control'|'obey'>} The simple properties
  */
 const getProps = (persona) => {
   if(!persona) { return null; }
@@ -55,11 +69,9 @@ const getProps = (persona) => {
 }
 
 /**
- * Get the relationships of a persona object as a Relationship object array
- * 
- * @param {object} persona 
- * @returns {object[]} - An array of relationship objects
- * @throws {Error} - If the persona object is invalid
+ * Get the relationships of a persona object
+ * @param {PersonaObject} persona 
+ * @returns {PersonaRelationship[]} Array of relationship objects
  */
 const getRelationships = (persona) => {
   if(!persona) { return null; }
@@ -70,8 +82,6 @@ const getRelationships = (persona) => {
     console.log('Error checking persona object: \n' + error);
   }
 
-  // loop through this persona's control and obey arrays 
-  // and create new relationship objects
   const relationships = [];
 
   if(persona.control) {
@@ -101,9 +111,8 @@ const getRelationships = (persona) => {
 
 /**
  * Create a new persona object from an email address
- * 
  * @param {string} email 
- * @returns {object} - A new persona object
+ * @returns {PersonaObject} A new persona object
  */
 const newFromEmail = (email) => {
   return newPersona(CC.PLATFORM.EMAIL, CC.TYPE.ACCOUNT, email.toLowerCase());
@@ -111,12 +120,10 @@ const newFromEmail = (email) => {
 
 /**
  * Create a new persona object from a UPN string
- * 
  * @param {string} upn 
- * @returns {object} - A new persona object
+ * @returns {PersonaObject} A new persona object
  */
 const newFromUpn = (upn) => {
-
   const platform = upn.split(":")[1];
   const type = upn.split(":")[2];
   const id = upn.split(":")[3];
@@ -126,12 +133,11 @@ const newFromUpn = (upn) => {
 
 /**
  * Create a new persona object
- * 
- * @param {string} platform 
- * @param {string} type 
+ * @param {PersonaPlatform} platform 
+ * @param {PersonaType} type 
  * @param {string} id 
- * @param {object} optionalParams 
- * @returns {object} - A new persona object
+ * @param {Partial<PersonaObject>} [optionalParams] 
+ * @returns {PersonaObject} A new persona object
  */
 const newPersona = (platform, type, id, optionalParams) => {
   if(!platform || !type || !id) { return null; }
@@ -150,7 +156,6 @@ const newPersona = (platform, type, id, optionalParams) => {
   }
 
   check.personaObject(persona);
-
   return persona;
 }
 

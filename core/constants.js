@@ -1,12 +1,16 @@
 /**
- * Relationship Levels
- * 
- * REQUIRED relationship levels for personas
- * Relationships must have a single level from this list
- * 
- * @readonly
+ * @fileoverview Constants and enumerations for the persona graph system
+ * @module Core/constants
  */
 
+/** @typedef {import('./types').ControlLevel} ControlLevel */
+/** @typedef {import('./types').ControlConfidence} ControlConfidence */
+
+/**
+ * Control level mappings
+ * Maps string representations to their numeric values (1-12)
+ * @type {Object.<string|number, ControlLevel>}
+ */
 const LEVEL = {
   1: 1,           // WILL has physical control
   "1": 1,
@@ -60,37 +64,24 @@ const LEVEL = {
 }
 
 /**
- * Relationship Confidence
- * 
- * Relationships must have a any confidance value ranging from 0 to 1
- * The score below are default values
- * 
- * MAX-SYSTEM = A system declares the relationship between two personas that it instantiates (highest system-level confidence)
- * HIGH-PROVEN = The relationship is known to exist, and all details are known (highest human-level confidence)
- * MEDIUM-ASSERTED = The relationship is known to exist, but not all relationship details are available
- * LOW-INFERRED = The relationship is assumed to exist from other data, but the relationship is not directly observed
- * MIN-UNKNOWN = The relationship is speculative
- * 
- * @readonly
+ * Standard confidence levels for relationships
+ * @type {Object.<string, ControlConfidence>}
  */
 const CONFIDENCE = {
   "MAX-SYSTEM": 1,
-  "HIGH-PROVEN": .75,
-  "MEDIUM-ASSERTED": .5,
-  "LOW-INFERRED": .25,
-  "MIN-UNKNOWN": .01,
+  "HIGH-PROVEN": 0.75,
+  "MEDIUM-ASSERTED": 0.5,
+  "LOW-INFERRED": 0.25,
+  "MIN-UNKNOWN": 0.01,
 }
 
 /**
- * Platform Types
- * 
- * OPTIONAL platform types for personas
- * Personas may have platform types not listed here
- * 
- * @readonly
+ * Standard platform types
+ * Note: Custom platform types are allowed
+ * @type {Object.<string, string>}
  */
 const PLATFORM = {
-  "DIRECTORY": "directory",   // Cartographer app data (Participants, Activities, etc.)
+  "DIRECTORY": "directory",
   "BAMBOOHR": "bamboohr",
   "EMAIL": "email",     
   "GOOGLE": "google",    
@@ -99,18 +90,14 @@ const PLATFORM = {
 }
 
 /**
- * Persona Types
- * 
- * OPTIONAL persona types for personas
- * Personas may have types not listed here
- * The meaning of each type is platform-specific
- * 
- * @readonly
+ * Standard persona types
+ * Note: Custom types are allowed and type meanings are platform-specific
+ * @type {Object.<string, string>}
  */
 const TYPE = {
-  "PARTICIPANT": "participant",   // a directory reference to a human being
-  "RECORD": "record",             // a platform's reference to a human being; records map indirect control to other personas (the record describes but does not grant agency)
-  "ACTIVITY": "activity",                     // a group of humans working together
+  "PARTICIPANT": "participant",
+  "RECORD": "record",
+  "ACTIVITY": "activity",
   "ACCOUNT": "account",
   "WORKSPACE": "workspace",
   "ORGANIZATION": "organization",
@@ -119,7 +106,7 @@ const TYPE = {
   "ROLE": "role",
   "TEAM": "team",
   "REPO": "repo",
-  "CHANNEL": "channel",  
+  "CHANNEL": "channel",
 }
 
 module.exports = {

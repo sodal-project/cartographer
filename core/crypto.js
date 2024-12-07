@@ -1,5 +1,9 @@
 /**
- * Provide simplified global encryption and decryption functions
+ * @fileoverview Provide simplified global encryption and decryption functions
+ * @module Core/crypto
+ * @description
+ * Provides AES-256-GCM encryption/decryption functions with module-specific keys.
+ * Each module gets a unique encryption key derived from MODULE_SECRET and the module name.
  */
 
 const crypto = require('crypto');
@@ -9,10 +13,14 @@ require('dotenv').config();
 const algorithm = "aes-256-gcm";
 
 /**
- * Encrypt a string
+ * Encrypt a string using AES-256-GCM
  * 
- * @param {string} module - Passed by core, used to generate a unique key
- * @param {string} text - The string to encrypt
+ * @param {string} module - Module name used to generate a unique key
+ * @param {string} text - The plaintext to encrypt
+ * @returns {Promise<Object>} Encryption package
+ * @property {string} encrypted - Base64 encoded encrypted data
+ * @property {string} iv - Base64 encoded initialization vector
+ * @property {string} tag - Base64 encoded authentication tag
  */
 async function encrypt(module, text) {
   const iv = crypto.randomBytes(12).toString('base64');
@@ -29,7 +37,15 @@ async function encrypt(module, text) {
 }
 
 /**
- * Decrypt a string
+ * Decrypt a string using AES-256-GCM
+ * 
+ * @param {string} module - Module name used to generate the unique key
+ * @param {Object} secretPackage - Package containing encrypted data
+ * @param {string} secretPackage.encrypted - Base64 encoded encrypted data
+ * @param {string} secretPackage.iv - Base64 encoded initialization vector
+ * @param {string} secretPackage.tag - Base64 encoded authentication tag
+ * @returns {Promise<string>} The decrypted plaintext
+ * @throws {Error} If decryption fails due to tampering or incorrect key
  */
 async function decrypt(module, secretPackage) {
   const { encrypted, iv, tag } = secretPackage;

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Graph database operations
+ * @module Core/graph
+ */
+
 const check = require('./check');
 const connector = require('./graphNeo4jConnector');
 const sourceUtils = require('./source');
@@ -5,11 +10,20 @@ const sourceStore = require('./sourceStore');
 const personaUtils = require('./persona');
 const graphFilter = require('./graphFilter');
 
+/** @typedef {import('./types').PersonaObject} PersonaObject */
+/** @typedef {import('./types').PersonaRelationship} PersonaRelationship */
+/** @typedef {import('./types').QuerySet} QuerySet */
+/** @typedef {import('./types').GraphFilterResponse} GraphFilterResponse */
+/** @typedef {import('./types').GraphResponse} GraphResponse */
+/** @typedef {import('./types').GraphBatchResponse} GraphBatchResponse */
+/** @typedef {import('./types').SourceObject} SourceObject */
+/** @typedef {import('./types').ControlLevel} ControlLevel */
+/** @typedef {import('./types').ControlConfidence} ControlConfidence */
+
 /**
  * Delete Personas that are not declared by any source
- * 
  * @param {string} module - automatically passed by core
- * @returns {object} - The response from the database
+ * @returns {Promise<GraphResponse>} The response from the database
  */
 const deleteOrphanedPersonas = async (module) => { 
   const query = `MATCH (persona:Persona)
@@ -17,19 +31,17 @@ const deleteOrphanedPersonas = async (module) => {
   DETACH DELETE persona`
 
   const response = await connector.runRawQuery(query);
-
   console.log('Deleted orphaned personas');
   return response;
 }
 
 /**
  * Detach a persona from a source
- * 
  * @param {string} module - automatically passed by core
  * @param {string} upn - the upn of the persona to remove
- * @param {string} sid - OPTIONAL, the source id to remove the persona from
- * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query 
- * @returns {object} - The response from the database, or the query set object
+ * @param {string} [sid] - OPTIONAL, the source id to remove the persona from
+ * @param {boolean} [querySetOnly] - OPTIONAL, if true, return a query set object instead of executing the query 
+ * @returns {Promise<GraphBatchResponse|QuerySet[]>} The response from the database, or the query set object
  */
 const removePersona = async (module, upn, sid, querySetOnly) => {
   if(!sid) {
@@ -68,8 +80,8 @@ const removePersona = async (module, upn, sid, querySetOnly) => {
  * 
  * @param {string} module - automatically passed by core
  * @param {string} upn - the upn of the persona to delete
- * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
- * @returns {object} - The response from the database, or the query set object
+ * @param {boolean} [querySetOnly] - OPTIONAL, if true, return a query set object instead of executing the query
+ * @returns {Promise<GraphResponse|QuerySet[]>} The response from the database, or the query set object
  */
 const deletePersona = async (module, upn, querySetOnly) => {
   const queries = [];
@@ -85,7 +97,6 @@ const deletePersona = async (module, upn, querySetOnly) => {
   }
 
   const response = await connector.runRawQueryArray(queries);
-
   console.log('Deleted persona:', upn);
   return response;
 }
@@ -94,9 +105,9 @@ const deletePersona = async (module, upn, querySetOnly) => {
  * Delete a source from the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {string} sid - OPTIONAL, the source id to delete
- * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
- * @returns {object} - The response from the database, or the query set object
+ * @param {string} [sid] - OPTIONAL, the source id to delete
+ * @param {boolean} [querySetOnly] - OPTIONAL, if true, return a query set object instead of executing the query
+ * @returns {Promise<GraphResponse|QuerySet[]>} The response from the database, or the query set object
  */
 const deleteSource = async (module, sid, querySetOnly) => {
   if(!sid) {
@@ -119,19 +130,18 @@ const deleteSource = async (module, sid, querySetOnly) => {
   }
 
   const response = await connector.runRawQueryArray(queries);
-
   console.log('Deleted source:', sid);
-  return response
+  return response;
 }
 
 /**
  * Merge a persona with the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {object} persona - a valid persona object
- * @param {object} source - OPTIONAL, a valid source object
- * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
- * @returns {Array} - The response from the database, or the query set array object
+ * @param {PersonaObject} persona - a valid persona object
+ * @param {SourceObject} [source] - OPTIONAL, a valid source object
+ * @param {boolean} [querySetOnly] - OPTIONAL, if true, return a query set object instead of executing the query
+ * @returns {Promise<GraphBatchResponse|QuerySet[]>} The response from the database, or the query set array object
  */
 const mergePersona = async (module, persona, source, querySetOnly) => {
   if(!persona) {
@@ -230,10 +240,10 @@ const mergePersona = async (module, persona, source, querySetOnly) => {
  * Merge an array of personas with the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {object} personaArray - an array of persona objects
- * @param {object} source - OPTIONAL, a valid source object
- * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
- * @returns {Array} - The response from the database, or the query set array object
+ * @param {PersonaObject[]} personaArray - an array of persona objects
+ * @param {SourceObject} [source] - OPTIONAL, a valid source object
+ * @param {boolean} [querySetOnly] - OPTIONAL, if true, return a query set object instead of executing the query
+ * @returns {Promise<GraphBatchResponse|QuerySet[]>} The response from the database, or the query set array object
  */
 const mergePersonas = async (module, personaArray, source, querySetOnly) => {
   let queries = [];
@@ -252,9 +262,9 @@ const mergePersonas = async (module, personaArray, source, querySetOnly) => {
  * Merge a source with the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {object} source - OPTIONAL, a valid source object
- * @param {boolean} querySetOnly - OPTIONAL, if true, return a query set object instead of executing the query
- * @returns {object} - The source object from the database, or the query set object
+ * @param {SourceObject} [source] - OPTIONAL, a valid source object
+ * @param {boolean} [querySetOnly] - OPTIONAL, if true, return a query set object instead of executing the query
+ * @returns {Promise<SourceObject|QuerySet>} The source object from the database, or the query set object
  */
 const mergeSource = async (module, source, querySetOnly) => {
   if(!source) {
@@ -285,7 +295,7 @@ const mergeSource = async (module, source, querySetOnly) => {
  * Read all personas that are not declared by any source
  * 
  * @param {string} module - automatically passed by core
- * @returns {object[]} - An array of persona objects
+ * @returns {Promise<PersonaObject[]>} An array of persona objects
  */ 
 const readOrphanedPersonas = async (module) => {
   const query = `MATCH (persona:Persona)
@@ -307,7 +317,7 @@ const readOrphanedPersonas = async (module) => {
  * 
  * @param {string} module - automatically passed by core 
  * @param {string} upn - the upn of the persona to read 
- * @returns {object} - The persona object
+ * @returns {Promise<PersonaObject|null>} The persona object or null if not found
  */
 const readPersona = async (module, upn) => {
 
@@ -362,20 +372,12 @@ const readPersona = async (module, upn) => {
  * Filter and sort personas from the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {object} filter - OPTIONAL, a filter object
- * @param {object} params - OPTIONAL, a sort and pagination object
- * @returns {
- *  raw: object[] - An array of raw query results
- *  personas: object[] - An array of persona objects from the graph
- *  upns: string[] - An array of upns
- *  currentCount: number - The number of personas that match the filter
- *  totalCount: number - The total number of personas that match the filter
- *  time: number - The time it took to execute the full query in milliseconds
- * } - The result
+ * @param {FilterObject} [filter] - OPTIONAL, a filter object
+ * @param {FilterParams} [params] - OPTIONAL, a sort and pagination object
+ * @returns {Promise<GraphFilterResponse>} The filtered and sorted results
  */
 const readPersonas = async (module, filter, params) => {
   const results = await graphFilter(filter, params);
-
   return results;
 }
 
@@ -383,8 +385,8 @@ const readPersonas = async (module, filter, params) => {
  * Get a source object from the persona graph database
  * 
  * @param {string} module - automatically passed by core
- * @param {string} sid - OPTIONAL, the source id to read
- * @returns {object} - The source object
+ * @param {string} [sid] - OPTIONAL, the source id to read
+ * @returns {Promise<SourceObject|null>} The source object or null if not found
  */
 const readSource = async (module, sid) => {
   if(!sid) {
@@ -408,8 +410,8 @@ const readSource = async (module, sid) => {
  * Get all personas declared by a given source
  * 
  * @param {string} module - automatically passed by core
- * @param {string} sid - OPTIONAL, the source id to read personas from
- * @returns {object[]} - An array of persona objects
+ * @param {string} [sid] - OPTIONAL, the source id to read personas from
+ * @returns {Promise<PersonaObject[]>} An array of persona objects
  */
 const readSourcePersonas = async (module, sid) => {
   if(!sid) {
@@ -433,7 +435,7 @@ const readSourcePersonas = async (module, sid) => {
  * 
  * @param {string} module - automatically passed by core
  * @param {string} sid - The source id to read relationships from
- * @returns {object[]} - An array of relationship objects
+ * @returns {Promise<PersonaRelationship[]>} An array of relationship objects
  */
 const readSourceRelationships = async (module, sid) => {
   const query = `MATCH (persona:Persona)-[rel:CONTROL]->(relation:Persona)
@@ -454,26 +456,37 @@ const readSourceRelationships = async (module, sid) => {
 /**
  * Execute a raw query against the persona graph database
  * 
+ * @param {string} module - automatically passed by core
  * @param {string} query - The cypher query to execute
- * @param {object} optionalParams - The parameters for the query
- * @returns {object} - The response from the database
+ * @param {Object} [optionalParams] - OPTIONAL, parameters for the query
+ * @param {boolean} [doCache] - OPTIONAL, whether to cache the results
+ * @returns {Promise<GraphResponse>} The response from the database
  */
 const runRawQuery = async (module, query, optionalParams, doCache) => {
-  return await connector.runRawQuery (query, optionalParams, doCache);
+  return await connector.runRawQuery(query, optionalParams, doCache);
 }
 
 /**
  * Execute an array of queries in a set of transactions
  * 
- * @param {object[]} queryArray - An array of query objects
- * @returns {object} - The response from the database
+ * @param {string} module - automatically passed by core
+ * @param {QuerySet[]} queryArray - Array of query objects
+ * @param {boolean} [doCache] - OPTIONAL, whether to cache the results
+ * @returns {Promise<GraphBatchResponse>} The response from the database
  */
 const runRawQueryArray = async (module, queryArray, doCache) => {
   return await connector.runRawQueryArray(queryArray, doCache);
 }
 
+/**
+ * Synchronize an array of personas with the graph database
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {PersonaObject[]} personaArray - Array of personas to sync
+ * @param {SourceObject} [customSource] - OPTIONAL, custom source object
+ * @returns {Promise<GraphBatchResponse|void>} The response from the database if changes were made
+ */
 const syncPersonas = async (module, personaArray, customSource) => {
-
   const source = customSource ? customSource : sourceUtils.getSourceObject(module);
   check.sourceObject(source);
 
@@ -494,18 +507,16 @@ const syncPersonas = async (module, personaArray, customSource) => {
   } else {
     console.log(`Merge Sync found ${queries.length} queries, no changes to process`);
   }
-
 }
 
 /**
  * Get a source store object from the graph
  * 
- * @param {string} sid 
- * @returns {object} - A source store object representing the entire
- *  graph associated with this source
+ * @param {string} module - automatically passed by core
+ * @param {string} sid - Source identifier
+ * @returns {Promise<SourceStoreObject|null>} Source store object or null if not found
  */
 const readSourceStore = async (module, sid) => {
-
   // get the source object
   const source = await readSource(module, sid);
 
@@ -541,8 +552,16 @@ const readSourceStore = async (module, sid) => {
   return store;
 }
 
+/**
+ * Remove all control relationships between two personas for a given source
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {string} upn1 - First persona UPN
+ * @param {string} upn2 - Second persona UPN
+ * @param {string} [sid] - OPTIONAL, source identifier
+ * @returns {Promise<GraphResponse>} The response from the database
+ */
 const unlinkPersonas = async (module, upn1, upn2, sid) => {
-
   const query = `MATCH (persona1:Persona {upn: $upn1})-[r:CONTROL]-(persona2:Persona {upn: $upn2})
   WHERE r.sid = $sid
   DELETE r`
@@ -552,16 +571,28 @@ const unlinkPersonas = async (module, upn1, upn2, sid) => {
   }
 
   const response = await connector.runRawQuery(query, { upn1, upn2, sid });
-
   console.log('Unlinked personas:', upn1, upn2);
-
   return response;
 }
 
+/**
+ * Create a backup of a source's data
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {string} sid - Source identifier
+ * @returns {Promise<Object>} Source store object containing all source data
+ */
 const backupSource = async (module, sid) => {
   return await readSourceStore(module, sid);
 }
 
+/**
+ * Restore a source from a backup
+ * 
+ * @param {string} module - automatically passed by core
+ * @param {Object} sourceStoreObject - Source store object from backupSource
+ * @returns {Promise<GraphBatchResponse|void>} The response from the database if changes were made
+ */
 const restoreSource = async (module, sourceStoreObject) => {
   check.sourceStoreObject(sourceStoreObject);
 
