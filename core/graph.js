@@ -9,6 +9,7 @@ const sourceUtils = require('./source');
 const sourceStore = require('./sourceStore');
 const personaUtils = require('./persona');
 const graphFilter = require('./graphFilter');
+const types = require('./types');
 
 /** @typedef {import('./types').PersonaObject} PersonaObject */
 /** @typedef {import('./types').PersonaRelationship} PersonaRelationship */

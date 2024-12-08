@@ -315,3 +315,5 @@
  * @property {GraphResponse[]} responses - Array of individual query responses
  * @property {number} totalTime - Total execution time in ms
  */ 
+
+module.exports = {}
