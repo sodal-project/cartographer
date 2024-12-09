@@ -1,4 +1,4 @@
-const core = require('../../core/core.js');
+import core from '../../core/core.js';
 
 const handleModuleFunction = async (req, res) => {
   const { moduleName, command } = req.params;
@@ -39,7 +39,7 @@ const handleModuleFunctionDownload = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   handleModuleFunction,
   handleModuleFunctionDownload,
 };

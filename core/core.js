@@ -1,25 +1,24 @@
 /**
  * @fileoverview Core system interface
- * @module Core
- * @requires Core/types
  */
 
 // Core Namespaces
 // Accessed via core.<namespace>.<call>()
-const cache = require('./cache.js')
-const check = require('./check.js')
-const client = require('./client.js')
-const config = require('./config.js')
-const crypto = require('./crypto.js')
-const constants = require('./constants.js')
-const graph = require('./graph.js')
-const persona = require('./persona.js')
-const source = require('./source.js')
-const types = require('./types.js')
+import cache from './cache.js'
+import check from './check.js'
+import client from './client.js'
+import config from './config.js'
+import crypto from './crypto.js'
+import constants from './constants.js'
+import graph from './graph.js'
+import persona from './persona.js'
+import server from './server.js'
+import source from './source.js'
+import types from './types.js'
 
 // Core Imports
-const { getCallingFolder } = require('./utilities.js');
-const { consoleLog, writeLog } = require('./log.js');
+import { getCallingFolder } from './utilities.js';
+import { consoleLog, writeLog } from './log.js';
 
 /**
  * This object stores the raw calls made through core
@@ -57,7 +56,7 @@ async function initModules(moduleArray) {
     const module = moduleArray[item].folder;
 
     // load the module
-    calls.mod[module] = await require(`../modules/${module}/mainPane.js`);
+    calls.mod[module] = await import(`../modules/${module}/mainPane.js`);
     core.mod[module] = {};
 
     consoleLog(`Core: loading external module: ${module}`)
@@ -182,7 +181,6 @@ function log(message, type='UNKNOWN_TYPE') {
 
 /**
  * Core system interface for Cartographer modules
- * @namespace Core
  * @description The main interface for all Cartographer module interactions. Provides:
  * - Module management and initialization
  * - Graph database operations
@@ -209,60 +207,60 @@ const core = {
   coreData: {
     currentModule: 'none',
     modules: [
-      {
-        folder: "directory",
-        label: "Directory",
-        category: "Discovery",
-        accessLevel: "operator"
-      },
-      {
-        folder: "filter-queries",
-        label: "Filter Queries",
-        category: "Discovery",
-        accessLevel: "operator"
-      },
-      {
-        folder: "detailPane",
-        label: "Detail Pane",
-        category: "Discovery",
-        accessLevel: "operator"
-      },
-      {
-        folder: "slack",
-        label: "Slack Integration",
-        category: "Integrations",
-        accessLevel: "admin"
-      },
-      {
-        folder: "google",
-        label: "Google Integration",
-        category: "Integrations",
-        accessLevel: "admin"
-      },
-      {
-        folder: "tableau",
-        label: "Tableau Integration",
-        category: "Integrations",
-        accessLevel: "admin"
-      },
-      {
-        folder: "bamboohr",
-        label: "BambooHR Integration",
-        category: "Integrations",
-        accessLevel: "admin"
-      },
-      {
-        folder: "powerbi",
-        label: "PowerBI Integration",
-        category: "Integrations",
-        accessLevel: "admin"
-      },
-      {
-        folder: "personaTable",
-        label: "Persona Table",
-        category: "System",
-        accessLevel: "admin"
-      },
+      // {
+      //   folder: "directory",
+      //   label: "Directory",
+      //   category: "Discovery",
+      //   accessLevel: "operator"
+      // },
+      // {
+      //   folder: "filter-queries",
+      //   label: "Filter Queries",
+      //   category: "Discovery",
+      //   accessLevel: "operator"
+      // },
+      // {
+      //   folder: "detailPane",
+      //   label: "Detail Pane",
+      //   category: "Discovery",
+      //   accessLevel: "operator"
+      // },
+      // {
+      //   folder: "slack",
+      //   label: "Slack Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "google",
+      //   label: "Google Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "tableau",
+      //   label: "Tableau Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "bamboohr",
+      //   label: "BambooHR Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "powerbi",
+      //   label: "PowerBI Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "personaTable",
+      //   label: "Persona Table",
+      //   category: "System",
+      //   accessLevel: "admin"
+      // },
       {
         folder: "test-config",
         label: "Test Config",
@@ -275,12 +273,12 @@ const core = {
         category: "System",
         accessLevel: "admin"
       },
-      {
-        folder: "exportCsv",
-        label: "Export CSV",
-        category: "System",
-        accessLevel: "admin"
-      },
+      // {
+      //   folder: "exportCsv",
+      //   label: "Export CSV",
+      //   category: "System",
+      //   accessLevel: "admin"
+      // },
     ]
   },
 
@@ -511,18 +509,12 @@ const core = {
 
   /**
    * Graph database functions
-   * @namespace Core.graph
-   * @see {@typedef Core.GraphResponse}
-   * @see {@typedef Core.Filter}
-   * @see {@typedef Core.FilterObject}
-   * @see {@typedef Core.PersonaObject}
-   * @see {@typedef Core.SourceObject}
    */
   graph: {
     /**
      * Backup a source
      * @async
-     * @param {string} sourceId - Source ID
+     * @param {SourceObject.id} sourceId - Source ID
      * @returns {Promise<void>}
      */
     backupSource: wrapWithModule(graph.backupSource),
@@ -683,10 +675,18 @@ const core = {
     newFromUpn: wrapWithoutModule(persona.newFromUpn)
   },
 
+  /**
+   * Server-side functions
+   */
+  server: {
+    realtime: wrapWithoutModule(server.realtime),
+    setupWebSocket: wrapWithoutModule(server.setupWebSocket)
+  },
+
   // Source namespace
   source: {
     getSourceObject: wrapWithModule(source.getSourceObject)
   }
 };
 
-module.exports = core;
+export default core;

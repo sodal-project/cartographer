@@ -1,9 +1,9 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const authenticateToken = require('../middlewares/authenticateToken');
-const { renderHomePage } = require('../controllers/coreController');
+import authenticateToken from '../middlewares/authenticateToken.js';
+import { renderHomePage } from '../controllers/coreController.js';
 
 router.get("/", authenticateToken, renderHomePage);
 router.get("/:moduleName/:command/", authenticateToken, renderHomePage);
 
-module.exports = router;
+export default router;

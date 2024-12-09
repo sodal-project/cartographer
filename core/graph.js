@@ -3,13 +3,13 @@
  * @module Core/graph
  */
 
-const check = require('./check');
-const connector = require('./graphNeo4jConnector');
-const sourceUtils = require('./source');
-const sourceStore = require('./sourceStore');
-const personaUtils = require('./persona');
-const graphFilter = require('./graphFilter');
-const types = require('./types');
+import check from './check.js';
+import connector from './graphNeo4jConnector.js';
+import sourceUtils from './source.js';
+import sourceStore from './sourceStore.js';
+import personaUtils from './persona.js';
+import graphFilter from './graphFilter.js';
+import types from './types.js';
 
 /** @typedef {import('./types').PersonaObject} PersonaObject */
 /** @typedef {import('./types').PersonaRelationship} PersonaRelationship */
@@ -613,7 +613,7 @@ const restoreSource = async (module, sourceStoreObject) => {
 }
 
 
-module.exports = {
+export default {
   backupSource,
   deleteOrphanedPersonas,
   deletePersona,

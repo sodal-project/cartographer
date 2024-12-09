@@ -1,4 +1,4 @@
-const Handlebars = require('handlebars');
+import Handlebars from 'handlebars';
 
 /**
  * Add custom Handlebars helpers here.
@@ -162,7 +162,7 @@ const includes = (array, value, options) => {
   return options.inverse(this);
 };
 
-module.exports = {
+export default {
   eq,
   add,
   dynamicPartial,

@@ -1,9 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
+import fs from 'fs';
+import path from 'path';
+import process from 'process';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Core Imports
-const { getFormattedDate } = require('./utilities.js');
+import { getFormattedDate } from './utilities.js';
 
 /**
  * writeLog
@@ -55,7 +56,7 @@ function consoleLog(msg) {
   }
 }
 
-module.exports = {
+export {
   writeLog,
   consoleLog,
 };

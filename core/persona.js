@@ -3,8 +3,8 @@
  * @module Core/persona
  */
 
-const CC = require('./constants');
-const check = require('./check');
+import CC from './constants.js';
+import check from './check.js';
 
 /** @typedef {import('./types').PersonaObject} PersonaObject */
 /** @typedef {import('./types').PersonaRelationship} PersonaRelationship */
@@ -159,7 +159,7 @@ const newPersona = (platform, type, id, optionalParams) => {
   return persona;
 }
 
-module.exports = {
+export default {
   getFromRelationships,
   getProps,
   getRelationships,

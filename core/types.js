@@ -316,4 +316,4 @@
  * @property {number} totalTime - Total execution time in ms
  */ 
 
-module.exports = {}
+export default {}

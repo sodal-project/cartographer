@@ -3,9 +3,9 @@
  * @module Core/graphFilter
  */
 
-const connector = require('./graphNeo4jConnector');
-const CC = require('./constants');
-const consoleLog = require('./log').consoleLog;
+import connector from './graphNeo4jConnector.js';
+import CC from './constants.js';
+import { consoleLog } from './log.js';
 
 /** @typedef {import('./types').FilterObject} FilterObject */
 /** @typedef {import('./types').FilterParams} FilterParams */
@@ -367,4 +367,4 @@ async function sortResults(upns, params) {
   return await connector.runRawQuery(query, { upns });
 }
 
-module.exports = graphFilter;
+export default graphFilter;

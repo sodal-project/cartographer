@@ -1,3 +1,10 @@
+import { CoreClientModule } from './CoreClientModule.js';
+import { realtime } from './realtime.js';
+
+// Export for browser usage
+window.CoreClientModule = CoreClientModule;
+window.realtime = realtime;
+
 let spinnerTimeout;
 
 // Show the spinner after 1 second if the request is still in progress

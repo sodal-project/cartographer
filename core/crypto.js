@@ -6,9 +6,11 @@
  * Each module gets a unique encryption key derived from MODULE_SECRET and the module name.
  */
 
-const crypto = require('crypto');
-const config = require('./config.js');
-require('dotenv').config();
+import crypto from 'crypto';
+import dotenv from 'dotenv';
+import process from 'process';
+import Buffer from 'buffer';
+dotenv.config();
 
 const algorithm = "aes-256-gcm";
 
@@ -60,7 +62,7 @@ async function decrypt(module, secretPackage) {
   return decrypted;
 }
 
-module.exports = {
+export default {
   encrypt,
   decrypt,
 }

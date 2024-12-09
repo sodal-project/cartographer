@@ -1,4 +1,4 @@
-const path = require('path');
+import path from 'path';
 
 /**
  * Get Calling Folder
@@ -9,7 +9,7 @@ const path = require('path');
  */ 
 function getCallingFolder(stack) {
   try {
-    const callerFile = stack.split('\n')[2].trim().match(/(\/.*)\:\d+:\d+|(\/.*)\:\d+:\d+\)/)[1];
+    const callerFile = stack.split('\n')[2].trim().match(/(\/.*):\d+:\d+|(\/.*):\d+:\d+\)/)[1];
     const folderName = path.basename(path.dirname(callerFile));
     return folderName;
   } catch (err) {
@@ -37,7 +37,7 @@ function getFormattedDate() {
   return `${month}-${day}-${year}_${hours}:${minutes}:${seconds}`;
 }
 
-module.exports = {
+export {
   getCallingFolder,
   getFormattedDate
 };

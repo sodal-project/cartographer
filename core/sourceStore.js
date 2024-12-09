@@ -1,6 +1,9 @@
+
+import utilPersona from './persona.js';
+import check from './check.js';
+
 /**
  * @fileoverview Source Store Management
- * @module Core/sourceStore
  * @description
  * Source Store provides a way to sync source data with the persona graph.
  * It handles building source stores from standard persona objects,
@@ -11,9 +14,6 @@
  * A merge operation will remove any source personas or relationships 
  * from the graph that are not present in the new source store.
  */
-
-const utilPersona = require('./persona');
-const check = require('./check');
 
 /** @typedef {import('./types').PersonaObject} PersonaObject */
 /** @typedef {import('./types').SourceObject} SourceObject */
@@ -415,7 +415,7 @@ const getRemoveControlQuery = (sid, controlUpn, obeyUpn) => {
   return {query, values: {sid, controlUpn, obeyUpn}};
 }
 
-module.exports = {
+export default {
   newStore,
   addPersonas,
   addRelationships,

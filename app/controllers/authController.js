@@ -1,6 +1,7 @@
-const { MongoClient } = require('mongodb');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+import { MongoClient } from 'mongodb';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import process from 'process';
 
 // TODO: Temp data storage
 let refreshTokens = [];
@@ -169,7 +170,7 @@ const handleLogout = async (req, res) => {
   res.status(204).json({ message: 'Logout successful' });
 };
 
-module.exports = {
+export {
   renderRegisterPage,
   handleRegister,
   renderLoginPage,

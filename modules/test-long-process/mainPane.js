@@ -1,4 +1,4 @@
-const core = require('../../core/core.js');
+import core from '../../core/core.js';
 
 /**
  * @description Fetch data from the config database namespace and render the main template
@@ -41,7 +41,7 @@ async function longProcess() {
   return redraw();
 }
 
-module.exports = {
+export {
   mainPane,
   longProcess,
 };

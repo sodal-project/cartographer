@@ -1,8 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const Handlebars = require('handlebars');
-const sanitize = require('sanitize-filename');
-const { consoleLog } = require('./log.js');
+import fs from 'fs';
+import path from 'path';
+import Handlebars from 'handlebars';
+import sanitize from 'sanitize-filename';
+import { consoleLog } from './log.js';
 
 /**
  * Render Handlebars Template
@@ -75,7 +75,7 @@ const registerPartials = (moduleName) => {
   readPartials(partialsDir);
 };
 
-module.exports = {
+export default {
   render,
   registerPartials,
 }

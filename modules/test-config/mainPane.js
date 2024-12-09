@@ -1,4 +1,4 @@
-const core = require('../../core/core.js');
+import core from '../../core/core.js';
 
 /**
  * @description 
@@ -42,7 +42,7 @@ async function deleteConfig(formData) {
   return redraw();
 }
 
-module.exports = {
+export {
   mainPane,
   writeConfig,
   deleteConfig,

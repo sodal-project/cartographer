@@ -1,6 +1,7 @@
 {
   "name": "cartograper-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "Cartographer Core Server facilitates communication between modules and provides data and interface strings to the client.",
   "main": "index.js",
   "scripts": {
@@ -19,6 +20,13 @@
     "multer": "^1.4.5-lts.1",
     "neo4j-driver": "^5.26.0",
     "nodemon": "^3.1.7",
-    "sanitize-filename": "^1.6.3"
+    "sanitize-filename": "^1.6.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "eslint": "^9.16.0",
+    "globals": "^15.13.0",
+    "typescript-eslint": "^8.17.0"
   }
 }

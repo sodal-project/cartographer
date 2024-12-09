@@ -6,7 +6,7 @@
  * Data is stored in MongoDB with module-specific namespaces.
  */
 
-const { readFromMongo, writeToMongo, deleteFromMongo } = require('./mongo.js');
+import { readFromMongo, writeToMongo, deleteFromMongo } from './mongo.js';
 
 /**
  * Read persistent module configuration data
@@ -74,7 +74,7 @@ async function deleteConfig(moduleName, property) {
   }
 }
 
-module.exports = {
+export default {
   readConfig,
   writeConfig,
   deleteConfig,
