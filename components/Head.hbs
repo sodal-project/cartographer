@@ -2,11 +2,23 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cartographer</title>
+
   <!-- Tailwind CSS -->
   <link
     href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
     rel="stylesheet"
   />
+  <!-- Tailwind for Shadow DOM -->
+  <script>
+    // Create a proxy endpoint to fetch Tailwind CSS
+    window.getTailwindCSS = async () => {
+      if (!window._tailwindCSS) {
+        const response = await fetch('https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css');
+        window._tailwindCSS = await response.text();
+      }
+      return window._tailwindCSS;
+    };
+  </script>
 
   <!-- Alpine JS -->
   <script
@@ -26,7 +38,6 @@
 
   <!-- Main JS -->
   <script type="module" src="/js/main.js" defer></script>
-
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />

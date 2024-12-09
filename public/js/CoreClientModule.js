@@ -1,6 +1,9 @@
 import { realtime } from './realtime.js';
 
 // core/client/CoreClientModule.js
+// Create a shared stylesheet that can be reused across all modules
+let tailwindStyles = null;
+
 export class CoreClientModule extends HTMLElement {
   static instances = new Map();
 
@@ -45,12 +48,50 @@ export class CoreClientModule extends HTMLElement {
   /**
    * Standard Web Component lifecycle - called when component is added to DOM
    */
-  connectedCallback() {
+  async connectedCallback() {
     this.instanceId = this.getAttribute('id');
     if (!this.instanceId) {
       throw new Error('Component must have an id attribute');
     }
-    this.init();
+
+    // Create shadow root if not already created
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' });
+    }
+
+    // Load and adopt Tailwind styles if not already loaded
+    if (!tailwindStyles) {
+      try {
+        tailwindStyles = new CSSStyleSheet();
+        const cssText = await window.getTailwindCSS();
+        await tailwindStyles.replace(cssText);
+      } catch (error) {
+        console.error('Error loading Tailwind styles:', error);
+      }
+    }
+
+    // Combine Tailwind and module-specific styles
+    const stylesheets = [tailwindStyles];
+
+    // Automatically load module styles if they exist
+    try {
+      const moduleStyles = new CSSStyleSheet();
+      const response = await fetch(`/public/${this.constructor.moduleName}/css/styles.css`);
+      if (response.ok) {
+        const cssText = await response.text();
+        await moduleStyles.replace(cssText);
+        stylesheets.push(moduleStyles);
+      }
+    } catch (error) {
+      // Silently fail if module styles don't exist
+      console.debug(`No custom styles found for module ${this.constructor.moduleName}`);
+    }
+
+    // Adopt the stylesheets
+    this.shadowRoot.adoptedStyleSheets = stylesheets;
+
+    // Initialize the component
+    await this.init();
   }
 
   /**
