@@ -1,5 +1,5 @@
 import { CoreClientModule } from '/js/CoreClientModule.js';
-import { createApp } from '/public/test-config/js/vue.js';
+import { createApp } from '/public/test-config/vue.js';
 
 class TestConfigModule extends CoreClientModule {
   static moduleName = 'test-config';

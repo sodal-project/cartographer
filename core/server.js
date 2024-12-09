@@ -27,8 +27,8 @@ class CoreServerModule {
 
     // Add default module assets if they exist
     const defaultAssets = [
-      `/public/${this.name}/css/styles.css`,
-      `/public/${this.name}/js/client.js`
+      `/public/${this.name}/styles.css`,
+      `/public/${this.name}/client.js`
     ];
 
     const cssLinks = [...defaultAssets.filter(p => p.endsWith('.css')), ...styles]
@@ -41,8 +41,8 @@ class CoreServerModule {
 
     return `
       ${cssLinks}
-      ${scriptTags}
       <${name} ${this._serializeProps(props)}></${name}>
+      ${scriptTags}
     `;
   }
 
