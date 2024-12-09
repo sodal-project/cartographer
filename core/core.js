@@ -680,7 +680,8 @@ const core = {
    */
   server: {
     realtime: wrapWithoutModule(server.realtime),
-    setupWebSocket: wrapWithoutModule(server.setupWebSocket)
+    setupWebSocket: wrapWithoutModule(server.setupWebSocket),
+    CoreServerModule: server.CoreServerModule
   },
 
   // Source namespace

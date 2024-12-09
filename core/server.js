@@ -1,5 +1,62 @@
 import { WebSocketServer } from 'ws';
 
+class CoreServerModule {
+  constructor(name) {
+    this.name = name;
+  }
+
+  // Helper method to safely serialize data for components
+  _serializeProps(props) {
+    return Object.entries(props)
+      .map(([key, value]) => {
+        const safeValue = JSON.stringify(value)
+          .replace(/&/g, '&amp;')
+          .replace(/'/g, '&apos;')
+          .replace(/"/g, '&quot;');
+        return `${key}="${safeValue}"`;
+      })
+      .join(' ');
+  }
+
+  // Template helper that modules can use
+  renderComponent(name, props = {}, options = {}) {
+    const {
+      scripts = [],
+      styles = [],
+    } = options;
+
+    // Add default module assets if they exist
+    const defaultAssets = [
+      `/public/${this.name}/css/styles.css`,
+      `/public/${this.name}/js/client.js`
+    ];
+
+    const cssLinks = [...defaultAssets.filter(p => p.endsWith('.css')), ...styles]
+      .map(href => `<link rel="stylesheet" href="${href}">`)
+      .join('\n');
+
+    const scriptTags = [...defaultAssets.filter(p => p.endsWith('.js')), ...scripts]
+      .map(src => `<script type="module" src="${src}"></script>`)
+      .join('\n');
+
+    return `
+      ${cssLinks}
+      ${scriptTags}
+      <${name} ${this._serializeProps(props)}></${name}>
+    `;
+  }
+
+  // Default entry point for module UI
+  async mainPane(req) {
+    throw new Error('mainPane not implemented');
+  }
+
+  // Helper to update connected clients
+  async update(instanceId, data) {
+    realtime.broadcast(this.name, instanceId, data);
+  }
+}
+
 class RealtimeService {
   constructor() {
     this.moduleGraph = new Map();
@@ -21,78 +78,53 @@ class RealtimeService {
       parent.children.add(childModule);
     }
 
-    const key = `${childModule}:${childId}`;
-    this.instanceRelations.set(key, {
-      parentModule,
-      parentId
-    });
-  }
-
-  async propagateUpdate({ moduleId, instanceId, data }) {
-    // 1. Notify WebSocket clients
-    this.notifyClients(moduleId, instanceId, data);
-
-    // 2. Find parent relationship
-    const instanceKey = `${moduleId}:${instanceId}`;
-    const relation = this.instanceRelations.get(instanceKey);
-
-    // 3. If there's a parent, notify it
-    if (relation) {
-      const parentModule = this.moduleGraph.get(relation.parentModule);
-      if (parentModule?.module) {
-        await parentModule.module.onChildUpdate(
-          moduleId,
-          relation.parentId,
-          data
-        );
-      }
+    // Store the instance relationship
+    const key = `${parentModule}:${parentId}`;
+    if (!this.instanceRelations.has(key)) {
+      this.instanceRelations.set(key, new Set());
     }
+    this.instanceRelations.get(key).add(`${childModule}:${childId}`);
   }
 
   handleConnection(ws) {
     ws.on('message', (message) => {
       try {
-        const { type, moduleId, instanceId } = JSON.parse(message);
-        
-        if (type === 'subscribe') {
-          this.subscribeClient(ws, moduleId, instanceId);
+        const data = JSON.parse(message);
+        if (data.type === 'subscribe') {
+          const key = `${data.module}:${data.instance}`;
+          if (!this.wsConnections.has(key)) {
+            this.wsConnections.set(key, new Set());
+          }
+          this.wsConnections.get(key).add(ws);
         }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
+      } catch (err) {
+        console.error('Error handling websocket message:', err);
       }
     });
 
     ws.on('close', () => {
-      this.removeClient(ws);
+      // Remove this connection from all subscriptions
+      for (const [key, connections] of this.wsConnections.entries()) {
+        connections.delete(ws);
+        if (connections.size === 0) {
+          this.wsConnections.delete(key);
+        }
+      }
     });
   }
 
-  subscribeClient(ws, moduleId, instanceId) {
-    const key = `${moduleId}:${instanceId}`;
-    if (!this.wsConnections.has(key)) {
-      this.wsConnections.set(key, new Set());
-    }
-    this.wsConnections.get(key).add(ws);
-  }
-
-  removeClient(ws) {
-    for (const [_, clients] of this.wsConnections) {
-      clients.delete(ws);
-    }
-  }
-
-  notifyClients(moduleId, instanceId, data) {
-    const key = `${moduleId}:${instanceId}`;
-    const clients = this.wsConnections.get(key);
+  broadcast(moduleName, instanceId, data) {
+    const key = `${moduleName}:${instanceId}`;
+    const connections = this.wsConnections.get(key);
     
-    if (clients) {
+    if (connections) {
       const message = JSON.stringify({
-        moduleId,
-        instanceId,
+        module: moduleName,
+        instance: instanceId,
         data
       });
 
-      clients.forEach(client => {
+      connections.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(message);
         }
@@ -112,7 +144,9 @@ function setupWebSocket(server) {
   return wss;
 }
 
+// Export class and functions separately
 export default {
+  CoreServerModule,
   realtime,
   setupWebSocket
 };
