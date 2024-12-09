@@ -1,4 +1,4 @@
-import { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 
 class CoreServerModule {
   constructor(name) {
@@ -59,94 +59,90 @@ class CoreServerModule {
 
 class RealtimeService {
   constructor() {
-    this.moduleGraph = new Map();
-    this.instanceRelations = new Map();
-    this.wsConnections = new Map();
+    this.clients = new Set();
+    this.subscriptions = new Map();
   }
 
-  registerModule(module) {
-    this.moduleGraph.set(module.name, {
-      module,
-      children: new Set(),
-      parent: null
-    });
-  }
-
-  trackRelationship(parentModule, childModule, parentId, childId) {
-    const parent = this.moduleGraph.get(parentModule);
-    if (parent) {
-      parent.children.add(childModule);
-    }
-
-    // Store the instance relationship
-    const key = `${parentModule}:${parentId}`;
-    if (!this.instanceRelations.has(key)) {
-      this.instanceRelations.set(key, new Set());
-    }
-    this.instanceRelations.get(key).add(`${childModule}:${childId}`);
-  }
-
-  handleConnection(ws) {
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message);
-        if (data.type === 'subscribe') {
-          const key = `${data.module}:${data.instance}`;
-          if (!this.wsConnections.has(key)) {
-            this.wsConnections.set(key, new Set());
-          }
-          this.wsConnections.get(key).add(ws);
-        }
-      } catch (err) {
-        console.error('Error handling websocket message:', err);
-      }
-    });
-
-    ws.on('close', () => {
-      // Remove this connection from all subscriptions
-      for (const [key, connections] of this.wsConnections.entries()) {
-        connections.delete(ws);
-        if (connections.size === 0) {
-          this.wsConnections.delete(key);
-        }
-      }
-    });
-  }
-
-  broadcast(moduleName, instanceId, data) {
-    const key = `${moduleName}:${instanceId}`;
-    const connections = this.wsConnections.get(key);
+  init(server) {
+    this.wss = new WebSocketServer({ server });
     
-    if (connections) {
-      const message = JSON.stringify({
-        module: moduleName,
-        instance: instanceId,
-        data
-      });
+    this.wss.on('connection', (ws) => {
+      console.log('Client connected to WebSocket');
+      this.clients.add(ws);
 
-      connections.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(message);
+      ws.on('message', (message) => {
+        try {
+          const data = JSON.parse(message.toString());
+          console.log('Received WebSocket message:', data);
+          
+          if (data.type === 'subscribe') {
+            console.log(`Subscribing to ${data.module}:${data.instance}`);
+            this.subscribe(ws, data.module, data.instance);
+          }
+        } catch (error) {
+          console.error('Error processing message:', error);
         }
       });
+
+      ws.on('close', () => {
+        console.log('Client disconnected');
+        this.clients.delete(ws);
+        this.unsubscribeAll(ws);
+      });
+
+      ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+      });
+    });
+  }
+
+  subscribe(client, moduleId, instanceId) {
+    const key = `${moduleId}:${instanceId}`;
+    console.log(`Adding client subscription for ${key}`);
+    if (!this.subscriptions.has(key)) {
+      this.subscriptions.set(key, new Set());
     }
+    this.subscriptions.get(key).add(client);
+    console.log(`Current subscriptions for ${key}: ${this.subscriptions.get(key).size}`);
+  }
+
+  unsubscribeAll(client) {
+    this.subscriptions.forEach((clients, key) => {
+      clients.delete(client);
+      if (clients.size === 0) {
+        this.subscriptions.delete(key);
+      }
+    });
+  }
+
+  broadcast(moduleId, instanceId, data) {
+    const key = `${moduleId}:${instanceId}`;
+    const clients = this.subscriptions.get(key) || new Set();
+    
+    const message = JSON.stringify({
+      moduleId,
+      instanceId,
+      data
+    });
+
+    console.log(`Broadcasting to ${clients.size} clients for ${key}:`, data);
+
+    clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        try {
+          client.send(message);
+        } catch (error) {
+          console.error('Error sending message:', error);
+        }
+      }
+    });
   }
 }
 
-// Create singleton instance
-const realtime = new RealtimeService();
-
-function setupWebSocket(server) {
-  const wss = new WebSocketServer({ server });
-  wss.on('connection', (ws) => {
-    realtime.handleConnection(ws);
-  });
-  return wss;
-}
+export const realtime = new RealtimeService();
 
 // Export class and functions separately
 export default {
   CoreServerModule,
-  realtime,
-  setupWebSocket
+  realtime
 };

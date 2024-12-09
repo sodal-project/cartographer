@@ -4,13 +4,28 @@ import { realtime } from './realtime.js';
 export class CoreClientModule extends HTMLElement {
   static instances = new Map();
 
+  static get tagName() {
+    return `${this.moduleName}-module`;
+  }
+
+  /**
+   * Define the custom element for this module
+   * @param {typeof CoreClientModule} moduleClass - The module class to define
+   */
+  static define(moduleClass) {
+    if (!moduleClass.moduleName) {
+      throw new Error('Module class must define static moduleName');
+    }
+    customElements.define(moduleClass.tagName, moduleClass);
+  }
+
   /**
    * Initialize a new instance of this component
    * @param {string} instanceId 
    */
   static initInstance(instanceId) {
-    if (!customElements.get(this.tagName)) {
-      customElements.define(this.tagName, this);
+    if (!this.moduleName) {
+      throw new Error('Module class must define static moduleName');
     }
     
     if (!this.instances.has(instanceId)) {
@@ -31,27 +46,33 @@ export class CoreClientModule extends HTMLElement {
    * Standard Web Component lifecycle - called when component is added to DOM
    */
   connectedCallback() {
-    // Get instance ID from element ID
-    this.instanceId = this.id.split('-').pop();
-    
-    // Get or create instance state
-    this.state = this.constructor.instances.get(this.instanceId);
-    
-    // Connect to realtime updates
-    this.connectRealtime();
-    
-    // Initialize component
+    this.instanceId = this.getAttribute('id');
+    if (!this.instanceId) {
+      throw new Error('Component must have an id attribute');
+    }
     this.init();
   }
 
   /**
-   * Connect to realtime update system
+   * Subscribe to state updates for this instance
    */
-  async connectRealtime() {
-    realtime.subscribe(
-      this.tagName.toLowerCase(),
+  subscribe(callback) {
+    console.log(`Subscribing to updates for ${this.constructor.moduleName}:${this.instanceId}`); // Debug log
+    
+    // Connect to WebSocket if not already connected
+    if (!window.realtime) {
+      console.error('Realtime service not initialized');
+      return;
+    }
+
+    // Subscribe to updates for this instance
+    return window.realtime.subscribe(
+      this.constructor.moduleName,
       this.instanceId,
-      (data) => this.handleUpdate(data)
+      (data) => {
+        console.log('Received WebSocket data:', data); // Debug log
+        callback(data);
+      }
     );
   }
 
@@ -76,7 +97,7 @@ export class CoreClientModule extends HTMLElement {
   async fetchInitialState() {
     try {
       const response = await fetch(
-        `/mod/${this.tagName.toLowerCase()}/getData?instance=${this.instanceId}`
+        `/mod/${this.constructor.moduleName}/getData?instance=${this.instanceId}`
       );
       return await response.json();
     } catch (error) {
@@ -112,33 +133,6 @@ export class CoreClientModule extends HTMLElement {
    */
   getState() {
     return this.state;
-  }
-
-  /**
-   * Subscribe to state changes
-   * @param {Function} callback 
-   */
-  subscribe(callback) {
-    const subscribers = this.constructor.instances.get(this.instanceId).subscribers;
-    subscribers.add(callback);
-    return () => subscribers.delete(callback);
-  }
-
-  /**
-   * Emit event to parent components
-   * @param {string} eventName 
-   * @param {Object} data 
-   */
-  emit(eventName, data) {
-    const event = new CustomEvent(eventName, {
-      bubbles: true,
-      composed: true,
-      detail: {
-        instanceId: this.instanceId,
-        data
-      }
-    });
-    this.dispatchEvent(event);
   }
 
   /**

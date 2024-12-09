@@ -56,7 +56,7 @@ app.use("/", coreRoutes);
 const server = http.createServer(app);
 
 // Setup WebSocket
-core.server.setupWebSocket(server);
+core.server.realtime.init(server);
 
 // Start server
 server.listen(config.port, () => {

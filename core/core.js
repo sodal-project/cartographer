@@ -56,7 +56,8 @@ async function initModules(moduleArray) {
     const module = moduleArray[item].folder;
 
     // load the module
-    calls.mod[module] = await import(`../modules/${module}/mainPane.js`);
+    const moduleImport = await import(`../modules/${module}/mainPane.js`);
+    calls.mod[module] = moduleImport.default;
     core.mod[module] = {};
 
     consoleLog(`Core: loading external module: ${module}`)
@@ -64,8 +65,11 @@ async function initModules(moduleArray) {
     // for each exported function in the module, add it to the core object
     for(const call in calls.mod[module]) {
 
+      consoleLog(`Core: loading external module function: ${module}.${call}`)
+
       // if this is the default export, skip it
       if(call === 'default') { 
+        consoleLog(`Core: skipping default export for module: ${module}`)
         continue; 
       }
       
@@ -91,9 +95,6 @@ async function initModules(moduleArray) {
             consoleLog(`Calling core.mod.${module}.${call} from ${callingModule}`)
             return calls.mod[module][call](...params);
           }
-
-          // set the function name to the full path to improve error reporting
-          Object.defineProperty(core.mod[module][call], 'name', { value: `core.mod.${module}.${call}` });
 
         } else {
 
@@ -679,8 +680,7 @@ const core = {
    * Server-side functions
    */
   server: {
-    realtime: wrapWithoutModule(server.realtime),
-    setupWebSocket: wrapWithoutModule(server.setupWebSocket),
+    realtime: server.realtime,
     CoreServerModule: server.CoreServerModule
   },
 

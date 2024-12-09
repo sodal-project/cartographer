@@ -6,56 +6,79 @@ class TestConfig extends core.server.CoreServerModule {
     super('test-config');
   }
 
+  async getData(instance) {
+    try {
+      // Get config using the config system
+      const config = await core.config.readConfig() || {};
+      return { config };
+    } catch (error) {
+      console.error('getData error:', error);
+      return { error: error.message, config: {} };
+    }
+  }
+
+  async writeConfig({ instanceId, key, value }) {
+    try {
+      // Get existing config
+      const config = await core.config.readConfig() || {};
+      
+      // Update config
+      config[key] = value;
+      
+      // Save config using the config system
+      await core.config.writeConfig(config);
+      
+      // Notify clients
+      this.update(instanceId, { config });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('writeConfig error:', error);
+      return { error: error.message };
+    }
+  }
+
+  async deleteConfig({ instanceId, key }) {
+    try {
+      // Delete key using the config system
+      await core.config.deleteConfig(key);
+      
+      // Get updated config
+      const config = await core.config.readConfig() || {};
+      
+      // Notify clients
+      this.update(instanceId, { config });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('deleteConfig error:', error);
+      return { error: error.message };
+    }
+  }
+
   async mainPane(req) {
-    const instanceId = req.instance || crypto.randomUUID();
-    const data = await this.getData(req, instanceId);
-    
-    return this.renderComponent('test-config-module', {
-      id: `test-config-${instanceId}`,
-      'initial-data': data
-    });
-  }
-
-  // API endpoints
-  async getData(req, instanceId) {
-    const config = await core.config.readConfig();
-    return { config };
-  }
-
-  async writeConfig(req) {
-    const { key, value } = req;
-    if (!key || !value) {
-      throw new Error('Missing required fields: key and value');
+    try {
+      // Get initial config for rendering
+      const config = await core.config.readConfig() || {};
+      
+      return this.renderComponent('test-config-module', {
+        id: `test-config-${req.instance || crypto.randomUUID()}`,
+        'initial-data': JSON.stringify({ config })
+      });
+    } catch (error) {
+      console.error('mainPane error:', error);
+      return `<div class="error">Error loading test config: ${error.message}</div>`;
     }
-
-    await core.config.writeConfig({ [key]: value });
-    
-    // Send updated data back
-    const newConfig = await core.config.readConfig();
-    await this.update(req.instance, { config: newConfig });
-    
-    return { success: true };
-  }
-
-  async deleteConfig(req) {
-    const { key } = req;
-    if (!key) {
-      throw new Error('Missing required field: key');
-    }
-
-    await core.config.deleteConfig(key);
-    
-    // Send updated data back
-    const newConfig = await core.config.readConfig();
-    await this.update(req.instance, { config: newConfig });
-    
-    return { success: true };
   }
 }
 
+// Create a single instance
 const testConfig = new TestConfig();
 
-export const mainPane = (...args) => testConfig.mainPane(...args);
-export const getData = (...args) => testConfig.getData(...args);
-export const writeConfig = (...args) => testConfig.writeConfig(...args);
-export const deleteConfig = (...args) => testConfig.deleteConfig(...args);
+// Export all the module functions
+export default {
+  mainPane: (...args) => testConfig.mainPane(...args),
+  getData: (...args) => testConfig.getData(...args),
+  writeConfig: (...args) => testConfig.writeConfig(...args),
+  deleteConfig: (...args) => testConfig.deleteConfig(...args)
+};
