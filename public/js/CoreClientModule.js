@@ -70,25 +70,24 @@ export class CoreClientModule extends HTMLElement {
       }
     }
 
-    // Combine Tailwind and module-specific styles
-    const stylesheets = [tailwindStyles];
+    // Always use Tailwind as the base stylesheet
+    this.shadowRoot.adoptedStyleSheets = [tailwindStyles];
 
-    // Automatically load module styles if they exist
+    // Try to load module styles, but don't fail if they don't exist
     try {
-      const moduleStyles = new CSSStyleSheet();
       const response = await fetch(`/public/${this.constructor.moduleName}/css/styles.css`);
-      if (response.ok) {
+      const contentType = response.headers.get('content-type');
+      
+      if (response.ok && contentType && contentType.includes('text/css')) {
+        const moduleStyles = new CSSStyleSheet();
         const cssText = await response.text();
         await moduleStyles.replace(cssText);
-        stylesheets.push(moduleStyles);
+        // Add module styles to existing stylesheets
+        this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, moduleStyles];
       }
     } catch (error) {
-      // Silently fail if module styles don't exist
-      console.debug(`No custom styles found for module ${this.constructor.moduleName}`);
+      // Silently continue if module styles don't exist or fail to load
     }
-
-    // Adopt the stylesheets
-    this.shadowRoot.adoptedStyleSheets = stylesheets;
 
     // Initialize the component
     await this.init();

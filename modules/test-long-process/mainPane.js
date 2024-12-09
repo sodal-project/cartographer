@@ -1,47 +1,67 @@
 import core from '../../core/core.js';
 
-/**
- * @description Fetch data from the config database namespace and render the main template
- * @returns {string} - Compiled HTML content
- */
-async function redraw() {
-  const data = await core.config.readConfig();
-  return core.client.render('mainPane.hbs', data);
-}
-
-// PUBLIC
-
-/**
- * @description The main interface for the module.
- * @returns {string} - Compiled HTML content
- */
-async function mainPane() {
-  return redraw();
-}
-
-/**
- * Start a long running process or report on the status of a long running process.
- * 
- * @param {object} data - An object with a delete property whose value is the property to delete
- * @returns {object} - A message string and the data object with the property to delete
- */
-async function longProcess() {
-  const data = await core.config.readConfig() || {};
-
-  // Default to ready if no processStatus is set
-  const status = data.status || 'ready'
-
-  // Simulate a long running process 
-  if (status === 'ready') {
-    await core.config.writeConfig({ status: 'running' });
-    setTimeout(async () => {
-      await core.config.writeConfig({ status: 'ready' });
-    }, 15000);
+class TestLongProcess extends core.server.CoreServerModule {
+  constructor() {
+    super('test-long-process');
   }
-  return redraw();
+
+  async getData(instance) {
+    try {
+      // Get process state from config
+      const config = await core.config.readConfig() || {};
+      const processState = config[instance] || { status: 'ready' };
+      return processState;
+    } catch (error) {
+      console.error('getData error:', error);
+      return { error: error.message, status: 'ready' };
+    }
+  }
+
+  async mainPane(req) {
+    return this.renderComponent('test-long-process-module', {
+      id: `test-long-process-${crypto.randomUUID()}`
+    });
+  }
+
+  async longProcess(req) {
+    const { instanceId } = req;
+    
+    try {
+      // Get current config
+      let config = await core.config.readConfig() || {};
+      
+      // Update process state
+      config = { 
+        status: 'running',
+      };
+      await core.config.writeConfig(config);
+      
+      // Notify clients
+      await this.update(instanceId, { status: 'running' });
+      
+      // Simulate long process
+      setTimeout(async () => {
+        const currentConfig = {
+          status: 'ready'
+        };
+        await core.config.writeConfig(currentConfig);
+        await this.update(instanceId, currentConfig);
+      }, 15000);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('longProcess error:', error);
+      return { error: error.message };
+    }
+  }
 }
 
-export {
-  mainPane,
-  longProcess,
+// Create a single instance
+const testLongProcess = new TestLongProcess();
+
+// Export all the module functions
+export default {
+  mainPane: (...args) => testLongProcess.mainPane(...args),
+  getData: (...args) => testLongProcess.getData(...args),
+  longProcess: (...args) => testLongProcess.longProcess(...args)
 };
