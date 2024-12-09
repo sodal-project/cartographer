@@ -553,10 +553,10 @@ const core = {
     /**
      * Merge a persona with the graph database
      * @async
-     * @param {Core.PersonaObject} persona - Persona object to merge
-     * @param {Core.SourceObject} [source] - Optional source object
+     * @param {PersonaObject} persona - Persona object to merge
+     * @param {SourceObject} [source] - Optional source object
      * @param {boolean} [querySetOnly=false] - Return query set instead of executing
-     * @returns {Promise<Core.GraphResponse|Core.QuerySet>} Graph response or query set
+     * @returns {Promise<GraphResponse|QuerySet>} Graph response or query set
      * @throws {Error} If persona object is invalid
      */
     mergePersona: wrapWithModule(graph.mergePersona),
@@ -592,7 +592,7 @@ const core = {
      * @param {string} [params.direction] - Sort direction ("ASC" or "DESC")
      * @param {number} [params.pageNum] - Page number
      * @param {number} [params.pageSize] - Page size
-     * @returns {Promise<Core.GraphResponse>} Graph query response
+     * @returns {Promise<GraphResponse>} Graph query response
      * @throws {Error} If filter parameters are invalid
      */
     readPersona: wrapWithModule(graph.readPersona),
