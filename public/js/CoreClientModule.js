@@ -75,7 +75,7 @@ export class CoreClientModule extends HTMLElement {
 
     // Try to load module styles, but don't fail if they don't exist
     try {
-      const response = await fetch(`/public/${this.constructor.moduleName}/css/styles.css`);
+      const response = await fetch(`/public/${this.constructor.moduleName}/styles.css`);
       const contentType = response.headers.get('content-type');
       
       if (response.ok && contentType && contentType.includes('text/css')) {

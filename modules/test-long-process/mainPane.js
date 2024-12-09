@@ -9,7 +9,7 @@ class TestLongProcess extends core.server.CoreServerModule {
     try {
       // Get process state from config
       const config = await core.config.readConfig() || {};
-      const processState = config[instance] || { status: 'ready' };
+      const processState = config || { status: 'ready' };
       return processState;
     } catch (error) {
       console.error('getData error:', error);
@@ -19,7 +19,7 @@ class TestLongProcess extends core.server.CoreServerModule {
 
   async mainPane(req) {
     return this.renderComponent('test-long-process-module', {
-      id: `test-long-process-${crypto.randomUUID()}`
+      id: `test-long-process`
     });
   }
 
