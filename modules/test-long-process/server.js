@@ -1,25 +1,13 @@
-import core from '../../core/core.js';
+import { CoreModule } from '../../core/core.js';
 
-class TestLongProcess extends core.server.CoreServerModule {
+class TestLongProcess extends CoreModule {
   constructor() {
     super('test-long-process');
   }
 
-  async getData(instance) {
-    try {
-      // Get process state from config
-      const config = await core.config.readConfig() || {};
-      const processState = config || { status: 'ready' };
-      return processState;
-    } catch (error) {
-      console.error('getData error:', error);
-      return { error: error.message, status: 'ready' };
-    }
-  }
-
   async index(req) {
     return this.renderComponent('test-long-process-module', {
-      id: `test-long-process`
+      id: 'test-long-process'
     });
   }
 
@@ -27,25 +15,16 @@ class TestLongProcess extends core.server.CoreServerModule {
     const { instanceId } = req;
     
     try {
-      // Get current config
-      let config = await core.config.readConfig() || {};
-      
       // Update process state
-      config = { 
-        status: 'running',
-      };
-      await core.config.writeConfig(config);
-      
-      // Notify clients
-      await this.update(instanceId, { status: 'running' });
+      await this.setState(instanceId, { 
+        status: 'running'
+      });
       
       // Simulate long process
       setTimeout(async () => {
-        const currentConfig = {
+        await this.setState(instanceId, {
           status: 'ready'
-        };
-        await core.config.writeConfig(currentConfig);
-        await this.update(instanceId, currentConfig);
+        });
       }, 15000);
       
       return { success: true };
@@ -62,6 +41,6 @@ const testLongProcess = new TestLongProcess();
 // Export all the module functions
 export default {
   index: (...args) => testLongProcess.index(...args),
-  getData: (...args) => testLongProcess.getData(...args),
+  getData: async (instance) => await testLongProcess.getState(instance),
   longProcess: (...args) => testLongProcess.longProcess(...args)
 };

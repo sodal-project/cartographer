@@ -1,7 +1,7 @@
 // modules/test-config/index.js
-import core from '../../core/core.js';
+import { CoreModule } from '../../core/core.js';
 
-class TestConfig extends core.server.CoreServerModule {
+class TestConfig extends CoreModule {
   constructor() {
     super('test-config');
   }
@@ -9,7 +9,7 @@ class TestConfig extends core.server.CoreServerModule {
   async getData(instance) {
     try {
       // Get config using the config system
-      const config = await core.config.readConfig() || {};
+      const config = await this.core.config.readConfig() || {};
       return { config };
     } catch (error) {
       console.error('getData error:', error);
@@ -20,13 +20,13 @@ class TestConfig extends core.server.CoreServerModule {
   async writeConfig({ instanceId, key, value }) {
     try {
       // Get existing config
-      const config = await core.config.readConfig() || {};
+      const config = await this.core.config.readConfig() || {};
       
       // Update config
       config[key] = value;
       
       // Save config using the config system
-      await core.config.writeConfig(config);
+      await this.core.config.writeConfig(config);
       
       // Notify clients
       this.update(instanceId, { config });
@@ -41,10 +41,10 @@ class TestConfig extends core.server.CoreServerModule {
   async deleteConfig({ instanceId, key }) {
     try {
       // Delete key using the config system
-      await core.config.deleteConfig(key);
+      await this.core.config.deleteConfig(key);
       
       // Get updated config
-      const config = await core.config.readConfig() || {};
+      const config = await this.core.config.readConfig() || {};
       
       // Notify clients
       this.update(instanceId, { config });

@@ -2,6 +2,7 @@ import express from "express";
 import Handlebars from 'handlebars';
 import { engine } from 'express-handlebars';
 import config from './config.js';
+import coreServer from './core/server.js';
 import dotenv from 'dotenv';
 import http from 'http';
 import path from 'path';
@@ -56,7 +57,7 @@ app.use("/", coreRoutes);
 const server = http.createServer(app);
 
 // Setup WebSocket
-core.server.realtime.init(server);
+coreServer.realtime.init(server);
 
 // Start server
 server.listen(config.port, () => {

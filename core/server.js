@@ -1,41 +1,4 @@
 import { WebSocket, WebSocketServer } from 'ws';
-import fs from 'fs';
-
-class CoreServerModule {
-  constructor(name) {
-    this.name = name;
-  }
-
-  // Template helper that modules can use
-  async renderComponent(name, props = {}, options = {}) {
-    const { id } = props;
-    
-    return `
-      <div id="component-mount-${id}">
-        <script type="module">
-          // Load and define the module first
-          const { CoreClientModule } = window;
-          await import('/public/${this.name}/client.js');
-          
-          // Then create the component once module is loaded
-          const component = document.createElement('${name}');
-          component.id = '${id}';
-          document.getElementById('component-mount-${id}').replaceWith(component);
-        </script>
-      </div>
-    `;
-  }
-
-  // Default entry point for module UI
-  async index(req) {
-    throw new Error('Index not implemented');
-  }
-
-  // Helper to update connected clients
-  async update(instanceId, data) {
-    realtime.broadcast(this.name, instanceId, data);
-  }
-}
 
 class RealtimeService {
   constructor() {
@@ -123,6 +86,5 @@ export const realtime = new RealtimeService();
 
 // Export class and functions separately
 export default {
-  CoreServerModule,
   realtime
 };

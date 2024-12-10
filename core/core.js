@@ -3,7 +3,6 @@
  */
 
 // Core Namespaces
-// Accessed via core.<namespace>.<call>()
 import cache from './cache.js'
 import check from './check.js'
 import client from './client.js'
@@ -19,166 +18,6 @@ import types from './types.js'
 // Core Imports
 import { getCallingFolder } from './utilities.js';
 import { consoleLog, writeLog } from './log.js';
-
-/**
- * This object stores the raw calls made through core
- * 
- * Together with the core namespace calls, this enables core to:
- * 1 - capture the call
- * 2 - identify the calling module
- * 3 - log the call
- * 4 - pass additional context to the root call if necessary
- */ 
-const calls = {};
-
-/**
- * Initialize External Modules
- * This function initializes external modules and adds them to the core object
- * 
- * @async
- * @param {Object[]} moduleArray - Array of module configuration objects
- * @param {string} moduleArray[].folder - Module folder name in modules directory
- * @param {string} moduleArray[].label - Display name for the module
- * @param {string} moduleArray[].category - Module category for organization
- * @param {string} moduleArray[].accessLevel - Required access level (operator|admin)
- * @returns {Promise<void>}
- * @throws {Error} If module initialization fails
- */
-async function initModules(moduleArray) {
-  let counter = 0;
-
-  // Generate Core External Module Calls
-  core.mod = {};
-  calls.mod = {};
-
-  // load external module calls to core.mod.<module>.<call>
-  for(const item in moduleArray) {
-    const module = moduleArray[item].folder;
-
-    // load the module
-    const moduleImport = await import(`../modules/${module}/server.js`);
-    calls.mod[module] = moduleImport.default;
-    core.mod[module] = {};
-
-    consoleLog(`Core: loading external module: ${module}`)
-
-    // for each exported function in the module, add it to the core object
-    for(const call in calls.mod[module]) {
-
-      consoleLog(`Core: loading external module function: ${module}.${call}`)
-
-      // if this is the default export, skip it
-      if(call === 'default') { 
-        consoleLog(`Core: skipping default export for module: ${module}`)
-        continue; 
-      }
-      
-      /**
-       * if this is the module's init function, call it immediately
-       * 
-       * The init function gives each module a chance to 
-       * setup itself prior to being called by other modules
-       */
-      else if(call === 'init') {
-        await calls.mod[module][call]();
-        continue;
-      } 
-      
-      else {
-        counter++;
-        // if this is a function, add it to the core object
-        if(typeof calls.mod[module][call] === 'function') {
-
-          // add the function to the core object
-          core.mod[module][call] = (...params) => {
-            const callingModule = getCallingFolder(new Error().stack);
-            consoleLog(`Calling core.mod.${module}.${call} from ${callingModule}`)
-            return calls.mod[module][call](...params);
-          }
-
-        } else {
-
-          // if this is an object instead of a function, add it to core as is
-          core.mod[module][call] = calls.mod[module][call];
-        }
-      }
-    }
-  }
-  consoleLog(`Core: loaded ${counter} external module calls`)
-}
-
-/**
- * Wraps a function to include the calling module name as first parameter
- * @template T
- * @param {function(string, ...any): T} func - Function to wrap
- * @returns {function(...any): T} Wrapped function that includes calling module
- * @private
- */
-const wrapWithModule = (func) => {
-  return async (...params) => {
-    const callingModule = getCallingFolder(new Error().stack);
-    consoleLog(`Calling ${func.name} from ${callingModule}`);
-    return await func(callingModule, ...params);
-  }
-}
-
-/**
- * Wraps a function to log the calling module without passing it
- * @template T
- * @param {function(...any): T} func - Function to wrap
- * @returns {function(...any): T} Wrapped function that logs calling module
- * @private
- */
-const wrapWithoutModule = (func) => {
-  return async (...params) => {
-    const callingModule = getCallingFolder(new Error().stack);
-    consoleLog(`Calling ${func.name} from ${callingModule}`);
-    return await func(...params);
-  }
-}
-
-// Initialize core and freeze it
-async function init() {
-  consoleLog("Core: initializing")
-  if(core.ready) {
-    consoleLog("Core: already initialized")
-    return core;
-  }
-
-  client.registerPartials();
-
-  // Initialize core's external module calls
-  await initModules(core.coreData.modules);
-
-  // Group modules by category
-  core.coreData.modulesByCategory = core.coreData.modules.reduce((acc, module) => {
-    const category = module.category || '';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(module);
-    return acc;
-  }, {});
-
-  // finalize core and freeze it
-  core.ready = true;
-  Object.freeze(core);
-  consoleLog("Core: initialized")
-  return core;
-}
-
-/**
- * Log
- * Log a message to a file
- * 
- * @param {string} message - The message to log
- * @param {string} type - The type of message to log
- */
-function log(message, type='UNKNOWN_TYPE') {
-  const moduleName = getCallingFolder(new Error().stack);
-
-  writeLog(moduleName, message, type);
-}
 
 /**
  * Core system interface for Cartographer modules
@@ -274,6 +113,18 @@ const core = {
         category: "System",
         accessLevel: "admin"
       },
+      {
+        folder: "test-ping",
+        label: "Test Ping",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
+        folder: "test-submodule",
+        label: "Test Submodule",
+        category: "System",
+        accessLevel: "admin"
+      },
       // {
       //   folder: "exportCsv",
       //   label: "Export CSV",
@@ -290,404 +141,281 @@ const core = {
    */
   init,
 
-  /**
-   * System logging function
-   * @param {string} message - Message to log
-   * @param {string} [type='UNKNOWN_TYPE'] - Log message type
-   * @returns {void}
-   */
-  log,
-
-  /**
-   * Cache management functions
-   * @namespace Core.cache
-   */
-  cache: {
-    /**
-     * Save data to cache
-     * @async
-     * @param {string} key - Cache key
-     * @param {any} value - Data to cache
-     * @returns {Promise<void>}
-     */
-    save: wrapWithModule(cache.save),
-
-    /**
-     * Load data from cache
-     * @async
-     * @param {string} key - Cache key
-     * @returns {Promise<any>} Cached data
-     */
-    load: wrapWithModule(cache.load)
-  },
-
-  /**
-   * Type checking and validation functions
-   * @namespace Core.check
-   */
-  check: {
-    /**
-     * Check if a value is a confidence number
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    confidenceNumber: wrapWithoutModule(check.confidenceNumber),
-
-    /**
-     * Check if a value is an ID string
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    idString: wrapWithoutModule(check.idString),
-
-    /**
-     * Check if a value is a level number
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    levelNumber: wrapWithoutModule(check.levelNumber),
-
-    /**
-     * Check if a value is a persona object
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    personaObject: wrapWithoutModule(check.personaObject),
-
-    /**
-     * Check if a value is a persona relationships array
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    personaRelsArray: wrapWithoutModule(check.personaRelsArray),
-
-    /**
-     * Check if a value is a platform string
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    platformString: wrapWithoutModule(check.platformString),
-
-    /**
-     * Check if a value is a relationship object
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    relationshipObject: wrapWithoutModule(check.relationshipObject),
-
-    /**
-     * Check if a value is an SID string
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    sidString: wrapWithoutModule(check.sidString),
-
-    /**
-     * Check if a value is a simple value
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    simpleValue: wrapWithoutModule(check.simpleValue),
-
-    /**
-     * Check if a value is a source object
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    sourceObject: wrapWithoutModule(check.sourceObject),
-
-    /**
-     * Check if a value is a source store modified persona object
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    sourceStoreModifiedPersonaObject: wrapWithoutModule(check.sourceStoreModifiedPersonaObject),
-
-    /**
-     * Check if a value is a source store modified persona relationships object
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    sourceStoreModifiedPersonaRelationshipsObject: wrapWithoutModule(check.sourceStoreModifiedPersonaRelationshipsObject),
-
-    /**
-     * Check if a value is a source store object
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    sourceStoreObject: wrapWithoutModule(check.sourceStoreObject),
-
-    /**
-     * Check if a value is a type string
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    typeString: wrapWithoutModule(check.typeString),
-
-    /**
-     * Check if a value is an UPN string
-     * @param {any} value - Value to check
-     * @returns {boolean}
-     */
-    upnString: wrapWithoutModule(check.upnString)
-  },
-
-  /**
-   * Client-side rendering functions
-   * @namespace Core.client
-   */
-  client: {
-    /**
-     * Render a handlebars template
-     * @param {string} template - Template name
-     * @param {object} data - Data to pass to the template
-     * @returns {string} Rendered HTML
-     */
-    render: wrapWithModule(client.render),
-
-    /**
-     * Register handlebars partials
-     * @returns {void}
-     */
-    registerPartials: wrapWithModule(client.registerPartials)
-  },
-
-  /**
-   * Configuration management functions
-   * @namespace Core.config
-   */
-  config: {
-    /**
-     * Read configuration data
-     * @async
-     * @param {string} key - Configuration key
-     * @returns {Promise<any>} Configuration data
-     */
-    readConfig: wrapWithModule(config.readConfig),
-
-    /**
-     * Write configuration data
-     * @async
-     * @param {string} key - Configuration key
-     * @param {any} value - Configuration data
-     * @returns {Promise<void>}
-     */
-    writeConfig: wrapWithModule(config.writeConfig),
-
-    /**
-     * Delete configuration data
-     * @async
-     * @param {string} key - Configuration key
-     * @returns {Promise<void>}
-     */
-    deleteConfig: wrapWithModule(config.deleteConfig)
-  },
-
-  // Constants namespace (direct assignment)
-  constants: constants,
-
-  /**
-   * Encryption and decryption functions
-   * @namespace Core.crypto
-   */
-  crypto: {
-    /**
-     * Encrypt data
-     * @async
-     * @param {string} data - Data to encrypt
-     * @returns {Promise<string>} Encrypted data
-     */
-    encrypt: wrapWithModule(crypto.encrypt),
-
-    /**
-     * Decrypt data
-     * @async
-     * @param {string} data - Data to decrypt
-     * @returns {Promise<string>} Decrypted data
-     */
-    decrypt: wrapWithModule(crypto.decrypt)
-  },
-
-  /**
-   * Graph database functions
-   */
-  graph: {
-    /**
-     * Backup a source
-     * @async
-     * @param {SourceObject.id} sourceId - Source ID
-     * @returns {Promise<void>}
-     */
-    backupSource: wrapWithModule(graph.backupSource),
-
-    /**
-     * Delete orphaned personas
-     * @async
-     * @returns {Promise<void>}
-     */
-    deleteOrphanedPersonas: wrapWithModule(graph.deleteOrphanedPersonas),
-
-    /**
-     * Delete a persona
-     * @async
-     * @param {string} upn - Persona UPN
-     * @returns {Promise<void>}
-     */
-    deletePersona: wrapWithModule(graph.deletePersona),
-
-    /**
-     * Delete a source
-     * @async
-     * @param {string} sourceId - Source ID
-     * @returns {Promise<void>}
-     */
-    deleteSource: wrapWithModule(graph.deleteSource),
-
-    /**
-     * Merge a persona with the graph database
-     * @async
-     * @param {PersonaObject} persona - Persona object to merge
-     * @param {SourceObject} [source] - Optional source object
-     * @param {boolean} [querySetOnly=false] - Return query set instead of executing
-     * @returns {Promise<GraphResponse|QuerySet>} Graph response or query set
-     * @throws {Error} If persona object is invalid
-     */
-    mergePersona: wrapWithModule(graph.mergePersona),
-
-    /**
-     * Merge personas
-     * @async
-     * @returns {Promise<void>}
-     */
-    mergePersonas: wrapWithModule(graph.mergePersonas),
-
-    /**
-     * Merge a source
-     * @async
-     * @param {string} sourceId - Source ID
-     * @returns {Promise<void>}
-     */
-    mergeSource: wrapWithModule(graph.mergeSource),
-
-    /**
-     * Read orphaned personas
-     * @async
-     * @returns {Promise<void>}
-     */ 
-    readOrphanedPersonas: wrapWithModule(graph.readOrphanedPersonas),
-
-    /**
-     * Read personas
-     * @async
-     * @param {Core.Filter} [filter] - Optional filter criteria
-     * @param {Object} [params] - Sort and pagination parameters
-     * @param {string} [params.field] - Field to sort by
-     * @param {string} [params.direction] - Sort direction ("ASC" or "DESC")
-     * @param {number} [params.pageNum] - Page number
-     * @param {number} [params.pageSize] - Page size
-     * @returns {Promise<GraphResponse>} Graph query response
-     * @throws {Error} If filter parameters are invalid
-     */
-    readPersona: wrapWithModule(graph.readPersona),
-
-    /**
-     * Read personas
-     * @async
-     * @returns {Promise<void>}
-     */
-    readPersonas: wrapWithModule(graph.readPersonas),
-
-    /**
-     * Read a source
-     * @async
-     * @param {string} sourceId - Source ID
-     * @returns {Promise<void>}
-     */
-    readSource: wrapWithModule(graph.readSource),
-
-    /**
-     * Read source personas
-     * @async
-     * @param {string} sourceId - Source ID
-     * @returns {Promise<void>}
-     */
-    readSourcePersonas: wrapWithModule(graph.readSourcePersonas),
-
-    /**
-     * Read source relationships
-     * @async
-     * @param {string} sourceId - Source ID
-     * @returns {Promise<void>}
-     */
-    readSourceRelationships: wrapWithModule(graph.readSourceRelationships),
-
-    /**
-     * Remove a persona
-     * @async
-     * @param {string} upn - Persona UPN
-     * @returns {Promise<void>}
-     */
-    removePersona: wrapWithModule(graph.removePersona),
-
-    /**
-     * Restore a source
-     * @async
-     * @param {string} sourceId - Source ID
-     * @returns {Promise<void>}
-     */
-    restoreSource: wrapWithModule(graph.restoreSource),
-
-    /**
-     * Run a raw query
-     * @async
-     * @param {string} query - Query to run
-     * @returns {Promise<void>}
-     */
-    runRawQuery: wrapWithModule(graph.runRawQuery),
-
-    /**
-     * Run a raw query and return an array
-     * @async
-     * @param {string} query - Query to run
-     * @returns {Promise<void>}
-     */
-    runRawQueryArray: wrapWithModule(graph.runRawQueryArray),
-
-    /**
-     * Sync personas
-     * @async
-     * @returns {Promise<void>}
-     */
-    syncPersonas: wrapWithModule(graph.syncPersonas),
-
-    /**
-     * Unlink personas
-     * @async
-     * @returns {Promise<void>}
-     */
-    unlinkPersonas: wrapWithModule(graph.unlinkPersonas)
-  },
-
-  // Persona namespace
-  persona: {
-    generateUpnRaw: wrapWithoutModule(persona.generateUpnRaw),
-    getFromRelationships: wrapWithoutModule(persona.getFromRelationships),
-    getProps: wrapWithoutModule(persona.getProps),
-    newFromUpn: wrapWithoutModule(persona.newFromUpn)
-  },
-
-  /**
-   * Server-side functions
-   */
-  server: {
-    realtime: server.realtime,
-    CoreServerModule: server.CoreServerModule
-  },
-
-  // Source namespace
-  source: {
-    getSourceObject: wrapWithModule(source.getSourceObject)
-  }
 };
+
+/**
+ * This object stores the raw calls made through core
+ * 
+ * Together with the core namespace calls, this enables core to:
+ * 1 - capture the call
+ * 2 - identify the calling module
+ * 3 - log the call
+ * 4 - pass additional context to the root call if necessary
+ */ 
+const calls = {};
+
+/**
+ * Initialize External Modules
+ * This function initializes external modules and adds them to the core object
+ * 
+ * @async
+ * @param {Object[]} moduleArray - Array of module configuration objects
+ * @param {string} moduleArray[].folder - Module folder name in modules directory
+ * @param {string} moduleArray[].label - Display name for the module
+ * @param {string} moduleArray[].category - Module category for organization
+ * @param {string} moduleArray[].accessLevel - Required access level (operator|admin)
+ * @returns {Promise<void>}
+ * @throws {Error} If module initialization fails
+ */
+
+async function initModules(moduleArray) {
+  let counter = 0;
+
+  // Generate Core External Module Calls
+  core.mod = {};
+  calls.mod = {};
+
+  // load external module calls to core.mod.<module>.<call>
+  for(const item in moduleArray) {
+    const module = moduleArray[item].folder;
+
+    // load the module
+    const moduleImport = await import(`../modules/${module}/server.js`);
+    calls.mod[module] = moduleImport.default;
+    core.mod[module] = {};
+
+    consoleLog(`Core: loading external module: ${module}`)
+
+    // for each exported function in the module, add it to the core object
+    for(const call in calls.mod[module]) {
+
+      consoleLog(`Core: loading external module function: ${module}.${call}`)
+
+      // if this is the default export, skip it
+      if(call === 'default') { 
+        consoleLog(`Core: skipping default export for module: ${module}`)
+        continue; 
+      }
+      
+      /**
+       * if this is the module's init function, call it immediately
+       * 
+       * The init function gives each module a chance to 
+       * setup itself prior to being called by other modules
+       */
+      else if(call === 'init') {
+        await calls.mod[module][call]();
+        continue;
+      } 
+      
+      else {
+        counter++;
+        // if this is a function, add it to the core object
+        if(typeof calls.mod[module][call] === 'function') {
+
+          // add the function to the core object
+          core.mod[module][call] = (...params) => {
+            consoleLog(`Calling core.mod.${module}.${call} from an API call`)
+            return calls.mod[module][call](...params);
+          }
+
+        } else {
+
+          // if this is an object instead of a function, add it to core as is
+          core.mod[module][call] = calls.mod[module][call];
+        }
+      }
+    }
+  }
+  consoleLog(`Core: loaded ${counter} external module calls`)
+}
+
+// Initialize core and freeze it
+async function init() {
+  consoleLog("Core: initializing")
+  if(core.ready) {
+    consoleLog("Core: already initialized")
+    return core;
+  }
+
+  client.registerPartials();
+
+  // Initialize core's external module calls
+  await initModules(core.coreData.modules);
+
+  // Group modules by category
+  core.coreData.modulesByCategory = core.coreData.modules.reduce((acc, module) => {
+    const category = module.category || '';
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(module);
+    return acc;
+  }, {});
+
+  // finalize core and freeze it
+  core.ready = true;
+  Object.freeze(core);
+  consoleLog("Core: initialized")
+  return core;
+}
+
+export class CoreModule {
+  constructor(name) {
+    // Validate that name matches a valid module folder
+    const validModules = core.coreData.modules.map(m => m.folder);
+    if (!validModules.includes(name)) {
+      throw new Error(`Invalid module name "${name}". Must match one of the registered module folders: ${validModules.join(', ')}`);
+    }
+    
+    try {
+      // Validate that this is being called from the correct module folder
+      if(getCallingFolder(new Error().stack) !== name) {
+        throw new Error(`Module "${name}" must be initialized from its own directory`)  ;
+      }
+    } catch (err) {
+      throw new Error(`Module "${name}" must be initialized from its own directory`);
+    }
+    
+    this.name = name;
+    
+    this.core = {
+      cache: {
+        save: async (...args) => await cache.save(this.name, ...args),
+        load: async (...args) => await cache.load(this.name, ...args)
+      },
+      config: {
+        readConfig: async (...args) => await config.readConfig(this.name, ...args),
+        writeConfig: async (...args) => await config.writeConfig(this.name, ...args),
+        deleteConfig: async (...args) => await config.deleteConfig(this.name, ...args)
+      },
+      graph: {
+        mergePersona: async (...args) => await graph.mergePersona(this.name, ...args),
+        readPersona: async (...args) => await graph.readPersona(this.name, ...args),
+        backupSource: async (...args) => await graph.backupSource(this.name, ...args),
+        deleteOrphanedPersonas: async (...args) => await graph.deleteOrphanedPersonas(this.name, ...args),
+        deletePersona: async (...args) => await graph.deletePersona(this.name, ...args),
+        deleteSource: async (...args) => await graph.deleteSource(this.name, ...args),
+        mergePersonas: async (...args) => await graph.mergePersonas(this.name, ...args),
+        mergeSource: async (...args) => await graph.mergeSource(this.name, ...args),
+        readOrphanedPersonas: async (...args) => await graph.readOrphanedPersonas(this.name, ...args),
+        readPersonas: async (...args) => await graph.readPersonas(this.name, ...args),
+        readSource: async (...args) => await graph.readSource(this.name, ...args),
+        readSourcePersonas: async (...args) => await graph.readSourcePersonas(this.name, ...args),
+        readSourceRelationships: async (...args) => await graph.readSourceRelationships(this.name, ...args),
+        removePersona: async (...args) => await graph.removePersona(this.name, ...args),
+        restoreSource: async (...args) => await graph.restoreSource(this.name, ...args),
+        runRawQuery: async (...args) => await graph.runRawQuery(this.name, ...args),
+        runRawQueryArray: async (...args) => await graph.runRawQueryArray(this.name, ...args),
+        syncPersonas: async (...args) => await graph.syncPersonas(this.name, ...args),
+        unlinkPersonas: async (...args) => await graph.unlinkPersonas(this.name, ...args)
+      },
+
+      // Direct pass-through for utility functions that don't need module context
+      check: check,
+      constants: constants,
+      types: types,
+
+      // Mixed namespace - some methods need context, others don't
+      client: {
+        render: async (...args) => await client.render(this.name, ...args),
+        registerPartials: client.registerPartials // Direct pass-through
+      },
+
+      crypto: {
+        encrypt: async (...args) => await crypto.encrypt(this.name, ...args),
+        decrypt: async (...args) => await crypto.decrypt(this.name, ...args)
+      },
+
+      source: {
+        getSourceObject: async (...args) => await source.getSourceObject(this.name, ...args)
+      },
+
+      persona: {
+        generateUpnRaw: persona.generateUpnRaw,
+        getFromRelationships: persona.getFromRelationships,
+        getProps: persona.getProps,
+        newFromUpn: persona.newFromUpn
+      },
+
+      server: {
+        realtime: server.realtime
+      },
+
+      log: (message, type = 'UNKNOWN_TYPE') => writeLog(this.name, message, type),
+
+      // Add mod namespace for accessing other modules
+      mod: {},
+    };
+
+    // Populate mod namespace
+    for (const [moduleName, moduleFunctions] of Object.entries(core.mod)) {
+      this.core.mod[moduleName] = {};
+      
+      for (const [funcName, func] of Object.entries(moduleFunctions)) {
+        if (typeof func === 'function') {
+          this.core.mod[moduleName][funcName] = async (...args) => {
+            consoleLog(`${this.name} calling core.mod.${moduleName}.${funcName} from ${moduleName}`);
+            return await func(...args);
+          };
+        } else {
+          this.core.mod[moduleName][funcName] = func;
+        }
+      }
+    }
+  }
+
+  // Template helper that modules can use
+  async renderComponent(name, props = {}, options = {}) {
+    const { id } = props;
+    
+    return `
+      <div id="component-mount-${id}">
+        <script type="module">
+          // Load and define the module first
+          const { CoreClientModule } = window;
+          await import('/public/${this.name}/client.js');
+          
+          // Then create the component once module is loaded
+          const component = document.createElement('${name}');
+          component.id = '${id}';
+          document.getElementById('component-mount-${id}').replaceWith(component);
+        </script>
+      </div>
+    `;
+  }
+
+  // Default entry point for module UI
+  async index(req) {
+    throw new Error('Index not implemented');
+  }
+
+  // Helper to update connected clients
+  async update(instanceId, data) {
+    server.realtime.broadcast(this.name, instanceId, data);
+  }
+
+  async getState(instanceId) {
+    // Get state for specific instance
+    const allState = await this.core.config.readConfig() || {};
+    return allState[instanceId] || {};
+  }
+
+  async setState(instanceId, instanceState) {
+    // Read current state
+    const allState = await this.core.config.readConfig() || {};
+    
+    // Update just this instance's state
+    allState[instanceId] = instanceState;
+    
+    // Persist to config
+    await this.core.config.writeConfig(allState);
+    
+    // Update realtime instance
+    await this.update(instanceId, instanceState);
+    
+    return instanceState;
+  }
+}
 
 export default core;

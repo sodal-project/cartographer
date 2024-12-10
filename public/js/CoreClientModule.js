@@ -133,7 +133,7 @@ export class CoreClientModule extends HTMLElement {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          instance: this.instanceId
+          instanceId: this.instanceId
         })
       });
       return await response.json();
