@@ -5,19 +5,6 @@ class CoreServerModule {
     this.name = name;
   }
 
-  // Helper method to safely serialize data for components
-  _serializeProps(props) {
-    return Object.entries(props)
-      .map(([key, value]) => {
-        const safeValue = JSON.stringify(value)
-          .replace(/&/g, '&amp;')
-          .replace(/'/g, '&apos;')
-          .replace(/"/g, '&quot;');
-        return `${key}="${safeValue}"`;
-      })
-      .join(' ');
-  }
-
   // Template helper that modules can use
   renderComponent(name, props = {}, options = {}) {
     const {
@@ -39,9 +26,12 @@ class CoreServerModule {
       .map(src => `<script type="module" src="${src}"></script>`)
       .join('\n');
 
+    // Only pass the id, let the module fetch its own data
+    const { id } = props;
+    
     return `
       ${cssLinks}
-      <${name} ${this._serializeProps(props)}></${name}>
+      <${name} id="${id}"></${name}>
       ${scriptTags}
     `;
   }

@@ -136,9 +136,15 @@ export class CoreClientModule extends HTMLElement {
    */
   async fetchInitialState() {
     try {
-      const response = await fetch(
-        `/mod/${this.constructor.moduleName}/getData?instance=${this.instanceId}`
-      );
+      const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instance: this.instanceId
+        })
+      });
       return await response.json();
     } catch (error) {
       console.error('Error fetching initial state:', error);
