@@ -59,7 +59,7 @@ class TestConfig extends CoreModule {
   async index(req) {
     try {
       return this.renderComponent('test-config-module', {
-        id: `test-config-${req.instance || crypto.randomUUID()}`
+        id: `test-config-${req.instance || 'default'}`
       });
     } catch (error) {
       console.error('index error:', error);
@@ -69,12 +69,5 @@ class TestConfig extends CoreModule {
 }
 
 // Create a single instance
-const testConfig = new TestConfig();
+export default new TestConfig();
 
-// Export all the module functions
-export default {
-  index: (...args) => testConfig.index(...args),
-  getData: (...args) => testConfig.getData(...args),
-  writeConfig: (...args) => testConfig.writeConfig(...args),
-  deleteConfig: (...args) => testConfig.deleteConfig(...args)
-};

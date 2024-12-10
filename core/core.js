@@ -181,49 +181,52 @@ async function initModules(moduleArray) {
 
     // load the module
     const moduleImport = await import(`../modules/${module}/server.js`);
-    calls.mod[module] = moduleImport.default;
+    const moduleExport = moduleImport.default;
+    
+    // Handle both class instances and regular objects
+    calls.mod[module] = moduleExport;
     core.mod[module] = {};
 
     consoleLog(`Core: loading external module: ${module}`)
 
-    // for each exported function in the module, add it to the core object
-    for(const call in calls.mod[module]) {
+    // Get all properties, including those from class instances
+    const properties = Object.getOwnPropertyNames(Object.getPrototypeOf(moduleExport))
+      .concat(Object.keys(moduleExport));
 
+    // for each exported property in the module, add it to the core object
+    for(const call of properties) {
       consoleLog(`Core: loading external module function: ${module}.${call}`)
 
-      // if this is the default export, skip it
-      if(call === 'default') { 
-        consoleLog(`Core: skipping default export for module: ${module}`)
-        continue; 
+      // Skip constructor and internal properties
+      if(call === 'constructor' || call === 'default') {
+        consoleLog(`Core: skipping ${call} for module: ${module}`)
+        continue;
       }
       
-      /**
-       * if this is the module's init function, call it immediately
-       * 
-       * The init function gives each module a chance to 
-       * setup itself prior to being called by other modules
-       */
-      else if(call === 'init') {
-        await calls.mod[module][call]();
-        continue;
-      } 
-      
-      else {
-        counter++;
-        // if this is a function, add it to the core object
-        if(typeof calls.mod[module][call] === 'function') {
-
-          // add the function to the core object
-          core.mod[module][call] = (...params) => {
-            consoleLog(`Calling core.mod.${module}.${call} from an API call`)
-            return calls.mod[module][call](...params);
-          }
-
-        } else {
-
-          // if this is an object instead of a function, add it to core as is
-          core.mod[module][call] = calls.mod[module][call];
+      // Handle init specially
+      if(call === 'init') {
+        if(typeof moduleExport[call] === 'function') {
+          await moduleExport[call]();
         }
+        continue;
+      }
+
+      counter++;
+      const property = moduleExport[call];
+      
+      // Handle both direct properties and prototype methods
+      if(typeof property === 'function' || 
+         typeof Object.getOwnPropertyDescriptor(Object.getPrototypeOf(moduleExport), call)?.value === 'function') {
+
+        // add the function to the core object
+        core.mod[module][call] = (...params) => {
+          consoleLog(`Calling core.mod.${module}.${call} from an API call`)
+          return moduleExport[call](...params);
+        }
+
+      } else {
+        // if this is an object instead of a function, add it to core as is
+        core.mod[module][call] = moduleExport[call];
       }
     }
   }
@@ -365,56 +368,65 @@ export class CoreModule {
     }
   }
 
-  // Template helper that modules can use
-  async renderComponent(name, props = {}, options = {}) {
-    const { id } = props;
+  // Simplified state management
+  async getState(instanceId) {
+    // Read all state for this module
+    const moduleState = await this.core.config.readConfig() || {};
     
+    // Return just this instance's state or empty object
+    return moduleState[instanceId] || {};
+  }
+
+  async setState(instanceId, newState) {
+    // Read current module state
+    const moduleState = await this.core.config.readConfig() || {};
+    
+    // Update just this instance's state
+    moduleState[instanceId] = newState;
+    
+    // Write back full module state
+    await this.core.config.writeConfig(moduleState);
+    
+    // Broadcast just this instance's state
+    await this.update(instanceId, newState);
+    
+    return newState;
+  }
+
+  // Simplified component rendering
+  async renderComponent(name, props = {}) {
+    const { id, moduleName = this.name } = props;
     return `
       <div id="component-mount-${id}">
         <script type="module">
-          // Load and define the module first
-          const { CoreClientModule } = window;
-          await import('/public/${this.name}/client.js');
+          // Ensure CoreClientModule is loaded
+          if (!window.CoreClientModule) {
+            await import('/public/js/CoreClientModule.js');
+          }
           
-          // Then create the component once module is loaded
+          // Load the module's client code
+          await import('/public/${moduleName}/client.js');
+          
+          // Create and mount the component
           const component = document.createElement('${name}');
           component.id = '${id}';
-          document.getElementById('component-mount-${id}').replaceWith(component);
+          const mount = document.getElementById('component-mount-${id}');
+          if (mount) {
+            mount.replaceWith(component);
+          }
         </script>
       </div>
     `;
   }
 
+  // Simplified update broadcast
+  async update(instanceId, data) {
+    this.core.server.realtime.broadcast(this.name, instanceId, data);
+  }
+
   // Default entry point for module UI
   async index(req) {
     throw new Error('Index not implemented');
-  }
-
-  // Helper to update connected clients
-  async update(instanceId, data) {
-    server.realtime.broadcast(this.name, instanceId, data);
-  }
-
-  async getState(instanceId) {
-    // Get state for specific instance
-    const allState = await this.core.config.readConfig() || {};
-    return allState[instanceId] || {};
-  }
-
-  async setState(instanceId, instanceState) {
-    // Read current state
-    const allState = await this.core.config.readConfig() || {};
-    
-    // Update just this instance's state
-    allState[instanceId] = instanceState;
-    
-    // Persist to config
-    await this.core.config.writeConfig(allState);
-    
-    // Update realtime instance
-    await this.update(instanceId, instanceState);
-    
-    return instanceState;
   }
 }
 

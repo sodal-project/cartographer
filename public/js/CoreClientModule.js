@@ -13,10 +13,7 @@ export class CoreClientModule extends HTMLElement {
    * @param {typeof CoreClientModule} moduleClass - The module class to define
    */
   static define(moduleClass) {
-    if (!moduleClass.moduleName) {
-      throw new Error('Module class must define static moduleName');
-    }
-    customElements.define(moduleClass.tagName, moduleClass);
+    customElements.define(`${moduleClass.moduleName}-module`, moduleClass);
   }
 
   /**
@@ -38,23 +35,19 @@ export class CoreClientModule extends HTMLElement {
 
   constructor() {
     super();
-    this.instanceId = '';
-    this.state = null;
+    this.attachShadow({ mode: 'open' });
   }
 
   /**
    * Standard Web Component lifecycle - called when component is added to DOM
    */
   async connectedCallback() {
+    // Set instanceId when element is connected, after attributes are set
     this.instanceId = this.getAttribute('id');
-    if (!this.instanceId) {
-      throw new Error('Component must have an id attribute');
-    }
-
-    if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' });
-    }
-
+    
+    // Initialize instance state
+    this.constructor.initInstance(this.instanceId);
+    
     if (!tailwindStyles) {
       try {
         tailwindStyles = new CSSStyleSheet();
@@ -100,10 +93,7 @@ export class CoreClientModule extends HTMLElement {
     return window.realtime.subscribe(
       this.constructor.moduleName,
       this.instanceId,
-      (data) => {
-        console.log('Received WebSocket data:', data);
-        callback(data);
-      }
+      callback
     );
   }
 
@@ -111,15 +101,17 @@ export class CoreClientModule extends HTMLElement {
    * Initialize component - override in subclass
    */
   async init() {
-    // Load initial state
-    const data = await this.fetchInitialState();
-    this.setState(data);
+    // Subscribe first to ensure no missed updates
+    this.subscribe(this.updateUI.bind(this));
     
-    // Setup event handlers
-    this.setupEvents();
+    // Get and render initial state
+    const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ instanceId: this.instanceId })
+    });
     
-    // Initial render
-    this.render();
+    this.updateUI(await response.json());
   }
 
   /**
@@ -173,7 +165,7 @@ export class CoreClientModule extends HTMLElement {
   }
 
   /**
-   * Setup event handlers - override in subclass
+   * Setup event handlers - override in subclass if needed
    */
   setupEvents() {
     // Override in subclass
@@ -194,5 +186,72 @@ export class CoreClientModule extends HTMLElement {
     if (!document.getElementById(this.id)) {
       this.constructor.instances.delete(this.instanceId);
     }
+  }
+
+  /**
+   * Render a submodule within this module's shadow DOM
+   * @param {string} moduleName - Name of the module to render
+   * @param {string} mountId - ID of the element where the submodule will be mounted
+   * @param {Object} options - Additional options
+   * @param {string} [options.action='index'] - The module action to call (e.g., 'index', 'list', etc.)
+   * @param {string} [options.instanceId] - Specific ID to use for the submodule instance
+   */
+  async renderSubmodule(moduleName, mountId, options = {}) {
+    const { 
+      action = 'index',
+      instanceId = crypto.randomUUID()
+    } = options;
+
+    try {
+      const response = await fetch(`/mod/${moduleName}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ instanceId })
+      });
+      
+      const html = await response.text();
+      const mountPoint = this.shadowRoot.getElementById(mountId);
+      mountPoint.innerHTML = html;
+
+      // Initialize the submodule's component
+      const componentMount = mountPoint.querySelector('[id^="component-mount-"]');
+      if (componentMount) {
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.textContent = `
+          import '/public/${moduleName}/client.js';
+          const component = document.createElement('${moduleName}-module');
+          component.id = '${instanceId}';
+          document.querySelector('${this.constructor.moduleName}-module')
+            .shadowRoot.querySelector('#${mountId}')
+            .replaceChild(component, document.querySelector('${this.constructor.moduleName}-module')
+            .shadowRoot.querySelector('#${mountId}').firstChild);
+        `;
+        document.head.appendChild(script);
+      }
+    } catch (error) {
+      console.error(`Failed to load ${moduleName}:`, error);
+      this.shadowRoot.getElementById(mountId).innerHTML = 
+        `<p class="text-red-500">Failed to load ${moduleName}</p>`;
+    }
+  }
+
+  /**
+   * Render component template
+   * @param {string} html - HTML content to render
+   */
+  renderComponent(html) {
+    this.shadowRoot.innerHTML = html;
+    this.setupEvents();
+  }
+
+  /**
+   * Update UI with new state - must be implemented by subclass
+   * @param {Object} state - New state to render
+   */
+  updateUI(state) {
+    throw new Error('updateUI must be implemented');
   }
 }

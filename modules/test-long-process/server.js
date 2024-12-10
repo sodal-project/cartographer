@@ -6,41 +6,36 @@ class TestLongProcess extends CoreModule {
   }
 
   async index(req) {
+    const instanceId = req.instanceId || 'test-long-process-default';
+    
+    // Initialize state if needed
+    const state = await this.getState(instanceId);
+    if (!state.status) {
+      await this.setState(instanceId, { status: 'ready' });
+    }
+
     return this.renderComponent('test-long-process-module', {
-      id: 'test-long-process'
+      id: instanceId,
+      moduleName: this.name
     });
   }
 
-  async longProcess(req) {
-    const { instanceId } = req;
+  async getData({ instanceId }) {
+    const state = await this.getState(instanceId);
+    return state.status ? state : { status: 'ready' };
+  }
+
+  async longProcess({ instanceId }) {
+    // Set status to running
+    await this.setState(instanceId, { status: 'running' });
     
-    try {
-      // Update process state
-      await this.setState(instanceId, { 
-        status: 'running'
-      });
-      
-      // Simulate long process
-      setTimeout(async () => {
-        await this.setState(instanceId, {
-          status: 'ready'
-        });
-      }, 15000);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('longProcess error:', error);
-      return { error: error.message };
-    }
+    // Simulate long process
+    setTimeout(async () => {
+      await this.setState(instanceId, { status: 'ready' });
+    }, 15000);
+    
+    return { success: true };
   }
 }
 
-// Create a single instance
-const testLongProcess = new TestLongProcess();
-
-// Export all the module functions
-export default {
-  index: (...args) => testLongProcess.index(...args),
-  getData: async (instance) => await testLongProcess.getState(instance),
-  longProcess: (...args) => testLongProcess.longProcess(...args)
-};
+export default new TestLongProcess();

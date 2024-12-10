@@ -6,24 +6,17 @@ class TestSubmodule extends CoreModule {
   }
 
   async index(req) {
+    const instanceId = req.instanceId || crypto.randomUUID();
     return this.renderComponent('test-submodule-module', {
-      id: 'test-submodule'
+      id: instanceId,
+      moduleName: this.name
     });
   }
 
+  // Simple getData to support our new pattern
   async getData({ instanceId }) {
-    const state = await this.getState(instanceId);
-    return {
-      status: state.status || 'ready'
-    };
+    return {};  // No state needed, just mounting submodules
   }
 }
 
-// Create a single instance
-const testSubmodule = new TestSubmodule();
-
-// Export all the module functions
-export default {
-  index: (...args) => testSubmodule.index(...args),
-  getData: (...args) => testSubmodule.getData(...args)
-};
+export default new TestSubmodule();

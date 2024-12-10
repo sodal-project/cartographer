@@ -4,49 +4,49 @@ class TestSubmoduleModule extends window.CoreClientModule {
   async init() {
     this.shadowRoot.innerHTML = `
       <div class="p-8">
-        <h2 class="text-xl font-bold mb-6 text-white">Test Submodule Dashboard</h2>
+        <h2 class="text-xl font-bold mb-4 text-white">Test Submodule</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Test Config Panel -->
+        <div class="flex flex-col gap-8">
           <div class="bg-gray-800 rounded-lg p-6">
             <h3 class="text-lg font-semibold mb-4 text-white">Test Config</h3>
-            <div id="test-config-mount"></div>
+            <div id="config-mount"></div>
           </div>
 
-          <!-- Test Long Process Panel -->
           <div class="bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-4 text-white">Long Process</h3>
-            <div id="test-long-process-mount"></div>
+            <h3 class="text-lg font-semibold mb-4 text-white">Test Ping</h3>
+            <div id="ping-mount"></div>
           </div>
 
-          <!-- Test Ping Panel -->
           <div class="bg-gray-800 rounded-lg p-6">
-            <h3 class="text-lg font-semibold mb-4 text-white">Ping Counter</h3>
-            <div id="test-ping-mount"></div>
+            <h3 class="text-lg font-semibold mb-4 text-white">Test Long Process</h3>
+            <div id="process-mount"></div>
           </div>
         </div>
       </div>
     `;
 
-    // Load submodules
-    await Promise.all([
-      this.loadSubmodule('test-config', 'test-config-mount'),
-      this.loadSubmodule('test-long-process', 'test-long-process-mount'),
-      this.loadSubmodule('test-ping', 'test-ping-mount')
-    ]);
-  }
+    // Mount test-config with custom configuration
+    await this.renderSubmodule('test-config', 'config-mount', {
+      action: 'index',
+      instanceId: 'shared-config'
+    });
 
-  async loadSubmodule(moduleName, mountId) {
-    try {
-      const response = await fetch(`/mod/${moduleName}/index`);
-      const html = await response.text();
-      this.shadowRoot.getElementById(mountId).innerHTML = html;
-    } catch (error) {
-      console.error(`Failed to load ${moduleName}:`, error);
-      this.shadowRoot.getElementById(mountId).innerHTML = 
-        `<p class="text-red-500">Failed to load ${moduleName}</p>`;
-    }
+    // Mount test-ping with custom configuration
+    await this.renderSubmodule('test-ping', 'ping-mount', {
+      action: 'index',
+      instanceId: 'shared-ping'
+    });
+
+    // Mount test-long-process with custom configuration
+    await this.renderSubmodule('test-long-process', 'process-mount', {
+      action: 'index',
+      instanceId: 'shared-process'
+    });
   }
 }
 
-window.CoreClientModule.define(TestSubmoduleModule);
+if (window.CoreClientModule) {
+  window.CoreClientModule.define(TestSubmoduleModule);
+} else {
+  console.error('CoreClientModule not loaded');
+}
