@@ -125,6 +125,12 @@ const core = {
         category: "System",
         accessLevel: "admin"
       },
+      {
+        folder: "test-interconnect",
+        label: "Test Interconnect",
+        category: "System",
+        accessLevel: "admin"
+      },
       // {
       //   folder: "exportCsv",
       //   label: "Export CSV",

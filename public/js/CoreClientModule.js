@@ -254,4 +254,33 @@ export class CoreClientModule extends HTMLElement {
   updateUI(state) {
     throw new Error('updateUI must be implemented');
   }
+
+  /**
+   * Call a server module method
+   * @param {string} path - Path in format 'moduleName/methodName' or just 'methodName' for same module
+   * @param {Object} params - Parameters to pass to the method
+   * @returns {Promise<any>} Server response
+   */
+  async call(path, params = {}) {
+    // Parse module and method from path
+    const [moduleName, methodName] = path.includes('/') 
+      ? path.split('/')
+      : [this.constructor.moduleName, path];
+
+    try {
+      const response = await fetch(`/mod/${moduleName}/${methodName}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instanceId: this.instanceId,
+          ...params
+        })
+      });
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`Error calling ${moduleName}/${methodName}:`, error);
+      throw error;
+    }
+  }
 }
