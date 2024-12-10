@@ -1,7 +1,6 @@
-import { CoreClientModule } from '/js/CoreClientModule.js';
 import { createApp } from '/public/test-config/vue.js';
 
-class TestConfigModule extends CoreClientModule {
+class TestConfigModule extends window.CoreClientModule {
   static moduleName = 'test-config';
 
   async init() {
@@ -99,4 +98,4 @@ class TestConfigModule extends CoreClientModule {
 }
 
 console.log('[TestConfigModule] Defining custom element');
-CoreClientModule.define(TestConfigModule);
+window.CoreClientModule.define(TestConfigModule);

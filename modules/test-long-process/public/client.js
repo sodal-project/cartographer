@@ -1,6 +1,4 @@
-import { CoreClientModule } from '/js/CoreClientModule.js';
-
-class TestLongProcessModule extends CoreClientModule {
+class TestLongProcessModule extends window.CoreClientModule {
   static moduleName = 'test-long-process';
 
   async init() {
@@ -70,4 +68,4 @@ class TestLongProcessModule extends CoreClientModule {
   }
 }
 
-CoreClientModule.define(TestLongProcessModule);
+window.CoreClientModule.define(TestLongProcessModule);

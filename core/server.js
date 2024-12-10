@@ -14,7 +14,7 @@ class CoreServerModule {
       <div id="component-mount-${id}">
         <script type="module">
           // Load and define the module first
-          import { CoreClientModule } from '/js/CoreClientModule.js';
+          const { CoreClientModule } = window;
           await import('/public/${this.name}/client.js');
           
           // Then create the component once module is loaded

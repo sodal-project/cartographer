@@ -1,6 +1,3 @@
-import { realtime } from './realtime.js';
-
-// core/client/CoreClientModule.js
 // Create a shared stylesheet that can be reused across all modules
 let tailwindStyles = null;
 
@@ -19,7 +16,6 @@ export class CoreClientModule extends HTMLElement {
     if (!moduleClass.moduleName) {
       throw new Error('Module class must define static moduleName');
     }
-    console.log(`[${moduleClass.name}] Defining custom element: ${moduleClass.tagName}`);
     customElements.define(moduleClass.tagName, moduleClass);
   }
 
@@ -42,7 +38,6 @@ export class CoreClientModule extends HTMLElement {
 
   constructor() {
     super();
-    console.log(`[${this.constructor.name}] Constructor called`);
     this.instanceId = '';
     this.state = null;
   }
@@ -51,81 +46,62 @@ export class CoreClientModule extends HTMLElement {
    * Standard Web Component lifecycle - called when component is added to DOM
    */
   async connectedCallback() {
-    console.log(`[${this.constructor.name}] connectedCallback started`);
     this.instanceId = this.getAttribute('id');
     if (!this.instanceId) {
       throw new Error('Component must have an id attribute');
     }
-    console.log(`[${this.constructor.name}] instanceId: ${this.instanceId}`);
 
-    // Create shadow root if not already created
     if (!this.shadowRoot) {
       this.attachShadow({ mode: 'open' });
     }
 
-    // Load and adopt Tailwind styles if not already loaded
     if (!tailwindStyles) {
       try {
         tailwindStyles = new CSSStyleSheet();
-        const cssText = await window.getTailwindCSS();
-        await tailwindStyles.replace(cssText);
+        await tailwindStyles.replace(await window.getTailwindCSS());
       } catch (error) {
         console.error('Error loading Tailwind styles:', error);
       }
     }
 
-    // Always use Tailwind as the base stylesheet
     this.shadowRoot.adoptedStyleSheets = [tailwindStyles];
 
-    // Load module styles
     try {
       const response = await fetch(`/public/${this.constructor.moduleName}/styles.css`);
-      const contentType = response.headers.get('content-type');
-      
-      if (response.ok && contentType && contentType.includes('text/css')) {
+      if (response.ok && response.headers.get('content-type')?.includes('text/css')) {
         const moduleStyles = new CSSStyleSheet();
-        const cssText = await response.text();
-        await moduleStyles.replace(cssText);
+        await moduleStyles.replace(await response.text());
         this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, moduleStyles];
       }
-    } catch (error) {
-      // Silently continue if module styles don't exist
-    }
+    } catch (error) {}
 
-    // Load module client code if not already loaded
     if (!customElements.get(this.constructor.tagName)) {
-      console.log(`[${this.constructor.name}] Loading client code for ${this.constructor.moduleName}`);
       try {
         await import(`/public/${this.constructor.moduleName}/client.js`);
-        console.log(`[${this.constructor.name}] Client code loaded successfully`);
       } catch (error) {
-        console.error(`[${this.constructor.name}] Error loading module client code:`, error);
+        console.error(`Error loading module client code:`, error);
       }
     }
 
-    console.log(`[${this.constructor.name}] Initializing component`);
     await this.init();
-    console.log(`[${this.constructor.name}] Component initialized`);
   }
 
   /**
    * Subscribe to state updates for this instance
    */
   subscribe(callback) {
-    console.log(`Subscribing to updates for ${this.constructor.moduleName}:${this.instanceId}`); // Debug log
+    console.log(`Subscribing to updates for ${this.constructor.moduleName}:${this.instanceId}`);
     
-    // Connect to WebSocket if not already connected
     if (!window.realtime) {
       console.error('Realtime service not initialized');
       return;
     }
 
-    // Subscribe to updates for this instance
     return window.realtime.subscribe(
       this.constructor.moduleName,
       this.instanceId,
       (data) => {
-        console.log('Received WebSocket data:', data); // Debug log
+        console.log('Received WebSocket data:', data);
         callback(data);
       }
     );
