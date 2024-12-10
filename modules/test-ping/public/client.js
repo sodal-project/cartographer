@@ -2,55 +2,42 @@ class TestPingModule extends window.CoreClientModule {
   static moduleName = 'test-ping';
 
   async init() {
-    // Subscribe first to ensure no missed updates
-    this.subscribe(state => this.updateUI(state));
-    
-    // Get initial state
-    const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ instanceId: this.instanceId })
-    });
-    
-    const state = await response.json();
+    const state = await this.call({ method: 'getData' });
     this.updateUI(state);
+    this.subscribe(state => this.updateUI(state));
   }
 
   updateUI(state) {
-    this.shadowRoot.innerHTML = `
-      <div class="p-8" style="max-width: 640px">
-        <h2 class="text-xl font-bold mb-4 text-white">Test Ping</h2>
-        
-        <div class="bg-gray-800 rounded-lg p-6">
-          <form class="flex items-end gap-6 mb-0">
-            <button
-              class="bg-indigo-600 p-1 px-6 rounded text-white text-sm hover:bg-indigo-500"
-              type="submit"
-            >
-              Ping
+    this.renderComponent({
+      html: `
+        <div class="p-4">
+          <h2 class="text-xl mb-4 text-white">Ping Test</h2>
+          
+          <div class="mb-4">
+            <button id="ping-btn" 
+              class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded text-white">
+              Send Ping
             </button>
-            <div>
-              <p class="text-white">Pings: ${state.pings}</p>
-            </div>
-          </form>
-        </div>
-      </div>
-    `;
+          </div>
 
-    const form = this.shadowRoot.querySelector('form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await fetch(`/mod/${this.constructor.moduleName}/ping`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceId: this.instanceId })
-      });
+          <div class="bg-gray-800 rounded p-4">
+            <div class="text-gray-400">
+              Pings: ${state?.pings || 0}
+            </div>
+          </div>
+        </div>
+      `
     });
+  }
+
+  setupEvents() {
+    const pingBtn = this.shadowRoot.getElementById('ping-btn');
+    if (pingBtn) {
+      pingBtn.addEventListener('click', () => {
+        this.call({ method: 'ping' });
+      });
+    }
   }
 }
 
-if (window.CoreClientModule) {
-  window.CoreClientModule.define(TestPingModule);
-} else {
-  console.error('CoreClientModule not loaded');
-} 
+window.CoreClientModule.define(TestPingModule); 

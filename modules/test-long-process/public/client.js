@@ -2,63 +2,62 @@ class TestLongProcessModule extends window.CoreClientModule {
   static moduleName = 'test-long-process';
 
   async init() {
-    // Subscribe first to ensure no missed updates
-    this.subscribe(state => this.updateUI(state));
-    
-    // Get initial state
-    const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ instanceId: this.instanceId })
-    });
-    
-    const state = await response.json();
+    console.log('Initializing test-long-process');
+    const state = await this.call({ method: 'getData' });
+    console.log('Initial state:', state);
     this.updateUI(state);
+    this.subscribe(state => this.updateUI(state));
   }
 
   updateUI(state) {
-    this.renderComponent(`
-      <div class="p-8" style="max-width: 640px">
-        <h2 class="text-xl font-bold mb-4 text-white">Test Long Process</h2>
-        
-        <div class="bg-gray-800 rounded-lg p-6">
-          <form class="flex items-end gap-6 mb-0">
-            <button
-              class="bg-indigo-600 p-1 px-6 rounded text-white text-sm hover:bg-indigo-500"
-              type="submit"
-              ${state.status === 'running' ? 'disabled' : ''}
-            >
+    console.log('Updating UI with state:', state);
+    this.renderComponent({
+      html: `
+        <div class="p-4">
+          <h2 class="text-xl mb-4 text-white">Long Process Test</h2>
+          
+          <div class="mb-4">
+            <button id="start-btn" 
+              class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded text-white"
+              ${state.status === 'running' ? 'disabled' : ''}>
               Start Process
             </button>
-            <div>
-              <p class="text-white">Status: ${state.status}</p>
-            </div>
-          </form>
+          </div>
+
+          <div class="bg-gray-800 rounded p-4">
+            ${state.status === 'running' ? `
+              <div class="text-white mb-2">Process running...</div>
+              <div class="bg-gray-700 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full transition-all" 
+                  style="width: 100%">
+                </div>
+              </div>
+            ` : `
+              <div class="text-gray-400">
+                Process not running
+              </div>
+            `}
+          </div>
         </div>
-      </div>
-    `);
+      `
+    });
   }
 
   setupEvents() {
-    const form = this.shadowRoot.querySelector('form');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        await fetch(`/mod/${this.constructor.moduleName}/longProcess`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instanceId: this.instanceId })
-        });
-      } catch (error) {
-        console.error('Error starting long process:', error);
-      }
-    });
+    const startBtn = this.shadowRoot.getElementById('start-btn');
+    if (startBtn) {
+      startBtn.addEventListener('click', async () => {
+        console.log('Starting long process');
+        try {
+          await this.call({
+            method: 'longProcess'
+          });
+        } catch (error) {
+          console.error('Long process error:', error);
+        }
+      });
+    }
   }
 }
 
-// Make sure this runs after CoreClientModule is available
-if (window.CoreClientModule) {
-  window.CoreClientModule.define(TestLongProcessModule);
-} else {
-  console.error('CoreClientModule not loaded');
-}
+window.CoreClientModule.define(TestLongProcessModule);

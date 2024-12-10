@@ -46,17 +46,12 @@ class TestConfigModule extends window.CoreClientModule {
         async submitForm() {
           if (!this.form.key || !this.form.value) return;
           
-          await fetch(`/mod/${component.constructor.moduleName}/writeConfig`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              instanceId: component.instanceId,
+          await component.call({
+            method: 'writeConfig',
+            params: {
               key: this.form.key,
               value: this.form.value
-            })
+            }
           });
           
           this.form.key = '';
@@ -64,21 +59,14 @@ class TestConfigModule extends window.CoreClientModule {
         },
 
         async deleteConfig(key) {
-          await fetch(`/mod/${component.constructor.moduleName}/deleteConfig`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              instanceId: component.instanceId,
-              key
-            })
+          await component.call({
+            method: 'deleteConfig',
+            params: { key }
           });
         },
 
         updateConfig(data) {
-          console.log('Updating config with:', data); // Debug log
+          console.log('Updating config with:', data);
           this.config = data.config || {};
         }
       }
@@ -91,7 +79,7 @@ class TestConfigModule extends window.CoreClientModule {
     this.subscribe(data => vm.updateConfig(data));
     
     console.log('[TestConfigModule] Fetching initial state');
-    const initialState = await this.fetchInitialState();
+    const initialState = await this.call({ method: 'getData' });
     vm.updateConfig(initialState);
     console.log('[TestConfigModule] Initial state loaded:', initialState);
   }

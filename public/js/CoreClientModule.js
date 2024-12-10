@@ -189,21 +189,16 @@ export class CoreClientModule extends HTMLElement {
   }
 
   /**
-   * Render a submodule within this module's shadow DOM
-   * @param {string} moduleName - Name of the module to render
-   * @param {string} mountId - ID of the element where the submodule will be mounted
-   * @param {Object} options - Additional options
-   * @param {string} [options.action='index'] - The module action to call (e.g., 'index', 'list', etc.)
-   * @param {string} [options.instanceId] - Specific ID to use for the submodule instance
+   * Render a submodule
+   * @param {Object} options - Render options
+   * @param {string} options.module - Module name to render
+   * @param {string} options.mountId - ID of mount point element
+   * @param {string} options.action - Action to call (defaults to 'index')
+   * @param {string} options.instanceId - Instance ID for the submodule
    */
-  async renderSubmodule(moduleName, mountId, options = {}) {
-    const { 
-      action = 'index',
-      instanceId = crypto.randomUUID()
-    } = options;
-
+  async renderSubmodule({ module, mountId, action = 'index', instanceId = crypto.randomUUID() }) {
     try {
-      const response = await fetch(`/mod/${moduleName}/${action}`, {
+      const response = await fetch(`/mod/${module}/${action}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -221,8 +216,8 @@ export class CoreClientModule extends HTMLElement {
         const script = document.createElement('script');
         script.type = 'module';
         script.textContent = `
-          import '/public/${moduleName}/client.js';
-          const component = document.createElement('${moduleName}-module');
+          import '/public/${module}/client.js';
+          const component = document.createElement('${module}-module');
           component.id = '${instanceId}';
           document.querySelector('${this.constructor.moduleName}-module')
             .shadowRoot.querySelector('#${mountId}')
@@ -232,19 +227,23 @@ export class CoreClientModule extends HTMLElement {
         document.head.appendChild(script);
       }
     } catch (error) {
-      console.error(`Failed to load ${moduleName}:`, error);
+      console.error(`Failed to load ${module}:`, error);
       this.shadowRoot.getElementById(mountId).innerHTML = 
-        `<p class="text-red-500">Failed to load ${moduleName}</p>`;
+        `<p class="text-red-500">Failed to load ${module}</p>`;
     }
   }
 
   /**
-   * Render component template
-   * @param {string} html - HTML content to render
+   * Render component content
+   * @param {Object} options - Render options
+   * @param {string} options.html - HTML content to render
+   * @param {boolean} options.setupEvents - Whether to call setupEvents (defaults to true)
    */
-  renderComponent(html) {
+  renderComponent({ html, setupEvents = true }) {
     this.shadowRoot.innerHTML = html;
-    this.setupEvents();
+    if (setupEvents) {
+      this.setupEvents();
+    }
   }
 
   /**
@@ -257,18 +256,16 @@ export class CoreClientModule extends HTMLElement {
 
   /**
    * Call a server module method
-   * @param {string} path - Path in format 'moduleName/methodName' or just 'methodName' for same module
-   * @param {Object} params - Parameters to pass to the method
-   * @returns {Promise<any>} Server response
+   * @param {Object} options - Call options
+   * @param {string} options.module - Target module name (optional, defaults to current module)
+   * @param {string} options.method - Method to call
+   * @param {Object} options.params - Parameters to pass to the method
    */
-  async call(path, params = {}) {
-    // Parse module and method from path
-    const [moduleName, methodName] = path.includes('/') 
-      ? path.split('/')
-      : [this.constructor.moduleName, path];
+  async call({ module, method, params = {} }) {
+    const targetModule = module || this.constructor.moduleName;
 
     try {
-      const response = await fetch(`/mod/${moduleName}/${methodName}`, {
+      const response = await fetch(`/mod/${targetModule}/${method}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -279,7 +276,7 @@ export class CoreClientModule extends HTMLElement {
       
       return await response.json();
     } catch (error) {
-      console.error(`Error calling ${moduleName}/${methodName}:`, error);
+      console.error(`Error calling ${targetModule}/${method}:`, error);
       throw error;
     }
   }
