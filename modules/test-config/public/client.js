@@ -5,6 +5,7 @@ class TestConfigModule extends CoreClientModule {
   static moduleName = 'test-config';
 
   async init() {
+    console.log('[TestConfigModule] init started');
     const component = this;
 
     // Create Vue app inside shadow root
@@ -84,17 +85,18 @@ class TestConfigModule extends CoreClientModule {
       }
     });
 
-    // Mount Vue app to shadow root
+    console.log('[TestConfigModule] Mounting Vue app');
     const vm = app.mount(this.shadowRoot);
     
-    // Subscribe to state changes
+    console.log('[TestConfigModule] Setting up subscription');
     this.subscribe(data => vm.updateConfig(data));
     
-    // Load initial state
+    console.log('[TestConfigModule] Fetching initial state');
     const initialState = await this.fetchInitialState();
     vm.updateConfig(initialState);
+    console.log('[TestConfigModule] Initial state loaded:', initialState);
   }
 }
 
-// Let CoreClientModule handle the custom element definition
+console.log('[TestConfigModule] Defining custom element');
 CoreClientModule.define(TestConfigModule);

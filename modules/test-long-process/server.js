@@ -17,7 +17,7 @@ class TestLongProcess extends core.server.CoreServerModule {
     }
   }
 
-  async mainPane(req) {
+  async index(req) {
     return this.renderComponent('test-long-process-module', {
       id: `test-long-process`
     });
@@ -61,7 +61,7 @@ const testLongProcess = new TestLongProcess();
 
 // Export all the module functions
 export default {
-  mainPane: (...args) => testLongProcess.mainPane(...args),
+  index: (...args) => testLongProcess.index(...args),
   getData: (...args) => testLongProcess.getData(...args),
   longProcess: (...args) => testLongProcess.longProcess(...args)
 };

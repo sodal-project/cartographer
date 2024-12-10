@@ -10,7 +10,6 @@ class ModuleManager {
   constructor() {
     this.currentModule = null;
     this.setupListeners();
-    console.log('ModuleManager initialized');
   }
 
   setupListeners() {
@@ -24,33 +23,7 @@ class ModuleManager {
       const moduleId = moduleLink.dataset.module;
       if (moduleId === this.currentModule) return;
 
-      // Show loading state
-      document.getElementById('spinner').style.visibility = 'visible';
-      document.getElementById('main').style.visibility = 'hidden';
-
-      try {
-        // First load the module's client code
-        await this.loadModuleScript(moduleId);
-        
-        // Then fetch and render module content
-        const response = await fetch(`/mod/${moduleId}/mainPane/`);
-        const html = await response.text();
-        
-        // Update URL
-        history.pushState({}, '', `/${moduleId}/mainPane/`);
-        
-        // Update content after web component is defined
-        const main = document.getElementById('main');
-        main.innerHTML = html;
-        
-        this.currentModule = moduleId;
-      } catch (error) {
-        console.error('Error loading module:', error);
-      } finally {
-        // Hide loading state
-        document.getElementById('spinner').style.visibility = 'hidden';
-        document.getElementById('main').style.visibility = 'visible';
-      }
+      await this.loadModule(moduleId);
     });
 
     // Handle browser back/forward
@@ -62,31 +35,22 @@ class ModuleManager {
     });
   }
 
-  async loadModuleScript(moduleId) {
-    try {
-      // Import the module's client code
-      await import(`/public/${moduleId}/client.js`);
-      console.log(`Loaded module script: ${moduleId}`);
-    } catch (error) {
-      console.error(`Error loading module script: ${moduleId}`, error);
-      throw error;
-    }
-  }
-
   async loadModule(moduleId) {
     document.getElementById('spinner').style.visibility = 'visible';
     document.getElementById('main').style.visibility = 'hidden';
 
     try {
-      // Load script first
-      await this.loadModuleScript(moduleId);
-      
-      // Then fetch and render content
-      const response = await fetch(`/mod/${moduleId}/mainPane/`);
+      const response = await fetch(`/mod/${moduleId}/index/`);
       const html = await response.text();
       
+      // Update URL
+      history.pushState({}, '', `/${moduleId}/index/`);
+      
+      // Update content
       document.getElementById('main').innerHTML = html;
       this.currentModule = moduleId;
+    } catch (error) {
+      console.error('Error loading module:', error);
     } finally {
       document.getElementById('spinner').style.visibility = 'hidden';
       document.getElementById('main').style.visibility = 'visible';
@@ -94,8 +58,58 @@ class ModuleManager {
   }
 }
 
+class ModuleLoader {
+  constructor() {
+    this.observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const mounts = [
+              ...(node.id?.startsWith('component-mount-') ? [node] : []),
+              ...node.querySelectorAll('[id^="component-mount-"]')
+            ];
+            mounts.forEach(mount => this.initializeComponent(mount));
+          }
+        }
+      }
+    });
+
+    this.observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  async initializeComponent(mountPoint) {
+    const scripts = mountPoint.querySelectorAll('script[type="module"]');
+    
+    try {
+      for (const script of scripts) {
+        const newScript = document.createElement('script');
+        newScript.type = 'module';
+        
+        if (script.src) {
+          newScript.src = script.src;
+        } else {
+          newScript.textContent = script.textContent;
+        }
+        
+        script.remove();
+        
+        await new Promise((resolve, reject) => {
+          newScript.onload = resolve;
+          newScript.onerror = reject;
+          document.head.appendChild(newScript);
+        });
+      }
+    } catch (error) {
+      console.error('Error initializing component:', error);
+    }
+  }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM Content Loaded');
   window.moduleManager = new ModuleManager();
+  window.moduleLoader = new ModuleLoader();
 });

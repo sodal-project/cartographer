@@ -1,4 +1,5 @@
 import { WebSocket, WebSocketServer } from 'ws';
+import fs from 'fs';
 
 class CoreServerModule {
   constructor(name) {
@@ -6,39 +7,28 @@ class CoreServerModule {
   }
 
   // Template helper that modules can use
-  renderComponent(name, props = {}, options = {}) {
-    const {
-      scripts = [],
-      styles = [],
-    } = options;
-
-    // Add default module assets if they exist
-    const defaultAssets = [
-      `/public/${this.name}/styles.css`,
-      `/public/${this.name}/client.js`
-    ];
-
-    const cssLinks = [...defaultAssets.filter(p => p.endsWith('.css')), ...styles]
-      .map(href => `<link rel="stylesheet" href="${href}">`)
-      .join('\n');
-
-    const scriptTags = [...defaultAssets.filter(p => p.endsWith('.js')), ...scripts]
-      .map(src => `<script type="module" src="${src}"></script>`)
-      .join('\n');
-
-    // Only pass the id, let the module fetch its own data
+  async renderComponent(name, props = {}, options = {}) {
     const { id } = props;
     
     return `
-      ${cssLinks}
-      <${name} id="${id}"></${name}>
-      ${scriptTags}
+      <div id="component-mount-${id}">
+        <script type="module">
+          // Load and define the module first
+          import { CoreClientModule } from '/js/CoreClientModule.js';
+          await import('/public/${this.name}/client.js');
+          
+          // Then create the component once module is loaded
+          const component = document.createElement('${name}');
+          component.id = '${id}';
+          document.getElementById('component-mount-${id}').replaceWith(component);
+        </script>
+      </div>
     `;
   }
 
   // Default entry point for module UI
-  async mainPane(req) {
-    throw new Error('mainPane not implemented');
+  async index(req) {
+    throw new Error('Index not implemented');
   }
 
   // Helper to update connected clients

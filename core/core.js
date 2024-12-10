@@ -56,7 +56,7 @@ async function initModules(moduleArray) {
     const module = moduleArray[item].folder;
 
     // load the module
-    const moduleImport = await import(`../modules/${module}/mainPane.js`);
+    const moduleImport = await import(`../modules/${module}/server.js`);
     calls.mod[module] = moduleImport.default;
     core.mod[module] = {};
 

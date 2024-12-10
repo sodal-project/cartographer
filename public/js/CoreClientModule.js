@@ -19,6 +19,7 @@ export class CoreClientModule extends HTMLElement {
     if (!moduleClass.moduleName) {
       throw new Error('Module class must define static moduleName');
     }
+    console.log(`[${moduleClass.name}] Defining custom element: ${moduleClass.tagName}`);
     customElements.define(moduleClass.tagName, moduleClass);
   }
 
@@ -41,6 +42,7 @@ export class CoreClientModule extends HTMLElement {
 
   constructor() {
     super();
+    console.log(`[${this.constructor.name}] Constructor called`);
     this.instanceId = '';
     this.state = null;
   }
@@ -49,10 +51,12 @@ export class CoreClientModule extends HTMLElement {
    * Standard Web Component lifecycle - called when component is added to DOM
    */
   async connectedCallback() {
+    console.log(`[${this.constructor.name}] connectedCallback started`);
     this.instanceId = this.getAttribute('id');
     if (!this.instanceId) {
       throw new Error('Component must have an id attribute');
     }
+    console.log(`[${this.constructor.name}] instanceId: ${this.instanceId}`);
 
     // Create shadow root if not already created
     if (!this.shadowRoot) {
@@ -73,7 +77,7 @@ export class CoreClientModule extends HTMLElement {
     // Always use Tailwind as the base stylesheet
     this.shadowRoot.adoptedStyleSheets = [tailwindStyles];
 
-    // Try to load module styles, but don't fail if they don't exist
+    // Load module styles
     try {
       const response = await fetch(`/public/${this.constructor.moduleName}/styles.css`);
       const contentType = response.headers.get('content-type');
@@ -82,15 +86,26 @@ export class CoreClientModule extends HTMLElement {
         const moduleStyles = new CSSStyleSheet();
         const cssText = await response.text();
         await moduleStyles.replace(cssText);
-        // Add module styles to existing stylesheets
         this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, moduleStyles];
       }
     } catch (error) {
-      // Silently continue if module styles don't exist or fail to load
+      // Silently continue if module styles don't exist
     }
 
-    // Initialize the component
+    // Load module client code if not already loaded
+    if (!customElements.get(this.constructor.tagName)) {
+      console.log(`[${this.constructor.name}] Loading client code for ${this.constructor.moduleName}`);
+      try {
+        await import(`/public/${this.constructor.moduleName}/client.js`);
+        console.log(`[${this.constructor.name}] Client code loaded successfully`);
+      } catch (error) {
+        console.error(`[${this.constructor.name}] Error loading module client code:`, error);
+      }
+    }
+
+    console.log(`[${this.constructor.name}] Initializing component`);
     await this.init();
+    console.log(`[${this.constructor.name}] Component initialized`);
   }
 
   /**

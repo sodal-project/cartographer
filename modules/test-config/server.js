@@ -56,17 +56,13 @@ class TestConfig extends core.server.CoreServerModule {
     }
   }
 
-  async mainPane(req) {
+  async index(req) {
     try {
-      // Get initial config for rendering
-      const config = await core.config.readConfig() || {};
-      
       return this.renderComponent('test-config-module', {
-        id: `test-config-${req.instance || crypto.randomUUID()}`,
-        'initial-data': JSON.stringify({ config })
+        id: `test-config-${req.instance || crypto.randomUUID()}`
       });
     } catch (error) {
-      console.error('mainPane error:', error);
+      console.error('index error:', error);
       return `<div class="error">Error loading test config: ${error.message}</div>`;
     }
   }
@@ -77,7 +73,7 @@ const testConfig = new TestConfig();
 
 // Export all the module functions
 export default {
-  mainPane: (...args) => testConfig.mainPane(...args),
+  index: (...args) => testConfig.index(...args),
   getData: (...args) => testConfig.getData(...args),
   writeConfig: (...args) => testConfig.writeConfig(...args),
   deleteConfig: (...args) => testConfig.deleteConfig(...args)
