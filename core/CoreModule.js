@@ -11,6 +11,7 @@ import server from './server.js'
 import source from './source.js'
 import types from './types.js'
 import { getCallingFolder } from './utilities.js';
+import { consoleLog } from './log.js';
 
 export class CoreModule {
   constructor(name) {
