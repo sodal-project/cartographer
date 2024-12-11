@@ -1,8 +1,6 @@
 import fs from 'fs';
-import path from 'path';
 import Handlebars from 'handlebars';
 import sanitize from 'sanitize-filename';
-import { consoleLog } from './log.js';
 
 /**
  * Render Handlebars Template
@@ -40,42 +38,6 @@ function render(moduleName, templateName, data) {
   return html;
 }
 
-// Register Partials Manually
-const registerPartials = (moduleName) => {
-
-  const corePartialsDir = `/app/components`;
-  const modulePartialsDir = `/app/modules/${moduleName}/components`;
-  const partialsDir = moduleName? modulePartialsDir : corePartialsDir;
-
-  const readPartials = (dir) => {
-    if (!fs.existsSync(dir)) {
-      return;
-    }
-
-    fs.readdirSync(dir).forEach((file) => {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
-
-      if (stat.isDirectory()) {
-        // Recursively read subdirectory
-        readPartials(filePath);
-      } else if (file.endsWith('.hbs')) {
-        const name = path.relative(partialsDir, filePath).replace(/\\/g, '/').replace('.hbs', '');
-        const template = fs.readFileSync(filePath, 'utf8');
-
-        if(moduleName) { consoleLog(`Registering partial: ${name}`); }
-
-        // Register the partial with the relative path name
-        Handlebars.registerPartial(name, template);
-      }
-    });
-  };
-
-  // Start reading partials from the root directory
-  readPartials(partialsDir);
-};
-
 export default {
   render,
-  registerPartials,
 }
