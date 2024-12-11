@@ -19,7 +19,7 @@ function generateAccessToken(user) {
  * Render register page
  */ 
 const renderRegisterPage = async (req, res) => {
-  res.render("core/register"); 
+  res.render("app/templates/register"); 
 };
 
 /**
@@ -64,7 +64,7 @@ const handleRegister = async (req, res) => {
  * Render login page
  */ 
 const renderLoginPage = async (req, res) => {
-  res.render("core/login"); 
+  res.render("app/templates/login"); 
 };
 
 /**

@@ -21,7 +21,7 @@ const renderHomePage = async (req, res) => {
     }
   }
   
-  res.render("core/index", data); 
+  res.render("app/templates/index", data); 
 };
 
 export {
