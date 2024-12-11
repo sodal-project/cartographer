@@ -1,8 +1,1 @@
-test-config-module {
-  display: block;
-  color: white;
-}
-
-test-config-module input {
-  color: white;
-}
+/* No custom styles needed - using Tailwind classes */

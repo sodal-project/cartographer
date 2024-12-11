@@ -6,30 +6,21 @@ class TestConfig extends CoreModule {
     super('test-config');
   }
 
-  async getData(instance) {
-    try {
-      // Get config using the config system
-      const config = await this.core.config.readConfig() || {};
-      return { config };
-    } catch (error) {
-      console.error('getData error:', error);
-      return { error: error.message, config: {} };
-    }
+  async getData({ instanceId }) {
+    const state = await this.getState(instanceId);
+    return state;
   }
 
   async writeConfig({ instanceId, key, value }) {
     try {
-      // Get existing config
-      const config = await this.core.config.readConfig() || {};
+      // Get current state
+      const state = await this.getState(instanceId);
       
-      // Update config
-      config[key] = value;
+      // Update state
+      state[key] = value;
       
-      // Save config using the config system
-      await this.core.config.writeConfig(config);
-      
-      // Notify clients
-      this.update(instanceId, { config });
+      // Save and broadcast
+      await this.setState(instanceId, state);
       
       return { success: true };
     } catch (error) {
@@ -40,14 +31,14 @@ class TestConfig extends CoreModule {
 
   async deleteConfig({ instanceId, key }) {
     try {
-      // Delete key using the config system
-      await this.core.config.deleteConfig(key);
+      // Get current state
+      const state = await this.getState(instanceId);
       
-      // Get updated config
-      const config = await this.core.config.readConfig() || {};
+      // Delete key
+      delete state[key];
       
-      // Notify clients
-      this.update(instanceId, { config });
+      // Save and broadcast
+      await this.setState(instanceId, state);
       
       return { success: true };
     } catch (error) {
@@ -57,17 +48,11 @@ class TestConfig extends CoreModule {
   }
 
   async index(req) {
-    try {
-      return this.renderComponent('test-config-module', {
-        id: `test-config-${req.instance || 'default'}`
-      });
-    } catch (error) {
-      console.error('index error:', error);
-      return `<div class="error">Error loading test config: ${error.message}</div>`;
-    }
+    return this.renderComponent('test-config-module', {
+      id: `test-config-${req.instance || 'default'}`
+    });
   }
 }
 
-// Create a single instance
 export default new TestConfig();
 

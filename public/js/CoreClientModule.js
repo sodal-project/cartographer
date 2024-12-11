@@ -16,23 +16,6 @@ export class CoreClientModule extends HTMLElement {
     customElements.define(`${moduleClass.moduleName}-module`, moduleClass);
   }
 
-  /**
-   * Initialize a new instance of this component
-   * @param {string} instanceId 
-   */
-  static initInstance(instanceId) {
-    if (!this.moduleName) {
-      throw new Error('Module class must define static moduleName');
-    }
-    
-    if (!this.instances.has(instanceId)) {
-      this.instances.set(instanceId, {
-        state: new Map(),
-        subscribers: new Set()
-      });
-    }
-  }
-
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -42,12 +25,18 @@ export class CoreClientModule extends HTMLElement {
    * Standard Web Component lifecycle - called when component is added to DOM
    */
   async connectedCallback() {
-    // Set instanceId when element is connected, after attributes are set
+    // Get instance ID from element attribute
     this.instanceId = this.getAttribute('id');
     
-    // Initialize instance state
-    this.constructor.initInstance(this.instanceId);
-    
+    // Initialize instance state if not exists
+    if (!this.constructor.instances.has(this.instanceId)) {
+      this.constructor.instances.set(this.instanceId, {
+        state: new Map(),
+        subscribers: new Set()
+      });
+    }
+
+    // Load and apply Tailwind styles
     if (!tailwindStyles) {
       try {
         tailwindStyles = new CSSStyleSheet();
@@ -56,9 +45,9 @@ export class CoreClientModule extends HTMLElement {
         console.error('Error loading Tailwind styles:', error);
       }
     }
-
     this.shadowRoot.adoptedStyleSheets = [tailwindStyles];
 
+    // Load module-specific styles if they exist
     try {
       const response = await fetch(`/public/${this.constructor.moduleName}/styles.css`);
       if (response.ok && response.headers.get('content-type')?.includes('text/css')) {
@@ -68,6 +57,7 @@ export class CoreClientModule extends HTMLElement {
       }
     } catch (error) {}
 
+    // Load module client code if needed
     if (!customElements.get(this.constructor.tagName)) {
       try {
         await import(`/public/${this.constructor.moduleName}/client.js`);
@@ -76,7 +66,24 @@ export class CoreClientModule extends HTMLElement {
       }
     }
 
-    await this.init();
+    // Set up subscription before getting initial state
+    if (window.realtime) {
+      this.subscribe(this.updateUI.bind(this));
+    }
+
+    // Get initial state
+    try {
+      const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceId: this.instanceId })
+      });
+      
+      const initialState = await response.json();
+      this.updateUI(initialState);
+    } catch (error) {
+      console.error('Error fetching initial state:', error);
+    }
   }
 
   /**
@@ -95,44 +102,6 @@ export class CoreClientModule extends HTMLElement {
       this.instanceId,
       callback
     );
-  }
-
-  /**
-   * Initialize component - override in subclass
-   */
-  async init() {
-    // Subscribe first to ensure no missed updates
-    this.subscribe(this.updateUI.bind(this));
-    
-    // Get and render initial state
-    const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ instanceId: this.instanceId })
-    });
-    
-    this.updateUI(await response.json());
-  }
-
-  /**
-   * Fetch initial state from server
-   */
-  async fetchInitialState() {
-    try {
-      const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          instanceId: this.instanceId
-        })
-      });
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching initial state:', error);
-      return {};
-    }
   }
 
   /**
