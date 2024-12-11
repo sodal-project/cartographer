@@ -90,6 +90,12 @@ const core = {
       //   accessLevel: "admin"
       // },
       {
+        folder: "export-csv",
+        label: "Export CSV",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
         folder: "test-config",
         label: "Test Config",
         category: "System",
