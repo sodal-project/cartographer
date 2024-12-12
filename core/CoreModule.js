@@ -2,7 +2,7 @@ import core from './core.js';
 import cache from './cache.js'
 import check from './check.js'
 import client from './client.js'
-import config from './config.js'
+import state from './state.js'
 import crypto from './crypto.js'
 import constants from './constants.js'
 import graph from './graph.js'
@@ -37,10 +37,10 @@ export class CoreModule {
         save: async (...args) => await cache.save(this.name, ...args),
         load: async (...args) => await cache.load(this.name, ...args)
       },
-      config: {
-        readConfig: async (...args) => await config.readConfig(this.name, ...args),
-        writeConfig: async (...args) => await config.writeConfig(this.name, ...args),
-        deleteConfig: async (...args) => await config.deleteConfig(this.name, ...args)
+      state: {
+        read: async (...args) => await state.read(this.name, ...args),
+        write: async (...args) => await state.write(this.name, ...args),
+        remove: async (...args) => await state.remove(this.name, ...args)
       },
       graph: {
         mergePersona: async (...args) => await graph.mergePersona(this.name, ...args),
@@ -140,7 +140,7 @@ export class CoreModule {
     // handle the case where instanceId is an object with an instanceId property
     instanceId = instanceId.instanceId || instanceId;
 
-    const moduleState = await this.core.config.readConfig() || {};
+    const moduleState = await this.core.state.read() || {};
     const instanceState = moduleState[instanceId] || null;
 
     if(!instanceState){
@@ -166,7 +166,7 @@ export class CoreModule {
     instanceId = instanceId.instanceId || instanceId;
 
     // Read all state for this module
-    const moduleState = await this.core.config.readConfig() || {};
+    const moduleState = await this.core.state.read() || {};
     
     // Return just this instance's state or empty object
     return moduleState[instanceId] || null;
@@ -189,13 +189,13 @@ export class CoreModule {
     }
 
     // Read current module state
-    const moduleState = await this.core.config.readConfig() || {};
+    const moduleState = await this.core.state.read() || {};
     
     // Update just this instance's state
     moduleState[instanceId] = newState;
     
     // Write back full module state
-    await this.core.config.writeConfig(moduleState);
+    await this.core.state.write(moduleState);
     
     return { 
       success: true,

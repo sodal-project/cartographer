@@ -16,12 +16,12 @@ import { readFromMongo, writeToMongo, deleteFromMongo } from './mongo.js';
  * @returns {Promise<Object|any|null>} The configuration data, specific value if key provided, or null if not found
  * @example
  * // Read entire config
- * const config = await readConfig('myModule');
+ * const config = await read('myModule');
  * 
  * // Read specific key
- * const value = await readConfig('myModule', 'apiKey');
+ * const value = await read('myModule', 'apiKey');
  */
-async function readConfig(moduleName, optionalKey) {
+async function read(moduleName, optionalKey) {
   const data = await readFromMongo(moduleName);
 
   if(optionalKey && data) {
@@ -44,12 +44,12 @@ async function readConfig(moduleName, optionalKey) {
  *   endpoint: 'https://api.example.com'
  * });
  */
-async function writeConfig(moduleName, data) {
+async function write(moduleName, data) {
   try {
     const response = await writeToMongo(moduleName, data);
     return response;
   } catch (err) {
-    console.error(`Error in writeConfig: ${err}`);
+    console.error(`Error in write: ${err}`);
     return false;
   }
 }
@@ -64,18 +64,18 @@ async function writeConfig(moduleName, data) {
  * // Delete a specific config property
  * await deleteConfig('myModule', 'apiKey');
  */
-async function deleteConfig(moduleName, property) {
+async function remove(moduleName, property) {
   try {
     const response = await deleteFromMongo(moduleName, property);
     return response;
   } catch (err) {
-    console.error(`Error in deleteConfig: ${err}`);
+    console.error(`Error in remove: ${err}`);
     return false;
   }
 }
 
 export default {
-  readConfig,
-  writeConfig,
-  deleteConfig,
+  read,
+  write,
+  remove,
 };
