@@ -15,7 +15,7 @@ class TableModule extends CoreModule {
           { key: 'email', label: 'Email' },
           { key: 'role', label: 'Role' }
         ],
-        pageSize: 5
+        maxRows: 250
       },
       data: {
         rows: [
@@ -30,7 +30,6 @@ class TableModule extends CoreModule {
         totalRows: 7
       },
       ui: {
-        currentPage: 1,
         sort: {
           field: null,
           direction: 'asc'
@@ -73,18 +72,6 @@ class TableModule extends CoreModule {
     return await super.broadcastState(instanceId);
   }
 
-  async updatePage({ instanceId, page }) {
-    const state = await this.getState(instanceId);
-    if (!state) return {
-      success: false,
-      message: `State not found for ${this.name} instance ${instanceId}`
-    };
-
-    state.ui.currentPage = page;
-    await this.setState(instanceId, state);
-    return await super.broadcastState(instanceId);
-  }
-
   async updateSort({ instanceId, field, direction }) {
     const state = await this.getState(instanceId);
     if (!state) return {
@@ -93,18 +80,114 @@ class TableModule extends CoreModule {
     };
 
     state.ui.sort = { field, direction };
+    this.sortData(state.data.rows, field, direction);
+
+    await this.setState(instanceId, state);
+    return await this.broadcastState({ instanceId });
+  }
+
+  async addFilter({ instanceId, filter }) {
+    const state = await this.getState(instanceId);
+    if (!state) return {
+      success: false,
+      message: `State not found for ${this.name} instance ${instanceId}`
+    };
+
+    // Add new filter
+    state.ui.filters.push(filter);
     
-    // Sort the data
-    state.data.rows.sort((a, b) => {
-      const aVal = a[field]?.toString().toLowerCase();
-      const bVal = b[field]?.toString().toLowerCase();
+    // Apply all filters
+    state.data.rows = this.getDefaultState().data.rows.filter(row => {
+      return state.ui.filters.every(filter => {
+        const value = row[filter.field]?.toString().toLowerCase();
+        const filterValue = filter.value.toLowerCase();
+        
+        switch (filter.operator) {
+          case 'contains':
+            return value.includes(filterValue);
+          case 'equals':
+            return value === filterValue;
+          case 'startsWith':
+            return value.startsWith(filterValue);
+          case 'endsWith':
+            return value.endsWith(filterValue);
+          default:
+            return true;
+        }
+      });
+    });
+
+    // Update total rows count
+    state.data.totalRows = state.data.rows.length;
+    
+    await this.setState(instanceId, state);
+    return await this.broadcastState({ instanceId });
+  }
+
+  async removeFilter({ instanceId, index }) {
+    const state = await this.getState(instanceId);
+    if (!state) return {
+      success: false,
+      message: `State not found for ${this.name} instance ${instanceId}`
+    };
+
+    // Remove filter
+    state.ui.filters.splice(index, 1);
+    
+    // Reset data and reapply remaining filters
+    state.data = { ...this.getDefaultState().data };
+    
+    if (state.ui.filters.length > 0) {
+      state.data.rows = state.data.rows.filter(row => {
+        return state.ui.filters.every(filter => {
+          const value = row[filter.field]?.toString().toLowerCase();
+          const filterValue = filter.value.toLowerCase();
+          
+          switch (filter.operator) {
+            case 'contains':
+              return value.includes(filterValue);
+            case 'equals':
+              return value === filterValue;
+            case 'startsWith':
+              return value.startsWith(filterValue);
+            case 'endsWith':
+              return value.endsWith(filterValue);
+            default:
+              return true;
+          }
+        });
+      });
+      state.data.totalRows = state.data.rows.length;
+    }
+
+    // Reapply current sort if exists
+    if (state.ui.sort.field) {
+      this.sortData(state.data.rows, state.ui.sort.field, state.ui.sort.direction);
+    }
+
+    await this.setState(instanceId, state);
+    return await this.broadcastState({ instanceId });
+  }
+
+  // Helper method for sorting
+  sortData(rows, field, direction) {
+    rows.sort((a, b) => {
+      let aVal = a[field];
+      let bVal = b[field];
+      
+      // Handle numbers
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return direction === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      // Convert to strings for comparison
+      aVal = aVal?.toString().toLowerCase() ?? '';
+      bVal = bVal?.toString().toLowerCase() ?? '';
+      
       return direction === 'asc' 
         ? aVal.localeCompare(bVal) 
         : bVal.localeCompare(aVal);
     });
-
-    await this.setState(instanceId, state);
-    return await super.broadcastState(instanceId);
   }
 }
 

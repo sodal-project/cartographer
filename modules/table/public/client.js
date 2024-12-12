@@ -18,9 +18,6 @@ class TableModule extends CoreClientModule {
               ${this.renderBody(state)}
             </table>
           </div>
-
-          <!-- Pagination -->
-          ${this.renderPagination(state)}
         </div>
       `
     });
@@ -28,17 +25,6 @@ class TableModule extends CoreClientModule {
 
   setupEvents() {
     this.shadowRoot.addEventListener('click', async (e) => {
-      // Handle pagination
-      const pageButton = e.target.closest('[data-page]');
-      if (pageButton) {
-        const page = parseInt(pageButton.dataset.page);
-        await this.call({
-          method: 'updatePage',
-          params: { page }
-        });
-        return;
-      }
-
       // Handle sorting
       const sortButton = e.target.closest('[data-sort]');
       if (sortButton) {
@@ -149,14 +135,9 @@ class TableModule extends CoreClientModule {
         `;
     }
 
-    // Calculate pagination slice
-    const startIndex = (state.ui.currentPage - 1) * state.config.pageSize;
-    const endIndex = startIndex + state.config.pageSize;
-    const paginatedRows = state.data.rows.slice(startIndex, endIndex);
-
     return `
         <tbody class="divide-y divide-gray-700">
-            ${paginatedRows.map(row => `
+            ${state.data.rows.map(row => `
                 <tr>
                     ${state.config.columns.map(col => `
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
@@ -167,62 +148,6 @@ class TableModule extends CoreClientModule {
             `).join('')}
         </tbody>
     `;
-  }
-
-  renderPagination(state) {
-    const totalPages = Math.ceil(state.data.totalRows / state.config.pageSize);
-    const pages = this.getPaginationRange(state.ui.currentPage, totalPages);
-
-    return `
-      <div class="flex justify-between items-center mt-4">
-        <div class="text-sm text-gray-400">
-          Showing ${(state.ui.currentPage - 1) * state.config.pageSize + 1} 
-          to ${Math.min(state.ui.currentPage * state.config.pageSize, state.data.totalRows)}
-          of ${state.data.totalRows} results
-        </div>
-        <div class="flex gap-1">
-          ${pages.map(page => `
-            <button 
-              class="btn-control ${page === state.ui.currentPage ? 'bg-blue-600 text-white' : ''}"
-              ${typeof page === 'number' ? `data-page="${page}"` : ''}
-            >
-              ${page}
-            </button>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  getPaginationRange(current, total) {
-    const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
-    let l;
-
-    range.push(1);
-    
-    for (let i = current - delta; i <= current + delta; i++) {
-      if (i < total && i > 1) {
-        range.push(i);
-      }
-    }
-    
-    range.push(total);
-
-    for (let i of range) {
-      if (l) {
-        if (i - l === 2) {
-          rangeWithDots.push(l + 1);
-        } else if (i - l !== 1) {
-          rangeWithDots.push('...');
-        }
-      }
-      rangeWithDots.push(i);
-      l = i;
-    }
-
-    return rangeWithDots;
   }
 }
 
