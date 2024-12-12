@@ -10,7 +10,7 @@ class TestLongProcess extends CoreModule {
     
     // Initialize state if needed
     const state = await this.getState(instanceId);
-    if (!state.status) {
+    if (!state?.status) {
       await this.setState(instanceId, { status: 'ready' });
     }
 

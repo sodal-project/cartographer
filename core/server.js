@@ -3,23 +3,64 @@ import { WebSocket, WebSocketServer } from 'ws';
 class RealtimeService {
   constructor() {
     this.subscriptions = new Map();
+    this.heartbeatTimeout = 35000; // Slightly longer than client interval
   }
 
   init(server) {
     this.wss = new WebSocketServer({ server });
     
     this.wss.on('connection', (ws) => {
+      console.log('New WebSocket connection');
+      
+      // Setup connection state
+      ws.isAlive = true;
+      ws.subscriptions = new Set();
+
+      ws.on('pong', () => {
+        ws.isAlive = true;
+      });
+
       ws.on('message', (message) => {
-        const data = JSON.parse(message.toString());
-        if (data.type === 'subscribe') {
-          this.subscribe(ws, data.module, data.instance);
+        try {
+          const data = JSON.parse(message.toString());
+          
+          if (data.type === 'ping') {
+            ws.isAlive = true;
+            ws.send(JSON.stringify({ type: 'pong' }));
+            return;
+          }
+          
+          if (data.type === 'subscribe') {
+            this.subscribe(ws, data.module, data.instance);
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
         }
       });
 
       ws.on('close', () => {
+        console.log('WebSocket connection closed');
+        this.unsubscribeAll(ws);
+      });
+
+      ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
         this.unsubscribeAll(ws);
       });
     });
+
+    // Setup heartbeat checking
+    setInterval(() => {
+      this.wss.clients.forEach(ws => {
+        if (!ws.isAlive) {
+          console.log('Terminating inactive WebSocket connection');
+          return ws.terminate();
+        }
+        
+        ws.isAlive = false;
+        ws.ping();
+      });
+    }, this.heartbeatTimeout);
   }
 
   subscribe(client, moduleId, instanceId) {
