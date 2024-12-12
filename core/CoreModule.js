@@ -232,4 +232,8 @@ export class CoreModule {
   async index(req) {
     throw new Error('Index not implemented');
   }
+
+  async init() {
+    throw new Error('Init not implemented');
+  }
 }

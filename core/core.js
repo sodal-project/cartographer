@@ -175,6 +175,7 @@ async function initModules(moduleArray) {
   // Generate Core External Module Calls
   core.mod = {};
   calls.mod = {};
+  const initCalls = [];
 
   // load external module calls to core.mod.<module>.<call>
   for(const item in moduleArray) {
@@ -190,44 +191,35 @@ async function initModules(moduleArray) {
 
     consoleLog(`Core: loading external module: ${module}`)
 
-    // Get all properties, including those from class instances
-    const properties = Object.getOwnPropertyNames(Object.getPrototypeOf(moduleExport))
-      .concat(Object.keys(moduleExport));
+    // Get all properties, including overridden methods from class instances
+    const properties = [
+      ...Object.keys(moduleExport),
+      ...Object.getOwnPropertyNames(Object.getPrototypeOf(moduleExport))
+    ];
+
+    // Remove duplicates
+    const uniqueProperties = [...new Set(properties)];
 
     // for each exported property in the module, add it to the core object
-    for(const call of properties) {
-      consoleLog(`Core: loading external module function: ${module}.${call}`)
-
+    for(const call of uniqueProperties) {
       // Skip constructor and internal properties
-      if(call === 'constructor' || call === 'default') {
+      if(call === 'constructor' || call === 'default' || call === 'core') {
         consoleLog(`Core: skipping ${call} for module: ${module}`)
         continue;
-      }
-      
       // Handle init specially
-      if(call === 'init') {
-        if(typeof moduleExport[call] === 'function') {
-          await moduleExport[call]();
-        }
-        continue;
-      }
+      } 
+      consoleLog(`Core: loading external module function: ${module}.${call}`)
 
       counter++;
       const property = moduleExport[call];
       
       // Handle both direct properties and prototype methods
-      if(typeof property === 'function' || 
-         typeof Object.getOwnPropertyDescriptor(Object.getPrototypeOf(moduleExport), call)?.value === 'function') {
-
+      if(typeof property === 'function') {
         // add the function to the core object
         core.mod[module][call] = (...params) => {
           consoleLog(`Calling core.mod.${module}.${call} from an API call`)
           return moduleExport[call](...params);
         }
-
-      } else {
-        // if this is an object instead of a function, add it to core as is
-        core.mod[module][call] = moduleExport[call];
       }
     }
   }

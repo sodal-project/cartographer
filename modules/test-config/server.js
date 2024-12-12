@@ -7,24 +7,16 @@ class TestConfig extends CoreModule {
   }
 
   async writeConfig({ instanceId, key, value }) {
-    try {
-      // Get current state
-      const state = await this.getState(instanceId);
-      
-      // Update state
-      state[key] = value;
-      
-      // Save and broadcast
-      await this.setState(instanceId, state); 
-      
-      return await this.broadcastState({ instanceId });
-    } catch (error) {
-      console.error('writeConfig error:', error);
-      return { 
-        success: false,
-        error: error.message 
-      };
-    }
+    // Get current state
+    const state = await this.getState(instanceId);
+    
+    // Update state
+    state[key] = value;
+    
+    // Save and broadcast
+    await this.setState(instanceId, state); 
+    
+    return await this.broadcastState({ instanceId });
   }
 
   async deleteConfig({ instanceId, key }) {

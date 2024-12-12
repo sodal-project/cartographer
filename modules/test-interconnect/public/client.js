@@ -46,6 +46,7 @@ class TestInterconnectModule extends window.CoreClientModule {
     await this.call({
       method: 'updateConfigIndirect',
       params: {
+        instanceId: this.state.configInstanceId,
         key: 'serverUpdate',
         value: `Updated from server at ${new Date().toISOString()}`
       }

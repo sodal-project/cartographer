@@ -120,10 +120,12 @@ export class CoreClientModule extends HTMLElement {
    * @param {string} options.instanceId - Instance ID for the submodule
    */
   async renderSubmodule({ module, mountId, action = 'index', instanceId }) {
-    if(!instanceId) {
-      instanceId = `${this.constructor.moduleName}-${module}-default`;
-    }
     try {
+      if(!instanceId) {
+        throw new Error('Instance ID not provided');
+      }
+
+      // Get the submodule's HTML
       const response = await fetch(`/mod/${module}/${action}`, {
         method: 'POST',
         headers: {
