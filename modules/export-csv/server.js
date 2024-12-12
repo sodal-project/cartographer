@@ -6,15 +6,68 @@ class ExportCsv extends CoreModule {
     super('export-csv');
   }
 
-  async index(req) {
-    return this.renderComponent('export-csv-module', {
-      id: `export-csv-${req.instance || 'default'}`
-    });
+  async index({ instanceId }) {
+    instanceId = instanceId || 'export-csv-default';
+    
+    // Initialize state if needed
+    const state = await this.getState(instanceId);
+    if (!state) {
+      await this.setState(instanceId, { 
+        status: 'ready',
+        lastExport: null,
+        error: null
+      });
+    }
+
+    return this.renderComponent(instanceId);
   }
 
-  async getData({ instanceId }) {
-    const state = await this.getState(instanceId);
-    return state;
+  // Main export functionality
+  async exportCsv({ instanceId, filter }) {
+    try {
+      // Update state to show processing
+      await this.setState(instanceId, { 
+        status: 'processing',
+        error: null 
+      });
+      await this.broadcastState({ instanceId });
+
+      const params = { size: 100000 };
+      const filterObj = filter ? JSON.parse(filter) : [];
+      
+      // Get personas from graph
+      const results = await this.core.graph.readPersonas(filterObj, params);
+      const personas = results.raw.records.map(node => node._fields[0].properties);
+      
+      // Generate CSV
+      const fields = this.getUniqueProperties(personas);
+      const parser = new Parser({ fields });
+      const csv = parser.parse(personas);
+      
+      // Update state with success
+      await this.setState(instanceId, { 
+        status: 'ready',
+        lastExport: new Date().toISOString(),
+        error: null
+      });
+      await this.broadcastState({ instanceId });
+
+      // Return file data
+      return {
+        file: csv,
+        fileName: `personas_${this.getShortDate()}.csv`,
+        type: 'text/csv'
+      };
+
+    } catch (error) {
+      // Update state with error
+      await this.setState(instanceId, { 
+        status: 'error',
+        error: error.message
+      });
+      await this.broadcastState({ instanceId });
+      throw error;
+    }
   }
 
   // Helper methods
@@ -34,47 +87,8 @@ class ExportCsv extends CoreModule {
     return `${month}-${day}-${year}`;
   }
 
-  // Main export functionality
-  async exportCsv({ instanceId, filter }) {
-    try {
-      // Update state to show processing
-      await this.setState(instanceId, { status: 'processing' });
-
-      const params = { size: 100000 };
-      const filterObj = filter ? JSON.parse(filter) : [];
-      
-      // Get personas from graph
-      const results = await this.core.graph.readPersonas(filterObj, params);
-      const personas = results.raw.records.map(node => node._fields[0].properties);
-      
-      // Generate CSV
-      const fields = this.getUniqueProperties(personas);
-      const parser = new Parser({ fields });
-      const csv = parser.parse(personas);
-      
-      // Create response object
-      const response = {
-        file: csv,
-        fileName: `personas_${this.getShortDate()}.csv`,
-        type: 'text/csv'
-      };
-
-      // Update state with success
-      await this.setState(instanceId, { 
-        status: 'ready',
-        lastExport: new Date().toISOString()
-      });
-
-      return response;
-
-    } catch (error) {
-      // Update state with error
-      await this.setState(instanceId, { 
-        status: 'error',
-        error: error.message
-      });
-      throw error;
-    }
+  async broadcastState({ instanceId }) {
+    await super.broadcastState({ instanceId });
   }
 }
 

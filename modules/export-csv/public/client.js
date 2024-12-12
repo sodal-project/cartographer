@@ -17,6 +17,7 @@ class ExportCsvModule extends window.CoreClientModule {
                   class="rounded p-1 text-sm w-full m-0 mb-2 align-top h-80 bg-gray-800 text-white"
                   id="filter-input"
                   placeholder="Enter JSON filter..."
+                  ${state.status === 'processing' ? 'disabled' : ''}
                 ></textarea>
               </div>
 
