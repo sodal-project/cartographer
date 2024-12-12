@@ -20,6 +20,7 @@ export class CoreClientModule extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this.state = null;
+    this._eventsInitialized = false;
   }
 
   /**
@@ -98,6 +99,22 @@ export class CoreClientModule extends HTMLElement {
   }
 
   /**
+   * Render component content with automatic event handling
+   * @param {Object} options - Render options
+   * @param {string} options.html - HTML content to render
+   * @param {boolean} options.setupEvents - Whether to call setupEvents (defaults to true)
+   */
+  renderComponent({ html, setupEvents = true }) {
+    this.shadowRoot.innerHTML = html;
+    
+    // Only set up events once, regardless of setupEvents parameter
+    if (!this._eventsInitialized && setupEvents) {
+      this.setupEvents();
+      this._eventsInitialized = true;
+    }
+  }
+
+  /**
    * Setup event handlers - override in subclass if needed
    */
   setupEvents() {
@@ -158,19 +175,6 @@ export class CoreClientModule extends HTMLElement {
       console.error(`Failed to load ${module}:`, error);
       this.shadowRoot.getElementById(mountId).innerHTML = 
         `<p class="text-red-500">Failed to load ${module}</p>`;
-    }
-  }
-
-  /**
-   * Render component content
-   * @param {Object} options - Render options
-   * @param {string} options.html - HTML content to render
-   * @param {boolean} options.setupEvents - Whether to call setupEvents (defaults to true)
-   */
-  renderComponent({ html, setupEvents = true }) {
-    this.shadowRoot.innerHTML = html;
-    if (setupEvents) {
-      this.setupEvents();
     }
   }
 
