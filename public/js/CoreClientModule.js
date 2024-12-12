@@ -204,7 +204,6 @@ export class CoreClientModule extends HTMLElement {
           ...params
         })
       });
-      
       return await response.json();
     } catch (error) {
       console.error(`Error calling ${module}/${method}:`, error);

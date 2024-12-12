@@ -88,7 +88,7 @@ class ExportCsv extends CoreModule {
   }
 
   async broadcastState({ instanceId }) {
-    await super.broadcastState({ instanceId });
+    return await super.broadcastState({ instanceId });
   }
 }
 

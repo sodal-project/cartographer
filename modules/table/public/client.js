@@ -2,18 +2,10 @@ class TableModule extends CoreClientModule {
   static moduleName = 'table';
 
   updateUI(state) {
-    this.state = state; // Cache state locally
+    console.log('Table state updated:', state);
     this.renderComponent({
       html: `
         <div class="table-module p-4 bg-gray-900">
-          <!-- Loading Overlay -->
-          <div class="loading-overlay hidden">
-            <div class="spinner"></div>
-          </div>
-
-          <!-- Error Message -->
-          <div class="error-message hidden"></div>
-
           <!-- Controls -->
           <div class="controls-bar mb-4">
             ${this.renderControls(state)}
@@ -35,55 +27,44 @@ class TableModule extends CoreClientModule {
   }
 
   setupEvents() {
-    this.setupPaginationEvents();
-    this.setupSortEvents();
-    this.setupFilterEvents();
-    this.setupSelectionEvents();
-  }
-
-  setupPaginationEvents() {
     this.shadowRoot.addEventListener('click', async (e) => {
+      // Handle pagination
       const pageButton = e.target.closest('[data-page]');
-      if (!pageButton) return;
-      
-      const page = parseInt(pageButton.dataset.page);
-      await this.call({
-        method: 'updatePage',
-        params: { page }
-      });
-    });
-  }
+      if (pageButton) {
+        const page = parseInt(pageButton.dataset.page);
+        await this.call({
+          method: 'updatePage',
+          params: { page }
+        });
+        return;
+      }
 
-  setupSortEvents() {
-    this.shadowRoot.addEventListener('click', async (e) => {
+      // Handle sorting
       const sortButton = e.target.closest('[data-sort]');
-      if (!sortButton) return;
+      if (sortButton) {
+        const field = sortButton.dataset.sort;
+        const direction = state.ui.sort.field === field && 
+                         state.ui.sort.direction === 'asc' ? 'desc' : 'asc';
+        
+        await this.call({
+          method: 'updateSort',
+          params: { field, direction }
+        });
+        return;
+      }
 
-      const field = sortButton.dataset.sort;
-      const direction = this.state.ui.sort.field === field && 
-                       this.state.ui.sort.direction === 'asc' ? 'desc' : 'asc';
-      
-      await this.call({
-        method: 'updateSort',
-        params: { field, direction }
-      });
-    });
-  }
-
-  setupFilterEvents() {
-    // Handle filter removal
-    this.shadowRoot.addEventListener('click', async (e) => {
+      // Handle filter removal
       const removeFilter = e.target.closest('[data-remove-filter]');
-      if (!removeFilter) return;
-
-      const index = parseInt(removeFilter.dataset.removeFilter);
-      await this.call({
-        method: 'removeFilter',
-        params: { index }
-      });
+      if (removeFilter) {
+        const index = parseInt(removeFilter.dataset.removeFilter);
+        await this.call({
+          method: 'removeFilter',
+          params: { index }
+        });
+      }
     });
 
-    // Handle filter form submission
+    // Handle filter form
     const filterForm = this.shadowRoot.querySelector('.filter-form');
     if (filterForm) {
       filterForm.addEventListener('submit', async (e) => {
@@ -106,29 +87,6 @@ class TableModule extends CoreClientModule {
     }
   }
 
-  setupSelectionEvents() {
-    this.shadowRoot.addEventListener('change', async (e) => {
-      const checkbox = e.target.closest('[data-row-select]');
-      if (!checkbox) return;
-
-      const rowId = checkbox.dataset.rowSelect;
-      const selectedRows = [...this.state.ui.selectedRows];
-
-      if (checkbox.checked) {
-        selectedRows.push(rowId);
-      } else {
-        const index = selectedRows.indexOf(rowId);
-        if (index > -1) selectedRows.splice(index, 1);
-      }
-
-      await this.call({
-        method: 'updateSelection',
-        params: { selectedRows }
-      });
-    });
-  }
-
-  // Helper render methods
   renderControls(state) {
     return `
       <div class="flex items-center gap-4">
@@ -178,18 +136,36 @@ class TableModule extends CoreClientModule {
   }
 
   renderBody(state) {
+    // Check if we have data
+    if (!state?.data?.rows?.length) {
+        return `
+            <tbody class="divide-y divide-gray-700">
+                <tr>
+                    <td colspan="${state?.config?.columns?.length || 1}" class="px-6 py-4 text-center text-gray-400">
+                        No data available
+                    </td>
+                </tr>
+            </tbody>
+        `;
+    }
+
+    // Calculate pagination slice
+    const startIndex = (state.ui.currentPage - 1) * state.config.pageSize;
+    const endIndex = startIndex + state.config.pageSize;
+    const paginatedRows = state.data.rows.slice(startIndex, endIndex);
+
     return `
-      <tbody class="divide-y divide-gray-700">
-        ${state.data.rows.map(row => `
-          <tr>
-            ${state.config.columns.map(col => `
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                ${row[col.key]}
-              </td>
+        <tbody class="divide-y divide-gray-700">
+            ${paginatedRows.map(row => `
+                <tr>
+                    ${state.config.columns.map(col => `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                            ${row[col.key] || ''}
+                        </td>
+                    `).join('')}
+                </tr>
             `).join('')}
-          </tr>
-        `).join('')}
-      </tbody>
+        </tbody>
     `;
   }
 
@@ -247,64 +223,6 @@ class TableModule extends CoreClientModule {
     }
 
     return rangeWithDots;
-  }
-
-  // Add error and loading handling methods
-  async call({ method, params }) {
-    try {
-      this.setLoading(true);
-      const result = await super.call({ method, params });
-      this.clearError();
-      return result;
-    } catch (error) {
-      this.showError(error.message);
-      throw error;
-    } finally {
-      this.setLoading(false);
-    }
-  }
-
-  setLoading(isLoading) {
-    const overlay = this.shadowRoot.querySelector('.loading-overlay');
-    if (isLoading) {
-      overlay.classList.remove('hidden');
-    } else {
-      overlay.classList.add('hidden');
-    }
-  }
-
-  showError(message) {
-    const errorDiv = this.shadowRoot.querySelector('.error-message');
-    errorDiv.textContent = message;
-    errorDiv.classList.remove('hidden');
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => this.clearError(), 5000);
-  }
-
-  clearError() {
-    const errorDiv = this.shadowRoot.querySelector('.error-message');
-    errorDiv.classList.add('hidden');
-    errorDiv.textContent = '';
-  }
-
-  // Add cleanup in disconnectedCallback
-  disconnectedCallback() {
-    // Clear any pending timeouts
-    if (this._errorTimeout) {
-      clearTimeout(this._errorTimeout);
-    }
-    
-    // Remove all event listeners
-    if (this.shadowRoot) {
-      const filterForm = this.shadowRoot.querySelector('.filter-form');
-      if (filterForm) {
-        filterForm.removeEventListener('submit', this._filterFormHandler);
-      }
-    }
-    
-    // Call parent cleanup
-    super.disconnectedCallback();
   }
 }
 

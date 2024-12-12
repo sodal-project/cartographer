@@ -140,8 +140,7 @@ export class CoreModule {
     // handle the case where instanceId is an object with an instanceId property
     instanceId = instanceId.instanceId || instanceId;
 
-    const moduleState = await this.core.state.read() || {};
-    const instanceState = moduleState[instanceId] || null;
+    const instanceState = await this.core.state.read(instanceId) || {};
 
     if(!instanceState){
       return { 
@@ -150,7 +149,7 @@ export class CoreModule {
       };
     }
 
-    this.core.server.realtime.broadcast(this.name, instanceId, instanceState);
+    await this.core.server.realtime.broadcast(this.name, instanceId, instanceState);
 
     return { 
       success: true,
