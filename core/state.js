@@ -39,7 +39,7 @@ async function read(moduleName, optionalKey) {
  * @returns {Promise<Object|boolean>} The response from the database, or false if an error occurred
  * @example
  * // Write config data
- * await writeConfig('myModule', {
+ * await write('myModule', {
  *   apiKey: 'abc123',
  *   endpoint: 'https://api.example.com'
  * });
@@ -62,7 +62,7 @@ async function write(moduleName, data) {
  * @returns {Promise<Object|boolean>} The response from the database, or false if an error occurred
  * @example
  * // Delete a specific config property
- * await deleteConfig('myModule', 'apiKey');
+ * await remove('myModule', 'apiKey');
  */
 async function remove(moduleName, property) {
   try {
