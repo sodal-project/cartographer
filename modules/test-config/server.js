@@ -6,11 +6,6 @@ class TestConfig extends CoreModule {
     super('test-config');
   }
 
-  async getData({ instanceId }) {
-    const state = await this.getState(instanceId);
-    return state;
-  }
-
   async writeConfig({ instanceId, key, value }) {
     try {
       // Get current state
@@ -20,37 +15,49 @@ class TestConfig extends CoreModule {
       state[key] = value;
       
       // Save and broadcast
-      await this.setState(instanceId, state);
+      await this.setState(instanceId, state); 
       
-      return { success: true };
+      return await this.broadcastState({ instanceId });
     } catch (error) {
       console.error('writeConfig error:', error);
-      return { error: error.message };
+      return { 
+        success: false,
+        error: error.message 
+      };
     }
   }
 
   async deleteConfig({ instanceId, key }) {
-    try {
-      // Get current state
-      const state = await this.getState(instanceId);
-      
-      // Delete key
-      delete state[key];
-      
-      // Save and broadcast
-      await this.setState(instanceId, state);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('deleteConfig error:', error);
-      return { error: error.message };
-    }
+    // Get current state
+    const state = await this.getState(instanceId);
+    if(!state){ return {
+      success: false,
+      error: `State not found for ${this.name} instance ${instanceId}`
+    }}
+    
+    delete state[key];
+    
+    // Save and broadcast
+    await this.setState(instanceId, state);
+
+    return await this.broadcastState({ instanceId });
   }
 
-  async index(req) {
-    return this.renderComponent('test-config-module', {
-      id: `test-config-${req.instance || 'default'}`
-    });
+  async index({ instanceId }) {
+    instanceId = instanceId || 'test-config-default';
+    const instanceState = await this.getState(instanceId);
+    if(!instanceState){
+      await this.setupNewInstance(instanceId, {});
+    }
+    return this.renderComponent(instanceId);
+  }
+
+  async setupNewInstance(instanceId, instanceState = {}) {
+    return await this.setState(instanceId, instanceState);
+  }
+
+  async broadcastState({ instanceId }) {
+    return await super.broadcastState({ instanceId });
   }
 }
 

@@ -1,10 +1,7 @@
 class TestConfigModule extends window.CoreClientModule {
   static moduleName = 'test-config';
 
-  updateUI(state) {
-    const config = state || {};
-    const configEntries = Object.entries(config);
-    
+  updateUI(state) {    
     this.renderComponent({
       html: `
         <div class="p-4">
@@ -12,8 +9,8 @@ class TestConfigModule extends window.CoreClientModule {
           
           <!-- Config Display -->
           <div class="mb-4 bg-gray-800 rounded p-4">
-            ${configEntries.length > 0 
-              ? configEntries.map(([key, value]) => `
+            ${Object.entries(state).length > 0 
+              ? Object.entries(state).map(([key, value]) => `
                   <div class="flex justify-between mb-2 text-white">
                     <span>${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}</span>
                     <button data-key="${key}" class="delete-btn text-red-400 hover:text-red-300">Delete</button>

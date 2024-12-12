@@ -19,6 +19,7 @@ export class CoreClientModule extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this.state = null;
   }
 
   /**
@@ -28,12 +29,9 @@ export class CoreClientModule extends HTMLElement {
     // Get instance ID from element attribute
     this.instanceId = this.getAttribute('id');
     
-    // Initialize instance state if not exists
+    // Simplify instance tracking
     if (!this.constructor.instances.has(this.instanceId)) {
-      this.constructor.instances.set(this.instanceId, {
-        state: new Map(),
-        subscribers: new Set()
-      });
+      this.constructor.instances.set(this.instanceId, this);
     }
 
     // Load and apply Tailwind styles
@@ -66,21 +64,16 @@ export class CoreClientModule extends HTMLElement {
       }
     }
 
-    // Set up subscription before getting initial state
-    if (window.realtime) {
-      this.subscribe(this.updateUI.bind(this));
-    }
+    await this.subscribe(state => {
+      this.state = state;
+      this.updateUI(state);
+    });
 
-    // Get initial state
+    // Get initial state from server
     try {
-      const response = await fetch(`/mod/${this.constructor.moduleName}/getData`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceId: this.instanceId })
-      });
-      
-      const initialState = await response.json();
-      this.updateUI(initialState);
+      // call broadcastState
+      const response = await this.call({});
+      console.log('Initial state response:', response);
     } catch (error) {
       console.error('Error fetching initial state:', error);
     }
@@ -105,35 +98,6 @@ export class CoreClientModule extends HTMLElement {
   }
 
   /**
-   * Handle updates from server
-   * @param {Object} data 
-   */
-  async handleUpdate(data) {
-    this.setState(data);
-    this.render();
-  }
-
-  /**
-   * Update component state
-   * @param {Object} newState 
-   */
-  setState(newState) {
-    this.state = newState;
-    this.constructor.instances.get(this.instanceId).state = newState;
-    
-    // Notify subscribers
-    const subscribers = this.constructor.instances.get(this.instanceId).subscribers;
-    subscribers.forEach(callback => callback(newState));
-  }
-
-  /**
-   * Get current state
-   */
-  getState() {
-    return this.state;
-  }
-
-  /**
    * Setup event handlers - override in subclass if needed
    */
   setupEvents() {
@@ -141,20 +105,10 @@ export class CoreClientModule extends HTMLElement {
   }
 
   /**
-   * Render component - override in subclass
-   */
-  render() {
-    // Override in subclass
-  }
-
-  /**
    * Standard Web Component lifecycle - called when component is removed from DOM
    */
   disconnectedCallback() {
-    // Cleanup if no more references to this instance exist
-    if (!document.getElementById(this.id)) {
-      this.constructor.instances.delete(this.instanceId);
-    }
+    this.constructor.instances.delete(this.instanceId);
   }
 
   /**
@@ -165,7 +119,10 @@ export class CoreClientModule extends HTMLElement {
    * @param {string} options.action - Action to call (defaults to 'index')
    * @param {string} options.instanceId - Instance ID for the submodule
    */
-  async renderSubmodule({ module, mountId, action = 'index', instanceId = crypto.randomUUID() }) {
+  async renderSubmodule({ module, mountId, action = 'index', instanceId }) {
+    if(!instanceId) {
+      instanceId = `${this.constructor.moduleName}-${module}-default`;
+    }
     try {
       const response = await fetch(`/mod/${module}/${action}`, {
         method: 'POST',
@@ -230,22 +187,25 @@ export class CoreClientModule extends HTMLElement {
    * @param {string} options.method - Method to call
    * @param {Object} options.params - Parameters to pass to the method
    */
-  async call({ module, method, params = {} }) {
-    const targetModule = module || this.constructor.moduleName;
-
+  async call({ 
+    module = this.constructor.moduleName, 
+    method = 'broadcastState', 
+    instanceId = this.instanceId, 
+    params = {} 
+  }) {
     try {
-      const response = await fetch(`/mod/${targetModule}/${method}`, {
+      const response = await fetch(`/mod/${module}/${method}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          instanceId: this.instanceId,
+          instanceId,
           ...params
         })
       });
       
       return await response.json();
     } catch (error) {
-      console.error(`Error calling ${targetModule}/${method}:`, error);
+      console.error(`Error calling ${module}/${method}:`, error);
       throw error;
     }
   }

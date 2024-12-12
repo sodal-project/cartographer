@@ -102,32 +102,92 @@ export class CoreModule {
     };
 
     // Populate mod namespace
-    for (const [moduleName, moduleFunctions] of Object.entries(core.mod)) {
+    Object.entries(core.mod).forEach(([moduleName, moduleFunctions]) => {
       this.core.mod[moduleName] = {};
       
-      for (const [funcName, func] of Object.entries(moduleFunctions)) {
+      const SHARED_BASE_METHODS = [];
+      // Get approved base methods
+      const baseMethods = SHARED_BASE_METHODS.reduce((acc, name) => {
+        if (CoreModule.prototype[name]) {
+          acc[name] = CoreModule.prototype[name];
+        }
+        return acc;
+      }, {});
+
+      // Merge with explicitly exported functions
+      const allFunctions = { ...baseMethods, ...moduleFunctions };
+      
+      // Process all functions
+      for (const [funcName, func] of Object.entries(allFunctions)) {
         if (typeof func === 'function') {
           this.core.mod[moduleName][funcName] = async (...args) => {
             consoleLog(`${this.name} calling core.mod.${moduleName}.${funcName} from ${moduleName}`);
-            return await func(...args);
+            return await func.apply(core.mod[moduleName], args);
           };
         } else {
           this.core.mod[moduleName][funcName] = func;
         }
       }
+    });
+  }
+
+  async broadcastState(instanceId) {
+    if(!instanceId){ return {
+      success: false,
+      message: `Can't broadcast state, instance ID not provided for ${this.name}`
+    }}
+    
+    // handle the case where instanceId is an object with an instanceId property
+    instanceId = instanceId.instanceId || instanceId;
+
+    const moduleState = await this.core.config.readConfig() || {};
+    const instanceState = moduleState[instanceId] || null;
+
+    if(!instanceState){
+      return { 
+        success: false,
+        message: `State not found for ${this.name} instance ${instanceId}`
+      };
     }
+
+    this.core.server.realtime.broadcast(this.name, instanceId, instanceState);
+
+    return { 
+      success: true,
+      message: `State broadcast for ${this.name} instance ${instanceId}`
+    };
   }
 
   // Simplified state management
   async getState(instanceId) {
+    if(!instanceId){ return null; }
+    
+    // handle the case where instanceId is an object with an instanceId property
+    instanceId = instanceId.instanceId || instanceId;
+
     // Read all state for this module
     const moduleState = await this.core.config.readConfig() || {};
     
     // Return just this instance's state or empty object
-    return moduleState[instanceId] || {};
+    return moduleState[instanceId] || null;
   }
 
   async setState(instanceId, newState) {
+
+    if(!instanceId){
+      return { 
+        success: false,
+        message: `Can't set state, instance ID not provided for ${this.name}`
+      };
+    }
+
+    if(!newState){
+      return { 
+        success: false,
+        message: `Can't set state, new state not provided for ${this.name} instance ${instanceId}`
+      };
+    }
+
     // Read current module state
     const moduleState = await this.core.config.readConfig() || {};
     
@@ -137,17 +197,16 @@ export class CoreModule {
     // Write back full module state
     await this.core.config.writeConfig(moduleState);
     
-    // Broadcast just this instance's state
-    await this.update(instanceId, newState);
-    
-    return newState;
+    return { 
+      success: true,
+      message: `State set for ${this.name} instance ${instanceId}`
+    };
   }
 
   // Simplified component rendering
-  async renderComponent(name, props = {}) {
-    const { id, moduleName = this.name } = props;
+  async renderComponent(instanceId, appName = "client.js", componentName = this.name) {
     return `
-      <div id="component-mount-${id}">
+      <div id="component-mount-${instanceId}">
         <script type="module">
           // Ensure CoreClientModule is loaded
           if (!window.CoreClientModule) {
@@ -155,23 +214,18 @@ export class CoreModule {
           }
           
           // Load the module's client code
-          await import('/public/${moduleName}/client.js');
+          await import('/public/${this.name}/${appName}');
           
           // Create and mount the component
-          const component = document.createElement('${name}');
-          component.id = '${id}';
-          const mount = document.getElementById('component-mount-${id}');
+          const component = document.createElement('${componentName}-module');
+          component.id = '${instanceId}';
+          const mount = document.getElementById('component-mount-${instanceId}');
           if (mount) {
             mount.replaceWith(component);
           }
         </script>
       </div>
     `;
-  }
-
-  // Simplified update broadcast
-  async update(instanceId, data) {
-    this.core.server.realtime.broadcast(this.name, instanceId, data);
   }
 
   // Default entry point for module UI

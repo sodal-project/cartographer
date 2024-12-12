@@ -5,8 +5,8 @@ class TestLongProcess extends CoreModule {
     super('test-long-process');
   }
 
-  async index(req) {
-    const instanceId = req.instanceId || 'test-long-process-default';
+  async index({ instanceId }) {
+    instanceId = instanceId || 'test-long-process-default';
     
     // Initialize state if needed
     const state = await this.getState(instanceId);
@@ -14,15 +14,7 @@ class TestLongProcess extends CoreModule {
       await this.setState(instanceId, { status: 'ready' });
     }
 
-    return this.renderComponent('test-long-process-module', {
-      id: instanceId,
-      moduleName: this.name
-    });
-  }
-
-  async getData({ instanceId }) {
-    const state = await this.getState(instanceId);
-    return state.status ? state : { status: 'ready' };
+    return this.renderComponent(instanceId);
   }
 
   async longProcess({ instanceId }) {
@@ -32,9 +24,14 @@ class TestLongProcess extends CoreModule {
     // Simulate long process
     setTimeout(async () => {
       await this.setState(instanceId, { status: 'ready' });
+      await this.broadcastState({ instanceId });
     }, 15000);
-    
-    return { success: true };
+
+    return await this.broadcastState({ instanceId });
+  }
+
+  async broadcastState({ instanceId }) {
+    return await super.broadcastState(instanceId);
   }
 }
 

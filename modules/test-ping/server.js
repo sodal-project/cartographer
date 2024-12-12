@@ -5,31 +5,29 @@ class TestPing extends CoreModule {
     super('test-ping');
   }
 
-  async index(req) {
-    const instanceId = req.instanceId || 'test-ping-default';
-    
-    // Initialize state if needed
-    const state = await this.getState(instanceId);
-    if (!state.pings) {
-      await this.setState(instanceId, { pings: 0 });
+  async index({ instanceId }) {
+    instanceId = instanceId || 'test-ping-default';
+    const instanceState = await this.getState(instanceId);
+    if(!instanceState){
+      await this.setupNewInstance(instanceId, { pings: 0 });
     }
-
-    return this.renderComponent('test-ping-module', {
-      id: instanceId,
-      moduleName: this.name
-    });
+    return this.renderComponent(instanceId);
   }
 
-  async getData({ instanceId }) {
-    const state = await this.getState(instanceId);
-    return state.pings ? state : { pings: 0 };
+  async setupNewInstance(instanceId, instanceState) {
+    return await this.setState(instanceId, instanceState);
   }
 
   async ping({ instanceId }) {
     const state = await this.getState(instanceId);
-    const newState = { pings: (state.pings || 0) + 1 };
-    await this.setState(instanceId, newState);
-    return newState;
+    await this.setState(instanceId, { 
+      pings: (state.pings || 0) + 1 
+    });
+    return await this.broadcastState({ instanceId});
+  }
+
+  async broadcastState({ instanceId }) {
+    return await super.broadcastState(instanceId);
   }
 }
 

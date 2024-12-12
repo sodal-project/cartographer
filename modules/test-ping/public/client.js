@@ -1,12 +1,6 @@
 class TestPingModule extends window.CoreClientModule {
   static moduleName = 'test-ping';
 
-  async init() {
-    const state = await this.call({ method: 'getData' });
-    this.updateUI(state);
-    this.subscribe(state => this.updateUI(state));
-  }
-
   updateUI(state) {
     this.renderComponent({
       html: `

@@ -1,16 +1,7 @@
 class TestLongProcessModule extends window.CoreClientModule {
   static moduleName = 'test-long-process';
 
-  async init() {
-    console.log('Initializing test-long-process');
-    const state = await this.call({ method: 'getData' });
-    console.log('Initial state:', state);
-    this.updateUI(state);
-    this.subscribe(state => this.updateUI(state));
-  }
-
   updateUI(state) {
-    console.log('Updating UI with state:', state);
     this.renderComponent({
       html: `
         <div class="p-4">
@@ -42,7 +33,7 @@ class TestLongProcessModule extends window.CoreClientModule {
       `
     });
   }
-
+  
   setupEvents() {
     const startBtn = this.shadowRoot.getElementById('start-btn');
     if (startBtn) {
