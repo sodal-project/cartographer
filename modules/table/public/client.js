@@ -50,12 +50,11 @@ class TableModule extends CoreClientModule {
       }
     });
 
-    // Handle filter form
-    const filterForm = this.shadowRoot.querySelector('.filter-form');
-    if (filterForm) {
-      filterForm.addEventListener('submit', async (e) => {
+    // Handle filter form submission
+    this.shadowRoot.addEventListener('submit', async (e) => {
+      if (e.target.matches('.filter-form')) {
         e.preventDefault();
-        const formData = new FormData(filterForm);
+        const formData = new FormData(e.target);
         
         await this.call({
           method: 'addFilter',
@@ -68,36 +67,50 @@ class TableModule extends CoreClientModule {
           }
         });
 
-        filterForm.reset();
-      });
-    }
+        e.target.reset();
+      }
+    });
   }
 
   renderControls(state) {
     return `
-      <div class="flex items-center gap-4">
-        <!-- Sort Dropdown -->
-        <div class="relative" data-control="sort">
-          <button class="btn-control">
-            Sort: ${state.ui.sort.field || 'Default'}
-            ${state.ui.sort.direction === 'asc' ? '↑' : '↓'}
+      <div class="flex flex-col gap-4">
+        <!-- Filter Form -->
+        <form class="filter-form flex items-center gap-2">
+          <select name="field" class="form-select bg-gray-800 text-gray-300 border-gray-700 rounded">
+            ${state.config.columns.map(col => `
+              <option value="${col.key}">${col.label}</option>
+            `).join('')}
+          </select>
+
+          <select name="operator" class="form-select bg-gray-800 text-gray-300 border-gray-700 rounded">
+            <option value="contains">Contains</option>
+            <option value="equals">Equals</option>
+            <option value="startsWith">Starts with</option>
+            <option value="endsWith">Ends with</option>
+          </select>
+
+          <input 
+            type="text" 
+            name="value" 
+            placeholder="Filter value..." 
+            class="form-input bg-gray-800 text-gray-300 border-gray-700 rounded"
+          >
+
+          <button type="submit" class="btn-control">
+            Apply Filter
           </button>
-        </div>
+        </form>
 
         <!-- Active Filters -->
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           ${state.ui.filters.map((filter, index) => `
             <div class="filter-tag">
-              ${filter.field} ${filter.operator} ${filter.value}
-              <button data-remove-filter="${index}">×</button>
+              ${filter.field} ${filter.operator} "${filter.value}"
+              <button data-remove-filter="${index}" class="ml-2">×</button>
             </div>
           `).join('')}
         </div>
-
-        <!-- Add Filter -->
-        <button class="btn-control" data-action="add-filter">
-          + Add Filter
-        </button>
       </div>
     `;
   }

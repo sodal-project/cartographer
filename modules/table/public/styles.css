@@ -264,3 +264,54 @@ td input[type="checkbox"]:focus {
 .table-module {
     position: relative;
 } 
+
+/* Filter form styles */
+.filter-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.form-select,
+.form-input {
+  padding: 0.5rem;
+  border-width: 1px;
+  border-radius: 0.25rem;
+  min-width: 120px;
+}
+
+.form-input {
+  min-width: 200px;
+}
+
+.form-select:focus,
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6; /* blue-500 */
+  ring: 2px;
+  ring-color: rgba(59, 130, 246, 0.5);
+}
+
+/* Filter tag styles */
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid #3b82f6;
+  border-radius: 9999px;
+  color: #93c5fd;
+  font-size: 0.875rem;
+}
+
+.filter-tag button {
+  color: #93c5fd;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0.125rem;
+  border-radius: 9999px;
+}
+
+.filter-tag button:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
