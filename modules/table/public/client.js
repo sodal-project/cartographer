@@ -2,7 +2,7 @@ class TableModule extends CoreClientModule {
   static moduleName = 'table';
 
   updateUI(state) {
-    console.log('Table state updated:', state);
+    console.log('Table updateUI called with state:', state);
     this.renderComponent({
       html: `
         <div class="table-module p-4 bg-gray-900">
@@ -24,51 +24,43 @@ class TableModule extends CoreClientModule {
   }
 
   setupEvents() {
-    this.shadowRoot.addEventListener('click', async (e) => {
-      // Handle sorting
-      const sortButton = e.target.closest('[data-sort]');
-      if (sortButton) {
-        const field = sortButton.dataset.sort;
-        const direction = state.ui.sort.field === field && 
-                         state.ui.sort.direction === 'asc' ? 'desc' : 'asc';
-        
-        await this.call({
-          method: 'updateSort',
-          params: { field, direction }
-        });
-        return;
-      }
-
-      // Handle filter removal
-      const removeFilter = e.target.closest('[data-remove-filter]');
-      if (removeFilter) {
-        const index = parseInt(removeFilter.dataset.removeFilter);
-        await this.call({
-          method: 'removeFilter',
-          params: { index }
-        });
-      }
+    console.log('Table setupEvents called');
+    const root = this.shadowRoot;
+    
+    this.addEventListener('click', '[data-sort]', async (e, target) => {
+      const field = target.dataset.sort;
+      const direction = this.state.ui.sort.field === field && 
+                       this.state.ui.sort.direction === 'asc' ? 'desc' : 'asc';
+      
+      await this.call({
+        method: 'updateSort',
+        params: { field, direction }
+      });
     });
 
-    // Handle filter form submission
-    this.shadowRoot.addEventListener('submit', async (e) => {
-      if (e.target.matches('.filter-form')) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        
-        await this.call({
-          method: 'addFilter',
-          params: {
-            filter: {
-              field: formData.get('field'),
-              operator: formData.get('operator'),
-              value: formData.get('value')
-            }
-          }
-        });
+    this.addEventListener('click', '[data-remove-filter]', async (e, target) => {
+      const index = parseInt(target.dataset.removeFilter);
+      await this.call({
+        method: 'removeFilter',
+        params: { index }
+      });
+    });
 
-        e.target.reset();
-      }
+    this.addEventListener('submit', '.filter-form', async (e, target) => {
+      e.preventDefault();
+      const formData = new FormData(target);
+      const filterData = {
+        field: formData.get('field'),
+        operator: formData.get('operator'),
+        value: formData.get('value')
+      };
+      
+      target.reset();
+
+      await this.call({
+        method: 'addFilter',
+        params: { filter: filterData }
+      });
     });
   }
 

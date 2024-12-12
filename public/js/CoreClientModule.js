@@ -20,7 +20,38 @@ export class CoreClientModule extends HTMLElement {
     super();
     this.attachShadow({ mode: 'open' });
     this.state = null;
-    this._eventsInitialized = false;
+    this._eventListeners = new Map();
+  }
+
+  addEventListener(eventType, selectorOrHandler, optionalHandler) {
+    // Determine if we're using delegation or direct event handling
+    const selector = typeof selectorOrHandler === 'string' ? selectorOrHandler : null;
+    const handler = typeof selectorOrHandler === 'function' ? selectorOrHandler : optionalHandler;
+
+    // Remove existing listener for this event type + selector combination
+    const key = `${eventType}:${selector || ''}`;
+    if (this._eventListeners.has(key)) {
+      this.shadowRoot.removeEventListener(
+        eventType, 
+        this._eventListeners.get(key)
+      );
+    }
+
+    // Create the delegated event handler
+    const delegatedHandler = (e) => {
+      if (selector) {
+        const target = e.target.closest(selector);
+        if (target) {
+          handler.call(this, e, target);
+        }
+      } else {
+        handler.call(this, e);
+      }
+    };
+
+    // Store and add the new listener
+    this._eventListeners.set(key, delegatedHandler);
+    this.shadowRoot.addEventListener(eventType, delegatedHandler);
   }
 
   /**
@@ -104,14 +135,9 @@ export class CoreClientModule extends HTMLElement {
    * @param {string} options.html - HTML content to render
    * @param {boolean} options.setupEvents - Whether to call setupEvents (defaults to true)
    */
-  renderComponent({ html, setupEvents = true }) {
+  renderComponent({ html }) {
     this.shadowRoot.innerHTML = html;
-    
-    // Only set up events once, regardless of setupEvents parameter
-    if (!this._eventsInitialized && setupEvents) {
-      this.setupEvents();
-      this._eventsInitialized = true;
-    }
+    this.setupEvents();
   }
 
   /**
