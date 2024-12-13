@@ -51,18 +51,18 @@ export const templates = {
       </button>
 
       <div
-        class="absolute z-10 top-9 -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
+        class="absolute z-10 top-9 -translate-x-1/2 min-w-[24rem] border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
         data-dropdown-content="sort"
       >
         <div class="flex gap-3 items-center w-full">
-          <select name="sortField" class="bg-gray-900 text-white rounded p-2">
+          <select name="sortField" class="bg-gray-900 text-white rounded p-2 flex-1">
             ${state.fields?.map(field => `
               <option value="${field.value}" ${field.value === state.sortField ? 'selected' : ''}>
                 ${field.label}
               </option>
             `).join('')}
           </select>
-          <select name="sortDirection" class="bg-gray-900 text-white rounded p-2">
+          <select name="sortDirection" class="bg-gray-900 text-white rounded p-2 flex-1">
             ${state.sortDirections?.map(dir => `
               <option value="${dir.value}" ${dir.value === state.sortDirection ? 'selected' : ''}>
                 ${dir.label}
