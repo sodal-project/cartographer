@@ -1,7 +1,7 @@
 // Import core dependencies
+import { ComponentLoader } from './componentLoader.js';
 import { CoreClientModule } from './CoreClientModule.js';
 import { realtime } from './realtime.js';
-import { ScriptLoader } from './scriptLoader.js';
 
 // Expose core dependencies globally
 window.CoreClientModule = CoreClientModule;
@@ -125,31 +125,18 @@ class App {
     this.setLoading(true);
 
     try {
-      const response = await fetch(`/mod/${moduleId}/index/`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load module: ${response.statusText}`);
-      }
+      await ComponentLoader.load({
+        module: moduleId,
+        instanceId: `${moduleId}-default`,
+        container: this.elements.main
+      });
 
-      const html = await response.text();
-      
-      // Update state and UI
       this.currentModule = moduleId;
-      this.elements.main.innerHTML = html;
-      
-      // Execute scripts using shared utility
-      await ScriptLoader.executeScripts(this.elements.main);
-      
       this.updateURL(moduleId);
       this.updateNavigation(moduleId);
 
     } catch (error) {
       console.error('Error loading module:', error);
-      this.elements.main.innerHTML = `
-        <div class="p-4 text-red-500">
-          Failed to load module. Please try again.
-        </div>
-      `;
     } finally {
       this.setLoading(false);
     }
