@@ -131,7 +131,7 @@ export class CoreModule {
     });
   }
 
-  async broadcastState(instanceId) {
+  async broadcastState(instanceId, modifiedState) {
     if(!instanceId){ return {
       success: false,
       message: `Can't broadcast state, instance ID not provided for ${this.name}`
@@ -140,7 +140,7 @@ export class CoreModule {
     // handle the case where instanceId is an object with an instanceId property
     instanceId = instanceId.instanceId || instanceId;
 
-    const instanceState = await this.core.state.read(instanceId) || {};
+    const instanceState = modifiedState || await this.core.state.read(instanceId) || {};
 
     if(!instanceState){
       return { 
