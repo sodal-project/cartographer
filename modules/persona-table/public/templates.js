@@ -43,15 +43,15 @@ export const templates = {
         type="button"
         data-dropdown-toggle="sort"
       >
-        <span class="relative h-3.5 text-indigo-400 inline-block">
-          ${state.sortDirection === 'ASC' ? '↑' : '↓'}
+        <span class="flex items-center justify-center w-3.5 h-3.5 text-indigo-400">
+          ${state.sortDirection === 'DESC' ? '↓' : '↑'}
         </span>
         <span class="text-sm capitalize">${state.sortField}</span>
-        <span class="relative w-3.5 h-3.5 text-indigo-400 inline-block">▼</span>
+        <span class="flex items-center justify-center w-3.5 h-3.5 text-indigo-400">▼</span>
       </button>
 
       <div
-        class="absolute z-10 top-9 left-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
+        class="absolute z-10 top-9 -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
         data-dropdown-content="sort"
       >
         <div class="flex gap-3 items-center w-full">
@@ -85,6 +85,31 @@ export const templates = {
     </div>
   `,
 
+  filterForm: (state, filter = {}, isNew = false) => `
+    <div class="flex flex-col gap-3 mb-3">
+      <select name="${isNew ? 'filterNewField' : 'filterField'}" class="bg-gray-900 text-white rounded p-2">
+        ${state.fields?.map(field => `
+          <option value="${field.value}" ${field.value === filter.field ? 'selected' : ''}>
+            ${field.label}
+          </option>
+        `).join('')}
+      </select>
+      <select name="${isNew ? 'filterNewOperator' : 'filterOperator'}" class="bg-gray-900 text-white rounded p-2">
+        ${state.filterOperators?.map(op => `
+          <option value="${op.value}" ${op.value === filter.operator ? 'selected' : ''}>
+            ${op.label}
+          </option>
+        `).join('')}
+      </select>
+    </div>
+    <input
+      type="text"
+      name="${isNew ? 'filterNewValue' : 'filterValue'}"
+      value="${filter.value || ''}"
+      class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3"
+    />
+  `,
+
   filter: (filter, state) => `
     <div class="relative filter-ui" data-dropdown="filter-${filter.field}">
       <button
@@ -96,31 +121,10 @@ export const templates = {
       </button>
 
       <div
-        class="absolute z-10 top-9 left-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
+        class="absolute z-10 top-9 left-1/2 -translate-x-1/2 min-w-[24rem] border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
         data-dropdown-content="filter-${filter.field}"
       >
-        <div class="flex gap-3 items-center w-full mb-3">
-          <select name="filterField" class="bg-gray-900 text-white rounded p-2">
-            ${state.fields?.map(field => `
-              <option value="${field.value}" ${field.value === filter.field ? 'selected' : ''}>
-                ${field.label}
-              </option>
-            `).join('')}
-          </select>
-          <select name="filterOperator" class="bg-gray-900 text-white rounded p-2">
-            ${state.filterOperators?.map(op => `
-              <option value="${op.value}" ${op.value === filter.operator ? 'selected' : ''}>
-                ${op.label}
-              </option>
-            `).join('')}
-          </select>
-        </div>
-        <input
-          type="text"
-          name="filterValue"
-          value="${filter.value}"
-          class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full"
-        />
+        ${templates.filterForm(state, filter, false)}
         <div class="flex justify-between w-full mt-4">
           <button
             class="bg-indigo-600 rounded text-white text-sm p-1 px-6"
@@ -151,22 +155,10 @@ export const templates = {
       </button>
 
       <div
-        class="absolute z-10 top-9 left-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
+        class="absolute z-10 top-9 -translate-x-1/2 min-w-[24rem] border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5 hidden"
         data-dropdown-content="new-filter"
       >
-        <div class="flex gap-3 items-center w-full mb-3">
-          <select name="filterNewField" class="bg-gray-900 text-white rounded p-2">
-            ${state.fields?.map(field => `
-              <option value="${field.value}">${field.label}</option>
-            `).join('')}
-          </select>
-          <select name="filterNewOperator" class="bg-gray-900 text-white rounded p-2">
-            ${state.filterOperators?.map(op => `
-              <option value="${op.value}">${op.label}</option>
-            `).join('')}
-          </select>
-        </div>
-        <input type="text" name="filterNewValue" class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
+        ${templates.filterForm(state, {}, true)}
         <div class="mt-4">
           <button class="bg-indigo-600 text-white px-4 py-2 rounded" data-action="save-new-filter">
             Save
