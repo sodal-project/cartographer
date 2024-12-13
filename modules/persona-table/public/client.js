@@ -162,7 +162,7 @@ class PersonaTableModule extends window.CoreClientModule {
       <div class="relative filter-ui" data-dropdown="filter-${filter.field}">
         <button
           class="flex gap-1 items-center inline-block h-7 px-3 ml-4 rounded-full border border-gray-700 text-sm text-gray-500 bg-gray-900 bg-opacity-30 hover:bg-gray-800"
-          @click="this.toggleDropdown('filter-${filter.field}')"
+          data-dropdown-toggle="filter-${filter.field}"
         >
           <span class="capitalize">${filter.field}</span>
           <span class="relative w-3.5 h-3.5 text-gray-500 inline-block">▼</span>
