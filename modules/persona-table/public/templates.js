@@ -86,15 +86,15 @@ export const templates = {
   `,
 
   filterForm: (state, filter = {}, isNew = false) => `
-    <div class="flex flex-col gap-3 mb-3">
-      <select name="${isNew ? 'filterNewField' : 'filterField'}" class="bg-gray-900 text-white rounded p-2">
+    <div class="flex gap-3 mb-3">
+      <select name="${isNew ? 'filterNewField' : 'filterField'}" class="bg-gray-900 text-white rounded p-2 flex-1">
         ${state.fields?.map(field => `
           <option value="${field.value}" ${field.value === filter.field ? 'selected' : ''}>
             ${field.label}
           </option>
         `).join('')}
       </select>
-      <select name="${isNew ? 'filterNewOperator' : 'filterOperator'}" class="bg-gray-900 text-white rounded p-2">
+      <select name="${isNew ? 'filterNewOperator' : 'filterOperator'}" class="bg-gray-900 text-white rounded p-2 flex-1">
         ${state.filterOperators?.map(op => `
           <option value="${op.value}" ${op.value === filter.operator ? 'selected' : ''}>
             ${op.label}
@@ -106,7 +106,7 @@ export const templates = {
       type="text"
       name="${isNew ? 'filterNewValue' : 'filterValue'}"
       value="${filter.value || ''}"
-      class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3"
+      class="w-full text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3"
     />
   `,
 
