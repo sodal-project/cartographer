@@ -44,9 +44,11 @@ export class CoreClientModule extends HTMLElement {
       if (selector) {
         const target = e.target.closest(selector);
         if (target) {
+          console.log(`Event triggered for selector: ${selector}`);
           handler.call(this, e, target);
         }
       } else {
+        console.log(`Event triggered for direct handler`);
         handler.call(this, e);
       }
     };
@@ -54,6 +56,7 @@ export class CoreClientModule extends HTMLElement {
     // Store and add the new listener
     this._eventListeners.set(key, delegatedHandler);
     this.shadowRoot.addEventListener(eventType, delegatedHandler);
+    console.log(`Added event listener for ${eventType} on ${selector || 'direct handler'}`);
   }
 
   /**
@@ -135,11 +138,10 @@ export class CoreClientModule extends HTMLElement {
    * Render component content with automatic event handling
    * @param {Object} options - Render options
    * @param {string} options.html - HTML content to render
-   * @param {boolean} options.setupEvents - Whether to call setupEvents (defaults to true)
    */
   renderComponent({ html }) {
     this.shadowRoot.innerHTML = html;
-    this.setupEvents();
+    this.setupEvents(); // Always set up events after rendering
   }
 
   /**

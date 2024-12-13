@@ -83,12 +83,12 @@ const core = {
       //   category: "Integrations",
       //   accessLevel: "admin"
       // },
-      // {
-      //   folder: "personaTable",
-      //   label: "Persona Table",
-      //   category: "System",
-      //   accessLevel: "admin"
-      // },
+      {
+        folder: "persona-table",
+        label: "Persona Table",
+        category: "System",
+        accessLevel: "admin"
+      },
       {
         folder: "table",
         label: "Table",
