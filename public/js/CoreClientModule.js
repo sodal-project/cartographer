@@ -1,3 +1,5 @@
+import { ScriptLoader } from './scriptLoader.js';
+
 // Create a shared stylesheet that can be reused across all modules
 let tailwindStyles = null;
 
@@ -164,43 +166,51 @@ export class CoreClientModule extends HTMLElement {
    */
   async renderSubmodule({ module, mountId, action = 'index', instanceId }) {
     try {
-      if(!instanceId) {
+      if (!instanceId) {
         throw new Error('Instance ID not provided');
       }
 
-      // Get the submodule's HTML
       const response = await fetch(`/mod/${module}/${action}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ instanceId })
       });
       
       const html = await response.text();
       const mountPoint = this.shadowRoot.getElementById(mountId);
+      
+      if (!mountPoint) {
+        throw new Error(`Mount point with ID "${mountId}" not found`);
+      }
+
+      // Create temp container and extract scripts before updating innerHTML
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      const scriptConfigs = ScriptLoader.extractScripts(temp);
+
+      // Update content
       mountPoint.innerHTML = html;
 
-      // Initialize the submodule's component
+      // Initialize component
       const componentMount = mountPoint.querySelector('[id^="component-mount-"]');
       if (componentMount) {
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.textContent = `
-          import '/public/${module}/client.js';
-          const component = document.createElement('${module}-module');
-          component.id = '${instanceId}';
-          document.querySelector('${this.constructor.moduleName}-module')
-            .shadowRoot.querySelector('#${mountId}')
-            .replaceChild(component, document.querySelector('${this.constructor.moduleName}-module')
-            .shadowRoot.querySelector('#${mountId}').firstChild);
-        `;
-        document.head.appendChild(script);
+        const component = document.createElement(`${module}-module`);
+        component.id = instanceId;
+        
+        if (componentMount.parentNode) {
+          componentMount.parentNode.replaceChild(component, componentMount);
+        }
+
+        // Execute extracted scripts
+        await ScriptLoader.executeScriptConfigs(scriptConfigs);
       }
+
     } catch (error) {
       console.error(`Failed to load ${module}:`, error);
-      this.shadowRoot.getElementById(mountId).innerHTML = 
-        `<p class="text-red-500">Failed to load ${module}</p>`;
+      const mountPoint = this.shadowRoot.getElementById(mountId);
+      if (mountPoint) {
+        mountPoint.innerHTML = `<p class="text-red-500">Failed to load ${module}: ${error.message}</p>`;
+      }
     }
   }
 
