@@ -43,11 +43,11 @@ export const templates = {
         type="button"
         data-dropdown-toggle="sort"
       >
-        <span class="flex items-center justify-center w-3.5 h-3.5 text-indigo-400">
+        <span class="inline-flex items-center justify-center w-3 h-3 text-indigo-400 text-xs leading-none">
           ${state.sortDirection === 'DESC' ? '↓' : '↑'}
         </span>
         <span class="text-sm capitalize">${state.sortField}</span>
-        <span class="flex items-center justify-center w-3.5 h-3.5 text-indigo-400">▼</span>
+        <span class="inline-flex items-center justify-center w-3 h-3 text-indigo-400 text-xs leading-none">▼</span>
       </button>
 
       <div

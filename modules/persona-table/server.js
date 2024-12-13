@@ -38,7 +38,7 @@ class PersonaTable extends CoreModule {
       field: 'id',
       direction: 'ASC',
       pageNum: 1,
-      pageSize: 500
+      pageSize: 100
     });
 
     // Get fields from the returned personas
@@ -88,7 +88,7 @@ class PersonaTable extends CoreModule {
       field: updatedState.sortField,
       direction: updatedState.sortDirection,
       pageNum: 1,
-      pageSize: 500 // We can make this configurable later
+      pageSize: 100
     });
 
     // Update state with response data
