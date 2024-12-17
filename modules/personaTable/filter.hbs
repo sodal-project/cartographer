@@ -1,0 +1,52 @@
+<div
+  class="relative filter-ui"
+  x-data="{ open: false }"
+  @click.away="open = false"
+>
+  <button
+    class="flex gap-1 items-center inline-block h-7 px-3 ml-4 rounded-full border border-gray-700 text-sm text-gray-500 bg-gray-900 bg-opacity-30 hover:bg-gray-800 hover:bg-opacity-100"
+    type="button"
+    @click="open = !open"
+  >
+    <span class="capitalize">{{field}}</span>
+
+    <!-- Angle Down -->
+    <span class="relative w-3.5 h-3.5 text-gray-500 inline-block">
+      {{> icons/AngleDown }}
+    </span>
+  </button>
+
+  <!-- Active Filter Form -->
+  <div
+    class="absolute z-10 top-9 left-1/2 w-px h-px"
+    x-show="open"
+  >
+    <div
+      class="transform -translate-x-1/2 w-96 border border-gray-700 bg-gray-800 shadow-xl rounded-lg p-5"
+    >
+      <div x-ref="filterFields">
+        <div class="flex gap-3 items-center w-full mb-3">
+          {{> FormSelect name="filterField" options=fields selected=field }}
+          {{> FormSelect name="filterOperator" options=filterOperators selected=operator }}
+        </div>
+        <input type="text" name="filterValue" value={{value}} class="text-white text-sm bg-gray-900 border border-gray-700 rounded-md p-2 px-3 w-full" />
+      </div>
+      <div class="flex justify-between w-full mt-4">
+        <button
+          class="bg-indigo-600 rounded text-white text-sm p-1 px-6"
+          type="submit"
+          x-ref="submitButton"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          class="p-1 px-6 rounded text-white text-sm bg-gray-600"
+          @click="$refs.filterFields.remove(); $refs.submitButton.click();"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

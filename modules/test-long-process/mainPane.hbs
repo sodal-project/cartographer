@@ -1,0 +1,23 @@
+<div class="p-8" style="max-width: 640px">
+  {{> Headline title="Test Long Process" }}
+  
+  <!-- Form to start process -->
+  {{#> Card }}
+  <form
+    class="flex items-end gap-6 mb-0"
+    hx-post="/mod/test-long-process/longProcess/"
+    hx-target="closest #main"
+    hx-swap="innerHTML"
+  >
+    <button
+      class="bg-indigo-600 p-1 px-6 rounded text-white text-sm"
+      type="submit"
+    >
+      Start Process
+    </button>
+    <div>
+      <p class="text-white">{{status}}</p>
+    </div>
+  </form>
+  {{/Card}}
+</div>

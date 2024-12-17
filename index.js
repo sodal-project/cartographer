@@ -1,20 +1,49 @@
+require('dotenv').config();
 const express = require("express");
+const Handlebars = require('handlebars');
+const { engine } = require('express-handlebars');
+const config = require('./config');
+
+// Import core functions
+const core = require('./core/core.js');
+
+// Import middlewares and helpers
+const cookieParser = require('cookie-parser'); // Parse cookies
+const handlebarsHelpers = require('./app/helpers/handlebarsHelpers'); // Register the handlebars helpers
+
+// Import routes
+const authRoutes = require("./app/routes/authRoutes");
+const moduleRoutes = require("./app/routes/moduleRoutes");
+const coreRoutes = require("./app/routes/coreRoutes");
+
+// Create an Express application
 const app = express();
 
-// The root route
-app.get("/", (req, res) => {
-  res.send(`
-    <html>
-      <body>
-        <h1>Cartographer</h1>
-        <form action="/get-module" method="POST">
-          <button type="submit">Install Module</button>
-        </form>
-      </body>
-    </html>
-  `);
+// Run the core initialization function
+core.init();
+
+// Set up Handlebars
+app.engine("hbs", engine({ defaultLayout: false}));
+app.set('view engine', 'hbs');
+app.set("views", config.viewsPath);
+
+// Register Handlebars helpers
+Object.keys(handlebarsHelpers).forEach((helperName) => {
+  Handlebars.registerHelper(helperName, handlebarsHelpers[helperName]);
 });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+// Middleware configuration
+app.use(express.urlencoded({ extended: true })); // Parse form data
+app.use(express.json()); // Parse JSON bodies
+app.use(cookieParser()); // Access cookies
+app.use(express.static(config.publicPath)); // Serve static files
+
+// Route configuration
+app.use("/", authRoutes);
+app.use("/mod", moduleRoutes);
+app.use("/", coreRoutes);
+
+// Start the server
+app.listen(config.port, () => {
+  console.log(`Server is running on port ${config.port}`);
 });

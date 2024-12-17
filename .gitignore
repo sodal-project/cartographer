@@ -1,4 +1,7 @@
-.env
-node_modules
 .DS_Store
+.env
+logs/*
+node_modules
 Notes.md
+request.rest
+data

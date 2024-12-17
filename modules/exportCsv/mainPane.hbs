@@ -1,0 +1,20 @@
+<div class="p-8" style="max-width: 640px">
+  {{> Headline title="Export CSV" }}
+  <div class="rounded-lg p-6 border border-gray-700 bg-gray-900">
+    <form
+      class="gap-6 mb-0"
+      hx-ext="download-csv"
+      hx-post="/mod/exportCsv/download/download"
+    >
+      <div class="flex-grow">
+        <label class="block text-white text-sm mb-2" for="filter">Filter:</label>
+        <textarea
+          class="rounded p-1 text-sm w-full m-0 mb-2 align-top h-80"
+          id="csvFilter"
+          name="csvFilter"
+        ></textarea>
+      </div>
+      {{> FormSubmit label="Export CSV" }}
+    </form>
+  </div>
+</div>

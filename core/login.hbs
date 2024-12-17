@@ -1,0 +1,23 @@
+<html lang="en">
+  {{> Head }}
+  <body class="poppins-regular" style="background: #080c15">
+    <div class="absolute left-4">
+      {{> Logo }}
+    </div>
+    <div class="flex items-center justify-center min-h-full">
+      <div class="w-80 py-20">
+        {{#> Card }}
+          <h1 class="text-white text-center mb-4">Login</h1>
+          <form class="flex flex-col gap-6" action="/login" method="POST">
+            {{> FormEmail label="Email" name="email" }}
+            {{> FormPassword label="Password" name="password" }}
+            <div class="flex items-center justify-center gap-8 mt-4">
+              {{> FormSubmit label="Login" }}
+              <a class="text-white text-sm" href="/register">Register</a>
+            </div>
+          </form>
+        {{/Card}}
+      </div>
+    </div>
+  </body>
+</html>

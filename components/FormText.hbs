@@ -1,0 +1,15 @@
+<div class="flex-grow">
+  <label class="block text-white text-sm mb-2" for={{name}}>{{label}}</label>
+ <input
+    class="text-sm border border-gray-700 rounded-md p-2 px-3 mb-4 w-full
+      {{#if dark}}
+        bg-gray-900 text-white 
+      {{else}}
+        bg-white text-gray-900
+      {{/if}}"
+    type="text"
+    id="{{name}}"
+    name="{{name}}"
+    value="{{value}}"
+  />
+</div>

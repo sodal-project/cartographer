@@ -1,0 +1,83 @@
+<div class="p-8" style="width: 640px"></div>
+  {{> Headline title="CSV Manager" }}
+
+  <!-- List all data stored in the module namespace of the config database -->
+  <div class="p-8 mb-6">
+    <ul class="text-white border-t border-black-700">
+      <li class="group relative border-b border-black-800 py-2 flex">
+        <span class="flex-grow text-white-200">File Id</span>
+        <span class="flex-grow text-white-200">File Name</span>
+        <span class="flex-grow text-white-200">Actions</span>
+      </li>
+      {{#each this.files }}
+        <li class="group relative border-b border-gray-800 py-2 flex">
+          <span class="flex-grow text-gray-400">{{this.fileId}}</span>
+          <span class="flex-grow text-gray-400">{{this.fileName}}</span>
+
+          <!-- Actions -->
+
+
+          <!-- Form to run a sync for this instance -->
+          <div class="flex">
+            <div
+              class="flex-grow w-20 group-hover:opacity-100"
+            >
+              <form
+                hx-post="/mod/directory/csvMerge/"
+                hx-target="#directoryCsvPane"
+                hx-swap="innerHTML"
+                hx-vals='{"fileId": "{{this.fileId}}"}'
+              >
+                <button
+                  class="h-3.5 w-3.5 inline text-gray-400 hover:text-indigo-600"
+                  type="submit"
+                >
+                Merge
+                </button>
+              </form>
+            </div>
+
+            <!-- Form to delete data from config db -->
+            <div
+              class="flex-grow w-20 group-hover:opacity-100"
+            >
+              <form
+                hx-post="/mod/directory/csvDeleteFile/"
+                hx-target="#directoryCsvPane"
+                hx-swap="innerHTML"
+                hx-vals='{"fileId": "{{this.fileId}}"}'
+              >
+                <button
+                  class="h-3.5 w-3.5 inline text-gray-400 hover:text-indigo-600"
+                  type="submit"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                    <path
+                      fill="currentColor"
+                      d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"
+                    />
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </div>
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+
+  <!-- Post data to the config database, redraw module on completion -->
+  {{#> Card }}
+    <form
+      class="mb-0"
+      hx-encoding="multipart/form-data"
+      hx-post="/mod/directory/csvAddFile/upload"
+      hx-target="#directoryCsvPane"
+      hx-swap="innerHTML"
+    >
+      <div class="mb-4">{{> FormText label="CSV Name" name="fileName" }}</div>
+      <div class="mb-4">{{> FormFilePicker label="File" name="file" }}</div>
+      {{> FormSubmit label="Add" }}
+    </form>
+  {{/Card}}
+</div>

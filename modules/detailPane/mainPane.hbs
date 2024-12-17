@@ -1,0 +1,44 @@
+<div>
+
+  <!-- Header with Form -->
+  <div class="flex justify-between items-start p-6 pb-2.5 border-b border-gray-700">
+    {{> Headline title="Detail Pane" }}
+    <div>
+      <form
+        class="flex gap-3 items-center"
+        hx-post="/mod/detailPane/search/"
+        hx-target="closest #main"
+        hx-swap="innerHTML"
+      >
+        <label class="text-white">UPN:</label>
+        <input
+          class="text-sm border border-gray-700 rounded-md p-1 px-2 w-60 bg-white text-gray-900"
+          type="text" id="upn" name="upn" value="{{upn}}"
+        >
+        {{> FormSubmit label="Search" }}
+      </form>
+    </div>
+  </div>
+
+  <!-- Name and UPN -->
+  {{#if upn}}
+    <div class="flex p-6 pb-10 items-center">
+      <div class="w-1/2">
+        <h3 class="text-white text-lg capitalize inline-block relative">
+          {{name}}
+        </h3>
+      </div>
+      <div class="w-1/2">
+        <div class="bg-gray-800 pl-4 pr-8 py-4 rounded-lg relative">
+          <p class="text-sm text-white font-bold truncate ">{{upn}}</p>
+          <div class="absolute top-0 right-0 p-3 h-full w-10 text-gray-400 hover:text-white cursor-pointer">
+            X
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+
+  <!-- Subpanes -->
+  {{{subpanes}}}
+</div>

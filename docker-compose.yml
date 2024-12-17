@@ -1,0 +1,57 @@
+version: "3"
+services:
+  app:
+    build:
+      dockerfile: Dockerfile
+    hostname: ${INSTANCE_NAME_APP}
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    command: npm start
+    env_file:
+      - .env # <-- This loads the .env file
+    environment:
+      - PORT=3000
+    ports:
+      - 3000:3000
+    depends_on:
+      - neo4j-db
+      - mongo-db
+
+  neo4j-db:
+    image: neo4j:5.23.0-community
+    hostname: ${INSTANCE_NAME_DB}
+    volumes:
+      - neo4j-data:/data
+      - neo4j-plugins:/plugins
+    ports:
+      - 7474:7474
+      - 7687:7687
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+      - NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      # The following enables unrestricted access to APOC procedures
+      # This is broad to simplify experimentation with APOC
+      # Future version may reduced scope to only required procedures
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.* 
+      - NEO4J_PLUGINS=["apoc"]
+
+  mongo-db:
+    image: mongo
+    hostname: mongo-db
+    command: mongod --port 28000 --quiet --logpath /tmp/mongo.log --setParameter logLevel=0 > /dev/null 2>&1 # Change internal port to 28000
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME} # Set MongoDB username
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD} # Set MongoDB password
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - 28000:28000 # Map custom external port to the new internal port
+
+volumes:
+  neo4j-data:
+  mongo-data:
+  neo4j-plugins:
