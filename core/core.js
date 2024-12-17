@@ -6,6 +6,7 @@ import fs from 'fs';
 import Handlebars from 'handlebars';
 import { consoleLog } from './log.js';
 import { CoreModule } from './CoreModule.js';
+import coreData from './coreData.js';
 
 /**
  * Core system interface for Cartographer modules
@@ -20,127 +21,8 @@ import { CoreModule } from './CoreModule.js';
  * - Encryption services
  */
 const core = {
-
-  /**
-   * System configuration and module data
-   * @type {Object}
-   * @property {string} currentModule - Currently executing module name
-   * @property {Object[]} modules - Available system modules
-   * @property {string} modules[].folder - Module folder name
-   * @property {string} modules[].label - Module display name
-   * @property {string} modules[].category - Module category
-   * @property {string} modules[].accessLevel - Required access level
-   * @property {Object.<string, Object[]>} modulesByCategory - Modules grouped by category
-   */
-  coreData: {
-    currentModule: 'none',
-    modules: [
-      // {
-      //   folder: "directory",
-      //   label: "Directory",
-      //   category: "Discovery",
-      //   accessLevel: "operator"
-      // },
-      // {
-      //   folder: "filter-queries",
-      //   label: "Filter Queries",
-      //   category: "Discovery",
-      //   accessLevel: "operator"
-      // },
-      // {
-      //   folder: "detailPane",
-      //   label: "Detail Pane",
-      //   category: "Discovery",
-      //   accessLevel: "operator"
-      // },
-      // {
-      //   folder: "slack",
-      //   label: "Slack Integration",
-      //   category: "Integrations",
-      //   accessLevel: "admin"
-      // },
-      // {
-      //   folder: "google",
-      //   label: "Google Integration",
-      //   category: "Integrations",
-      //   accessLevel: "admin"
-      // },
-      // {
-      //   folder: "tableau",
-      //   label: "Tableau Integration",
-      //   category: "Integrations",
-      //   accessLevel: "admin"
-      // },
-      // {
-      //   folder: "bamboohr",
-      //   label: "BambooHR Integration",
-      //   category: "Integrations",
-      //   accessLevel: "admin"
-      // },
-      // {
-      //   folder: "powerbi",
-      //   label: "PowerBI Integration",
-      //   category: "Integrations",
-      //   accessLevel: "admin"
-      // },
-      {
-        folder: "persona-table",
-        label: "Persona Table",
-        category: "System",
-        accessLevel: "admin"
-      },
-      {
-        folder: "export-csv",
-        label: "Export CSV",
-        category: "System",
-        accessLevel: "admin"
-      },
-      {
-        folder: "test-config",
-        label: "Test Config",
-        category: "System",
-        accessLevel: "admin"
-      },
-      {
-        folder: "test-long-process",
-        label: "Test Long Process",
-        category: "System",
-        accessLevel: "admin"
-      },
-      {
-        folder: "test-ping",
-        label: "Test Ping",
-        category: "System",
-        accessLevel: "admin"
-      },
-      {
-        folder: "test-submodule",
-        label: "Test Submodule",
-        category: "System",
-        accessLevel: "admin"
-      },
-      {
-        folder: "test-interconnect",
-        label: "Test Interconnect",
-        category: "System",
-        accessLevel: "admin"
-      },
-      // {
-      //   folder: "exportCsv",
-      //   label: "Export CSV",
-      //   category: "System",
-      //   accessLevel: "admin"
-      // },
-    ]
-  },
-
-  /**
-   * Initialize the core system
-   * @async
-   * @returns {Promise<Core>} Initialized and frozen core object
-   */
+  coreData,
   init,
-
   CoreModule,
 };
 

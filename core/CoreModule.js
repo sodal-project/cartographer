@@ -157,7 +157,11 @@ export class CoreModule {
     };
   }
 
-  // Simplified state management
+  /**
+   * Simplified state management
+   */
+
+  // Get the state for a specific instance
   async getState(instanceId) {
     if(!instanceId){ return null; }
     
@@ -171,6 +175,7 @@ export class CoreModule {
     return moduleState[instanceId] || null;
   }
 
+  // Set the state for a specific instance
   async setState(instanceId, newState) {
 
     if(!instanceId){
@@ -227,12 +232,29 @@ export class CoreModule {
     `;
   }
 
+  /**
+   * Functions to be implemented by the module
+   */
+
+  // Run when module is initialized
+  async init() {
+    throw new Error('Init not implemented');
+  }
+
   // Default entry point for module UI
+  // returns the default HTML for the module's UI
   async index(req) {
     throw new Error('Index not implemented');
   }
 
-  async init() {
-    throw new Error('Init not implemented');
+  // Default view for module UI
+  // returns the default HTML for the module's UI
+  async view(req) {
+    return this.index(req);
+  }
+
+  // returns the HTML for the module's UI for a specific instance
+  async viewInstance(instanceId){
+    throw new Error('View instance not implemented');
   }
 }
