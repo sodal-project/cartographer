@@ -54,7 +54,7 @@
       >
         <div
           class="flex grow flex-col gap-y-5 overflow-y-auto h-full px-4 pb-4"
-          x-data="{ mode: 'operator', current: '{{currentModule}}' }"
+          x-data="{ mode: 'admin', current: '{{currentModule}}' }"
         >
           <!-- Logo -->
           {{> Logo }}
@@ -102,10 +102,8 @@
                           <li
                             x-show="mode === 'admin' || '{{accessLevel}}' === 'operator'"
                             data-access="{{accessLevel}}"
+                            data-module="{{folder}}"
                             @click="current='{{folder}}'"
-                            hx-get="/mod/{{folder}}/mainPane/"
-                            hx-target="#main"
-                            hx-push-url="/{{folder}}/mainPane/"
                             class="relative border-transparent group flex gap-x-3 rounded-md p-2 pl-3 text-sm font-semibold leading-6 text-white hover:bg-gray-800 cursor-pointer"
                           >
                             <span

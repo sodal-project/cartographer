@@ -1,4 +1,4 @@
-const core = require('../../core/core.js');
+import core from '../../core/core.js';
 
 /**
  * Root
@@ -21,9 +21,9 @@ const renderHomePage = async (req, res) => {
     }
   }
   
-  res.render("core/index", data); 
+  res.render("app/templates/index", data); 
 };
 
-module.exports = {
+export {
   renderHomePage
 };

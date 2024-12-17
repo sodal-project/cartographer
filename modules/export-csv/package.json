@@ -1,0 +1,16 @@
+{
+  "name": "export-csv",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "dependencies": {
+    "json2csv": "^6.0.0-alpha.2"
+  }
+}

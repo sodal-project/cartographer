@@ -1,55 +1,38 @@
-const connector = require('./graphNeo4jConnector');
-const CC = require('./constants');
-const consoleLog = require('./log').consoleLog;
+/**
+ * @fileoverview Graph filtering operations
+ * @module Core/graphFilter
+ */
 
-/* 
-params: {
-  field: string
-  direction: ASC | DESC
-  pageNum: number
-  pageSize: number
-}
+import connector from './graphNeo4jConnector.js';
+import CC from './constants.js';
+import { consoleLog } from './log.js';
 
-filterArray: [
-  {
-    type: field
-    key: string
-    value: string
-    operator: string
-    not: boolean
-  },
-  {
-    type: source
-    key: id | name | lastUpdate
-    value: string
-    operator: string
-    not: boolean
-  },
-  {
-    type: agency
-    key: control | obey
-    filter: [ ... ]                  // if omitted, the filter is applied to the entire graph
-    levels: number[]                 // if omitted, the filter is applied to all levels
-    depth: number || [min, max]      // if omitted, the filter is applied to all depths
-    confidence: {                    // if omitted, the filter is applied to all confidence levels
-      min: number
-      max: number
-    }
-  },
-  {
-    type: compare,
-    key: in, not, or
-    filter: [ ... ]
-  },
-  {
-    type: set
-    upns: string[] // array of upns
-  }
-]
+/** @typedef {import('./types').FilterObject} FilterObject */
+/** @typedef {import('./types').FilterParams} FilterParams */
+/** @typedef {import('./types').FieldFilter} FieldFilter */
+/** @typedef {import('./types').SourceFilter} SourceFilter */
+/** @typedef {import('./types').AgencyFilter} AgencyFilter */
+/** @typedef {import('./types').CompareFilter} CompareFilter */
+/** @typedef {import('./types').SetFilter} SetFilter */
+/** @typedef {import('./types').PropertyOperator} PropertyOperator */
+/** @typedef {import('./types').PersonaObject} PersonaObject */
 
-*/
+/**
+ * @typedef {FilterObject[]} Filter
+ * Array of filter objects that are combined with AND logic
+ */
 
-// Operators for filtering
+/**
+ * @typedef {Object} GraphFilterResponse
+ * @property {Object} raw - Raw Neo4j response
+ * @property {PersonaObject[]} personas - Array of filtered persona objects
+ * @property {number} totalCount - Total number of matching personas
+ * @property {string[]} upns - Array of matching UPNs
+ * @property {number} time - Query execution time in ms
+ */
+
+// Valid operators for filtering that map to Neo4j syntax
+/** @type {Object.<string, PropertyOperator>} */
 const operators = {
   "=": "=",
   ">": ">",
@@ -74,14 +57,14 @@ const operators = {
   "endsWith": "ENDS WITH",
 }
 
-const allLevels = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+/** @type {number[]} */
+const allLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 /**
- * @description Filter the graph database based on the provided filter
- * 
- * @param {object[]} filter - Array of filter objects
- * @param {object} params - The sort and pagination parameters
- * @returns {object[]} - The query results
+ * Filter the graph database based on the provided filter
+ * @param {Filter} filter - Array of filter objects
+ * @param {FilterParams} [params] - Sort and pagination parameters
+ * @returns {Promise<GraphFilterResponse>} Query results
  */
 async function graphFilter(filter, params = {}) {
   const timeStart = new Date();
@@ -104,24 +87,21 @@ async function graphFilter(filter, params = {}) {
   const time = new Date() - timeStart;
   consoleLog(`Graph filter processing time: ${time}ms`);
 
-  const graphFilterResponse = {
+  return {
     raw: sortedResults,
     personas: sortedResults.records.map(node => node._fields[0].properties),
     totalCount: upns.length,
     upns,
     time
-  }
-  return graphFilterResponse;
+  };
 }
 
 /**
- * @description Get the upns from the filter object
- * 
- * @param {object} filter - The filter object
- * @returns {string[]} - An array of upns, or null if no filtering occured (implies all upns)
+ * Get the UPNs matching the filter criteria
+ * @param {Filter} filter - Filter criteria
+ * @returns {Promise<string[]|null>} Matching UPNs or null for all
  */
-async function getUpnsFromFilter (filter) {
-
+async function getUpnsFromFilter(filter) {
   if(!filter) { return await getAllUpns(); }
 
   const setArray = [];
@@ -168,11 +148,15 @@ async function getUpnsFromFilter (filter) {
   return upns;
 }
 
-async function getAllUpns () {
+/**
+ * Get all UPNs from the graph
+ * @returns {Promise<string[]>} All UPNs
+ */
+async function getAllUpns() {
   return await readSingleArray(`MATCH (persona:Persona) RETURN DISTINCT persona.upn`);
 }
 
-async function getUpnsByFieldArray (fieldArray) {
+async function getUpnsByFieldArray(fieldArray) {
   let query = `MATCH (persona:Persona)\n`
   let firstQuery = true;
 
@@ -200,7 +184,7 @@ async function getUpnsByFieldArray (fieldArray) {
   return await readSingleArray(query);
 }
 
-async function getUpnsBySetArray (setArray, upns) {
+async function getUpnsBySetArray(setArray, upns) {
   // identify only the upns that are in all sets
   for(const set of setArray) {
     if(!upns) {
@@ -212,7 +196,7 @@ async function getUpnsBySetArray (setArray, upns) {
   return upns;
 }
 
-async function getUpnsBySourceArray (sourceArray, upns) {
+async function getUpnsBySourceArray(sourceArray, upns) {
   let query = `MATCH (source:Source)-[:DECLARE]->(persona:Persona) WHERE 1=1 \n`;
 
   for(const source in sourceArray) {
@@ -238,7 +222,7 @@ async function getUpnsBySourceArray (sourceArray, upns) {
   return await readSingleArray(query, { upns });
 }
 
-async function getUpnsByAgency (agency, upns) {
+async function getUpnsByAgency(agency, upns) {
 
   // Convert agency.confidence into a min and max
   const confidence = agency.confidence || { min: 0, max: 1 };
@@ -337,7 +321,7 @@ async function getUpnsByAgency (agency, upns) {
   return [...new Set([...results, ...selfUpns])];
 }
 
-async function getUpnsByCompare (compare, upns) {
+async function getUpnsByCompare(compare, upns) {
 
   const action = compare.key;
   const filter = compare.filter;
@@ -366,13 +350,13 @@ async function getUpnsByCompare (compare, upns) {
   return upns;
 }
 
-async function readSingleArray (query, params) {
+async function readSingleArray(query, params) {
   const results = await connector.runRawQuery(query, params);
   const array = results.records.map(node => node._fields[0]);
   return array;
 }
 
-async function sortResults (upns, params) {
+async function sortResults(upns, params) {
 
   let query = `MATCH (persona:Persona) WHERE persona.upn IN $upns\n`;
   query += `RETURN DISTINCT persona 
@@ -383,4 +367,4 @@ async function sortResults (upns, params) {
   return await connector.runRawQuery(query, { upns });
 }
 
-module.exports = graphFilter;
+export default graphFilter;

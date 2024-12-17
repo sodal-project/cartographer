@@ -1,4 +1,4 @@
-const CC = require('./constants');
+import CC from './constants.js';
 
 /**
  * Test if an object is a valid persona
@@ -463,7 +463,7 @@ const confidenceNumber = (confidence) => {
   return true;
 }
 
-module.exports = {
+export default {
   personaObject,
   upnString,
   idString,

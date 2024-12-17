@@ -1,6 +1,8 @@
-require('dotenv').config();
-const { consoleLog } = require('./log.js');
-const { MongoClient } = require('mongodb');
+import { consoleLog } from './log.js';
+import { MongoClient } from 'mongodb';
+import process from 'process';
+import dotenv from 'dotenv';
+dotenv.config();
 
 /**
  * MONGO CRUD FUNCTIONS
@@ -139,7 +141,7 @@ async function deleteFromMongo(namespace, property) {
   }
 }
 
-module.exports = {
+export {
   readFromMongo,
   writeToMongo,
   deleteFromMongo,

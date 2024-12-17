@@ -1,6 +1,7 @@
-const fs = require('fs').promises;
-const path = require('path');
-const sanitize = require('sanitize-filename');
+import fs from 'fs/promises';
+import path from 'path';
+import sanitize from 'sanitize-filename';
+import process from 'process';
 
 const localPath = './data/';
 
@@ -58,11 +59,12 @@ const load = async (moduleName, loadName) => {
     return JSON.parse(content);
   } catch (err) {
     console.error("Cache not found for " + loadName);
+    console.error(err);
     return false;
   }
 }
 
-module.exports = {
+export default {
   save,
   load,
 }

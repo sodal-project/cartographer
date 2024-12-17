@@ -1,110 +1,148 @@
-// Core Namespaces
-// Accessed via core.<namespace>.<call>()
-const cache = require('./cache.js')
-const check = require('./check.js')
-const client = require('./client.js')
-const config = require('./config.js')
-const crypto = require('./crypto.js')
-const constants = require('./constants.js')
-const graph = require('./graph.js')
-const persona = require('./persona.js')
-const source = require('./source.js')
+/**
+ * @fileoverview Core system interface
+ */
+import path from 'path';
+import fs from 'fs';
+import Handlebars from 'handlebars';
+import { consoleLog } from './log.js';
+import { CoreModule } from './CoreModule.js';
 
-const namespaces = {
-  cache,
-  check,
-  client,
-  config,
-  constants,
-  crypto,
-  graph,
-  persona,
-  source,
+/**
+ * Core system interface for Cartographer modules
+ * @description The main interface for all Cartographer module interactions. Provides:
+ * - Module management and initialization
+ * - Graph database operations
+ * - Cache management
+ * - Configuration management
+ * - Type checking and validation
+ * - Client-side rendering
+ * - Logging
+ * - Encryption services
+ */
+const core = {
+
+  /**
+   * System configuration and module data
+   * @type {Object}
+   * @property {string} currentModule - Currently executing module name
+   * @property {Object[]} modules - Available system modules
+   * @property {string} modules[].folder - Module folder name
+   * @property {string} modules[].label - Module display name
+   * @property {string} modules[].category - Module category
+   * @property {string} modules[].accessLevel - Required access level
+   * @property {Object.<string, Object[]>} modulesByCategory - Modules grouped by category
+   */
+  coreData: {
+    currentModule: 'none',
+    modules: [
+      // {
+      //   folder: "directory",
+      //   label: "Directory",
+      //   category: "Discovery",
+      //   accessLevel: "operator"
+      // },
+      // {
+      //   folder: "filter-queries",
+      //   label: "Filter Queries",
+      //   category: "Discovery",
+      //   accessLevel: "operator"
+      // },
+      // {
+      //   folder: "detailPane",
+      //   label: "Detail Pane",
+      //   category: "Discovery",
+      //   accessLevel: "operator"
+      // },
+      // {
+      //   folder: "slack",
+      //   label: "Slack Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "google",
+      //   label: "Google Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "tableau",
+      //   label: "Tableau Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "bamboohr",
+      //   label: "BambooHR Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      // {
+      //   folder: "powerbi",
+      //   label: "PowerBI Integration",
+      //   category: "Integrations",
+      //   accessLevel: "admin"
+      // },
+      {
+        folder: "persona-table",
+        label: "Persona Table",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
+        folder: "export-csv",
+        label: "Export CSV",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
+        folder: "test-config",
+        label: "Test Config",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
+        folder: "test-long-process",
+        label: "Test Long Process",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
+        folder: "test-ping",
+        label: "Test Ping",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
+        folder: "test-submodule",
+        label: "Test Submodule",
+        category: "System",
+        accessLevel: "admin"
+      },
+      {
+        folder: "test-interconnect",
+        label: "Test Interconnect",
+        category: "System",
+        accessLevel: "admin"
+      },
+      // {
+      //   folder: "exportCsv",
+      //   label: "Export CSV",
+      //   category: "System",
+      //   accessLevel: "admin"
+      // },
+    ]
+  },
+
+  /**
+   * Initialize the core system
+   * @async
+   * @returns {Promise<Core>} Initialized and frozen core object
+   */
+  init,
+
+  CoreModule,
 };
-
-// Core Imports
-const { getCallingFolder } = require('./utilities.js');
-const { consoleLog, writeLog } = require('./log.js');
-
-// Core Data
-// TODO: move this to config database
-const coreData = {
-  currentModule: 'none',
-  modules: [
-    {
-      folder: "directory",
-      label: "Directory",
-      category: "Discovery",
-      accessLevel: "operator"
-    },
-    {
-      folder: "filter-queries",
-      label: "Filter Queries",
-      category: "Discovery",
-      accessLevel: "operator"
-    },
-    {
-      folder: "detailPane",
-      label: "Detail Pane",
-      category: "Discovery",
-      accessLevel: "operator"
-    },
-    {
-      folder: "slack",
-      label: "Slack Integration",
-      category: "Integrations",
-      accessLevel: "admin"
-    },
-    {
-      folder: "google",
-      label: "Google Integration",
-      category: "Integrations",
-      accessLevel: "admin"
-    },
-    {
-      folder: "tableau",
-      label: "Tableau Integration",
-      category: "Integrations",
-      accessLevel: "admin"
-    },
-    {
-      folder: "bamboohr",
-      label: "BambooHR Integration",
-      category: "Integrations",
-      accessLevel: "admin"
-    },
-    {
-      folder: "powerbi",
-      label: "PowerBI Integration",
-      category: "Integrations",
-      accessLevel: "admin"
-    },
-    {
-      folder: "personaTable",
-      label: "Persona Table",
-      category: "System",
-      accessLevel: "admin"
-    },
-    {
-      folder: "test-config",
-      label: "Test Config",
-      category: "System",
-      accessLevel: "admin"
-    },
-    {
-      folder: "test-long-process",
-      label: "Test Long Process",
-      category: "System",
-      accessLevel: "admin"
-    },
-    {
-      folder: "exportCsv",
-      label: "Export CSV",
-      category: "System",
-      accessLevel: "admin"
-    },
-  ]
-}
 
 /**
  * This object stores the raw calls made through core
@@ -121,84 +159,71 @@ const calls = {};
  * Initialize External Modules
  * This function initializes external modules and adds them to the core object
  * 
- * @param {array} moduleArray - An array of objects containing the module folder name and label
+ * @async
+ * @param {Object[]} moduleArray - Array of module configuration objects
+ * @param {string} moduleArray[].folder - Module folder name in modules directory
+ * @param {string} moduleArray[].label - Display name for the module
+ * @param {string} moduleArray[].category - Module category for organization
+ * @param {string} moduleArray[].accessLevel - Required access level (operator|admin)
+ * @returns {Promise<void>}
+ * @throws {Error} If module initialization fails
  */
+
 async function initModules(moduleArray) {
   let counter = 0;
 
   // Generate Core External Module Calls
   core.mod = {};
   calls.mod = {};
+  const initCalls = [];
 
   // load external module calls to core.mod.<module>.<call>
   for(const item in moduleArray) {
     const module = moduleArray[item].folder;
 
     // load the module
-    calls.mod[module] = await require(`../modules/${module}/mainPane.js`);
+    const moduleImport = await import(`../modules/${module}/server.js`);
+    const moduleExport = moduleImport.default;
+    
+    // Handle both class instances and regular objects
+    calls.mod[module] = moduleExport;
     core.mod[module] = {};
 
     consoleLog(`Core: loading external module: ${module}`)
 
-    // for each exported function in the module, add it to the core object
-    for(const call in calls.mod[module]) {
+    // Get all properties, including overridden methods from class instances
+    const properties = [
+      ...Object.keys(moduleExport),
+      ...Object.getOwnPropertyNames(Object.getPrototypeOf(moduleExport))
+    ];
 
-      // if this is the default export, skip it
-      if(call === 'default') { 
-        continue; 
-      }
-      
-      /**
-       * if this is the module's init function, call it immediately
-       * 
-       * The init function gives each module a chance to 
-       * setup itself prior to being called by other modules
-       */
-      else if(call === 'init') {
-        await calls.mod[module][call]();
+    // Remove duplicates
+    const uniqueProperties = [...new Set(properties)];
+
+    // for each exported property in the module, add it to the core object
+    for(const call of uniqueProperties) {
+      // Skip constructor and internal properties
+      if(call === 'constructor' || call === 'default' || call === 'core') {
+        consoleLog(`Core: skipping ${call} for module: ${module}`)
         continue;
+      // Handle init specially
       } 
+      consoleLog(`Core: loading external module function: ${module}.${call}`)
+
+      counter++;
+      const property = moduleExport[call];
       
-      else {
-        counter++;
-        // if this is a function, add it to the core object
-        if(typeof calls.mod[module][call] === 'function') {
-
-          // add the function to the core object
-          core.mod[module][call] = (...params) => {
-            const callingModule = getCallingFolder(new Error().stack);
-            consoleLog(`Calling core.mod.${module}.${call} from ${callingModule}`)
-            return calls.mod[module][call](...params);
-          }
-
-          // set the function name to the full path to improve error reporting
-          Object.defineProperty(core.mod[module][call], 'name', { value: `core.mod.${module}.${call}` });
-
-        } else {
-
-          // if this is an object instead of a function, add it to core as is
-          core.mod[module][call] = calls.mod[module][call];
+      // Handle both direct properties and prototype methods
+      if(typeof property === 'function') {
+        // add the function to the core object
+        core.mod[module][call] = (...params) => {
+          consoleLog(`Calling core.mod.${module}.${call} from an API call`)
+          return moduleExport[call](...params);
         }
       }
     }
   }
   consoleLog(`Core: loaded ${counter} external module calls`)
-}
-
-const wrapWithModule = (func) => {
-  return async (...params) => {
-    const callingModule = getCallingFolder(new Error().stack);
-    consoleLog(`Calling ${func.name} from ${callingModule}`);
-    return await func(callingModule, ...params);
-  }
-}
-
-const wrapWithoutModule = (func) => {
-  return async (...params) => {
-    const callingModule = getCallingFolder(new Error().stack);
-    consoleLog(`Calling ${func.name} from ${callingModule}`);
-    return await func(...params);
-  }
 }
 
 // Initialize core and freeze it
@@ -209,13 +234,13 @@ async function init() {
     return core;
   }
 
-  client.registerPartials();
+  registerPartials();
 
   // Initialize core's external module calls
-  await initModules(coreData.modules);
+  await initModules(core.coreData.modules);
 
   // Group modules by category
-  coreData.modulesByCategory = coreData.modules.reduce((acc, module) => {
+  core.coreData.modulesByCategory = core.coreData.modules.reduce((acc, module) => {
     const category = module.category || '';
     if (!acc[category]) {
       acc[category] = [];
@@ -231,118 +256,36 @@ async function init() {
   return core;
 }
 
-/**
- * Log
- * Log a message to a file
- * 
- * @param {string} message - The message to log
- * @param {string} type - The type of message to log
- */
-function log(message, type='UNKNOWN_TYPE') {
-  const moduleName = getCallingFolder(new Error().stack);
+// Register Partials Manually
+const registerPartials = () => {
 
-  writeLog(moduleName, message, type);
-}
+  const partialsDir = `/app/components`;
 
-/**
- * Core object to export
- * 
- * This object is the main interface for all modules across Cartographer
- * 
- * This object includes:
- * -- initiation function & ready state
- * -- core data (this will be replaced by the configuration database)
- * -- logging function
- * -- core namespace calls (assigned to core.<namespace>.<function>)
- * -- external module calls (assigned to core.mod.<module>.<function>)
- */
-const core = {
-  coreData,
-  init,
-  log,
+  const readPartials = (dir) => {
+    if (!fs.existsSync(dir)) {
+      return;
+    }
 
-  // Cache namespace
-  cache: {
-    save: wrapWithModule(cache.save),
-    load: wrapWithModule(cache.load)
-  },
+    fs.readdirSync(dir).forEach((file) => {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
 
-  // Check namespace
-  check: {
-    confidenceNumber: wrapWithoutModule(check.confidenceNumber),
-    idString: wrapWithoutModule(check.idString),
-    levelNumber: wrapWithoutModule(check.levelNumber),
-    personaObject: wrapWithoutModule(check.personaObject),
-    personaRelsArray: wrapWithoutModule(check.personaRelsArray),
-    platformString: wrapWithoutModule(check.platformString),
-    relationshipObject: wrapWithoutModule(check.relationshipObject),
-    sidString: wrapWithoutModule(check.sidString),
-    simpleValue: wrapWithoutModule(check.simpleValue),
-    sourceObject: wrapWithoutModule(check.sourceObject),
-    sourceStoreModifiedPersonaObject: wrapWithoutModule(check.sourceStoreModifiedPersonaObject),
-    sourceStoreModifiedPersonaRelationshipsObject: wrapWithoutModule(check.sourceStoreModifiedPersonaRelationshipsObject),
-    sourceStoreObject: wrapWithoutModule(check.sourceStoreObject),
-    typeString: wrapWithoutModule(check.typeString),
-    upnString: wrapWithoutModule(check.upnString)
-  },
+      if (stat.isDirectory()) {
+        // Recursively read subdirectory
+        readPartials(filePath);
+      } else if (file.endsWith('.hbs')) {
+        const name = path.relative(partialsDir, filePath).replace(/\\/g, '/').replace('.hbs', '');
+        const template = fs.readFileSync(filePath, 'utf8');
 
-  // Client namespace
-  client: {
-    render: wrapWithModule(client.render),
-    registerPartials: wrapWithModule(client.registerPartials)
-  },
+        // Register the partial with the relative path name
+        Handlebars.registerPartial(name, template);
+      }
+    });
+  };
 
-  // Config namespace
-  config: {
-    readConfig: wrapWithModule(config.readConfig),
-    writeConfig: wrapWithModule(config.writeConfig),
-    deleteConfig: wrapWithModule(config.deleteConfig)
-  },
-
-  // Constants namespace (direct assignment)
-  constants: constants,
-
-  // Crypto namespace
-  crypto: {
-    encrypt: wrapWithModule(crypto.encrypt),
-    decrypt: wrapWithModule(crypto.decrypt)
-  },
-
-  // Graph namespace
-  graph: {
-    backupSource: wrapWithModule(graph.backupSource),
-    deleteOrphanedPersonas: wrapWithModule(graph.deleteOrphanedPersonas),
-    deletePersona: wrapWithModule(graph.deletePersona),
-    deleteSource: wrapWithModule(graph.deleteSource),
-    mergePersona: wrapWithModule(graph.mergePersona),
-    mergePersonas: wrapWithModule(graph.mergePersonas),
-    mergeSource: wrapWithModule(graph.mergeSource),
-    readOrphanedPersonas: wrapWithModule(graph.readOrphanedPersonas),
-    readPersona: wrapWithModule(graph.readPersona),
-    readPersonas: wrapWithModule(graph.readPersonas),
-    readSource: wrapWithModule(graph.readSource),
-    readSourcePersonas: wrapWithModule(graph.readSourcePersonas),
-    readSourceRelationships: wrapWithModule(graph.readSourceRelationships),
-    removePersona: wrapWithModule(graph.removePersona),
-    restoreSource: wrapWithModule(graph.restoreSource),
-    runRawQuery: wrapWithModule(graph.runRawQuery),
-    runRawQueryArray: wrapWithModule(graph.runRawQueryArray),
-    syncPersonas: wrapWithModule(graph.syncPersonas),
-    unlinkPersonas: wrapWithModule(graph.unlinkPersonas)
-  },
-
-  // Persona namespace
-  persona: {
-    generateUpnRaw: wrapWithoutModule(persona.generateUpnRaw),
-    getFromRelationships: wrapWithoutModule(persona.getFromRelationships),
-    getProps: wrapWithoutModule(persona.getProps),
-    newFromUpn: wrapWithoutModule(persona.newFromUpn)
-  },
-
-  // Source namespace
-  source: {
-    getSourceObject: wrapWithModule(source.getSourceObject)
-  }
+  // Start reading partials from the root directory
+  readPartials(partialsDir);
 };
 
-module.exports = core;
+export { CoreModule };
+export default core;

@@ -1,52 +1,39 @@
+
+import utilPersona from './persona.js';
+import check from './check.js';
+
 /**
- * Source Store
+ * @fileoverview Source Store Management
+ * @description
+ * Source Store provides a way to sync source data with the persona graph.
+ * It handles building source stores from standard persona objects,
+ * comparing current graph state with new source state, and generating
+ * the necessary queries to update the graph.
  * 
- * Source Store provides a simple way to sync source data
- * with the persona graph.
- * 
- * WARNING: Merging an incomplete source store will
- * result in data loss. A merge operation will remove
- * any source personas or relationships from the 
- * graph that are not present in the new source store.
- * 
- * Source Store
- * -- builds Source Stores from standard persona objects
- * -- compares the current source graph state with new source state
- * -- generates and executes the necessary queries to update the graph
- * 
- * A Source Store object includes modified persona objects.
- * These modified objects are NOT canonical persona objects. 
- * Do not access them directly.
+ * WARNING: Merging an incomplete source store will result in data loss.
+ * A merge operation will remove any source personas or relationships 
+ * from the graph that are not present in the new source store.
  */
 
-const utilPersona = require('./persona');
-const check = require('./check');
+/** @typedef {import('./types').PersonaObject} PersonaObject */
+/** @typedef {import('./types').SourceObject} SourceObject */
+/** @typedef {import('./types').QuerySet} QuerySet */
+/** @typedef {import('./types').StoreRelationship} StoreRelationship */
 
 /**
  * Create a new source store object
  * 
- * Structure of a source store object
- * {
- *   source: {
- *     sid: string,
- *     name: string,
- *     lastUpdate: string,
- *   },
- *   personas: {
- *     ...props,
- *     control: [{
- *      upn: { 
- *        level,
- *        confidence,
- *        ...customProps
- *      },
- *      {...}]
- *    },
- *   }
- * }
- * 
- * @param {object} source - The source object
- * @returns {object} - The new source store object
+ * @param {SourceObject} source - The source object that owns this store
+ * @returns {Object} A new source store object
+ * @property {SourceObject} source - The source object
+ * @property {Object.<string, Object>} personas - Map of UPNs to modified persona objects
+ * @throws {TypeError} If source object is invalid
+ * @example
+ * const store = newStore({
+ *   sid: 'source:github:main',
+ *   name: 'GitHub Main',
+ *   lastUpdate: Date.now()
+ * });
  */
 const newStore = (source) => {
   check.sourceObject(source);
@@ -58,13 +45,24 @@ const newStore = (source) => {
 }
 
 /**
- * Add a persona object to the store
+ * Add an array of persona objects to the store
  * 
  * WARNING: This function modifies the incoming store object
  * 
- * @param {object} store
- * @param {object[]} personas
- * @returns {object} - The updated store object
+ * @param {Object} store - The source store object to modify
+ * @param {PersonaObject[]} personas - Array of persona objects to add
+ * @returns {Object} The updated store object
+ * @throws {TypeError} If any persona objects are invalid
+ * @example
+ * const store = newStore(source);
+ * addPersonas(store, [
+ *   {
+ *     upn: 'upn:github:user:alice',
+ *     platform: 'github',
+ *     type: 'user',
+ *     id: 'alice'
+ *   }
+ * ]);
  */
 const addPersonas = (store, personas) => {
   for(const persona of personas) {
@@ -79,12 +77,19 @@ const addPersonas = (store, personas) => {
  * 
  * WARNING: This function modifies the incoming store object
  * 
- * @param {object} store
- * @param {object[]} relationships
- * @returns {object} - The updated store object
+ * @param {Object} store - The source store object to modify
+ * @param {Object[]} relationships - Array of relationship objects to add
+ * @returns {Object} The updated store object
+ * @throws {TypeError} If any relationship objects are invalid
+ * @example
+ * addRelationships(store, [{
+ *   controlUpn: 'upn:github:org:acme',
+ *   obeyUpn: 'upn:github:user:alice',
+ *   level: 9,
+ *   confidence: 1.0
+ * }]);
  */
 const addRelationships = (store, relationships) => {
-
   for(const relationship of relationships) {
     // skip if source is not the same as the store
     if(relationship.sid && relationship.sid !== store.source.sid) { continue; }
@@ -111,10 +116,19 @@ const addRelationships = (store, relationships) => {
 }
 
 /**
- * Merge a source store object with the graph
+ * Generate queries to sync a source store with the graph
  * 
- * @param {object} store - The source store object
- * @returns {object} - The result of the merge queries
+ * @param {Object} store - The new source store object
+ * @param {Object} [storeOld] - OPTIONAL, the current source store object
+ * @returns {QuerySet[]} Array of queries to update the graph
+ * @throws {TypeError} If store objects are invalid
+ * @throws {Error} If stores have different sources
+ * @example
+ * const queries = getSyncQueries(newStore, oldStore);
+ * // Returns array of queries to:
+ * // 1. Remove personas/relationships not in new store
+ * // 2. Update changed personas/relationships
+ * // 3. Add new personas/relationships
  */
 const getSyncQueries = (store, storeOld) => {
   check.sourceStoreObject(store);
@@ -200,6 +214,10 @@ Sync Process Identified:
   return queries;
 }
 
+/**
+ * Create or get a persona in the store
+ * @private
+ */
 const forcePersona = (store, upn) => {
   if(!store.personas[upn]) {
     const tempPersona = utilPersona.newFromUpn(upn);
@@ -215,6 +233,10 @@ const forcePersona = (store, upn) => {
   return store.personas[upn];
 }
 
+/**
+ * Add a single persona to the store
+ * @private
+ */
 const addPersona = (store, persona) => {
   const upn = persona.upn;
   const storePersona = forcePersona(store, upn);
@@ -393,7 +415,7 @@ const getRemoveControlQuery = (sid, controlUpn, obeyUpn) => {
   return {query, values: {sid, controlUpn, obeyUpn}};
 }
 
-module.exports = {
+export default {
   newStore,
   addPersonas,
   addRelationships,

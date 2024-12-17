@@ -1,7 +1,9 @@
-require('dotenv').config();
-const { consoleLog } = require('./log.js');
-const neo4j = require('neo4j-driver');
-const cache = require('./cache.js');
+import { consoleLog } from './log.js';
+import neo4j from 'neo4j-driver';
+import cache from './cache.js';
+import dotenv from 'dotenv';
+import process from 'process';
+dotenv.config();
 
 const Config = {
   db_host: `bolt://${process.env.INSTANCE_NAME_DB}:${process.env.NEO4J_BOLT_PORT}`,
@@ -204,7 +206,7 @@ const saveCache = async (type, data) => {
   await cache.save(`graph-${unixTime}`, type, data);
 }
 
-module.exports = {
+export default {
   runRawQueryArray,
   runRawQuery
 }
