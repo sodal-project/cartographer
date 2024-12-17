@@ -1,9 +1,6 @@
 /**
  * @fileoverview Core system interface
  */
-import path from 'path';
-import fs from 'fs';
-import Handlebars from 'handlebars';
 import { consoleLog } from './log.js';
 import { CoreModule } from './CoreModule.js';
 import coreData from './coreData.js';
@@ -116,8 +113,6 @@ async function init() {
     return core;
   }
 
-  registerPartials();
-
   // Initialize core's external module calls
   await initModules(core.coreData.modules);
 
@@ -137,37 +132,6 @@ async function init() {
   consoleLog("Core: initialized")
   return core;
 }
-
-// Register Partials Manually
-const registerPartials = () => {
-
-  const partialsDir = `/app/components`;
-
-  const readPartials = (dir) => {
-    if (!fs.existsSync(dir)) {
-      return;
-    }
-
-    fs.readdirSync(dir).forEach((file) => {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
-
-      if (stat.isDirectory()) {
-        // Recursively read subdirectory
-        readPartials(filePath);
-      } else if (file.endsWith('.hbs')) {
-        const name = path.relative(partialsDir, filePath).replace(/\\/g, '/').replace('.hbs', '');
-        const template = fs.readFileSync(filePath, 'utf8');
-
-        // Register the partial with the relative path name
-        Handlebars.registerPartial(name, template);
-      }
-    });
-  };
-
-  // Start reading partials from the root directory
-  readPartials(partialsDir);
-};
 
 export { CoreModule };
 export default core;

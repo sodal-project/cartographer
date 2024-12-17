@@ -2,6 +2,11 @@ import path from 'path';
 import fs from 'fs';
 import express from 'express';
 
+/**
+ * Middleware to serve static files for modules
+ * @param {string} modulesPath - The path to the modules directory
+ * @returns {function} Express middleware function
+ */
 function moduleStatics(modulesPath) {
   return function(app) {
     if (!fs.existsSync(modulesPath)) {

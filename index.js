@@ -18,6 +18,8 @@ import core from './core/core.js';
 import cookieParser from 'cookie-parser'; // Parse cookies
 import handlebarsHelpers from './app/helpers/handlebarsHelpers.js'; // Register the handlebars helpers
 import moduleStatics from './app/middlewares/moduleStatics.js';
+import registerPartials from './app/middlewares/registerPartials.js';
+
 // Import routes
 import authRoutes from "./app/routes/authRoutes.js";
 import moduleRoutes from "./app/routes/moduleRoutes.js";
@@ -28,6 +30,9 @@ const app = express();
 
 // Run the core initialization function
 core.init();
+
+// Register partials
+registerPartials();
 
 // Set up Handlebars
 app.engine("hbs", engine({ defaultLayout: false}));

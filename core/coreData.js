@@ -64,43 +64,43 @@ const coreData = {
     {
       folder: "persona-table",
       label: "Persona Table",
-      category: "System",
+      category: "Components",
       accessLevel: "admin"
     },
     {
       folder: "export-csv",
       label: "Export CSV",
-      category: "System",
+      category: "Components",
       accessLevel: "admin"
     },
     {
       folder: "test-config",
       label: "Test Config",
-      category: "System",
+      category: "Testing",
       accessLevel: "admin"
     },
     {
       folder: "test-long-process",
       label: "Test Long Process",
-      category: "System",
+      category: "Testing",
       accessLevel: "admin"
     },
     {
       folder: "test-ping",
       label: "Test Ping",
-      category: "System",
+      category: "Testing",
       accessLevel: "admin"
     },
     {
       folder: "test-submodule",
       label: "Test Submodule",
-      category: "System",
+      category: "Testing",
       accessLevel: "admin"
     },
     {
       folder: "test-interconnect",
       label: "Test Interconnect",
-      category: "System",
+      category: "Testing",
       accessLevel: "admin"
     },
   ]
