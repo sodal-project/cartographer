@@ -1,0 +1,10 @@
+@use '@angular/material' as mat
+@use '@angular/material/prebuilt-themes/cyan-orange.css'
+
+html
+  color-scheme: light
+  @include mat.theme((color: mat.$cyan-palette, typography: Roboto, density: 0))
+
+body, html
+  height: 100%
+  margin: 0

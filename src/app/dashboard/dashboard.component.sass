@@ -1,0 +1,66 @@
+@use '@angular/material' as mat
+@use '@angular/material/prebuilt-themes/azure-blue.css'
+
+$color-dark-gray: darkgray
+$color-dim-gray: dimgray
+$color-light-gray: lightgray
+$color-red: red
+$color-green: green
+
+$toolbar-height: 4rem
+$font-size-small: 0.8rem
+$dash-container-height: calc(100vh - #{$toolbar-height * 2})
+$dash-content-height: calc(100% - 2rem)
+
+.dash-container
+  border: none
+  width: 100%
+  height: $dash-container-height
+
+  .dash-content
+    background-color: $color-light-gray
+    height: $dash-content-height
+    border: none
+    display: flex
+    align-items: center
+    justify-content: center
+    padding: 1rem
+
+  .dash-sidenav
+    border-radius: 0
+    background-color: $color-dark-gray
+    padding: 0
+
+.dash-toolbar
+  background-color: $color-dark-gray
+
+.nav-toolbar
+  background-color: $color-dim-gray
+
+.status-toolbar
+  height: $toolbar-height
+  background-color: $color-dark-gray
+
+.dash-nav
+  padding: 1rem
+
+.expanding-spacer
+  flex-grow: 1
+
+.access-off
+  color: unset
+
+.access-on
+  color: rgb(0, 106, 106)
+
+.info-card
+  min-width: 500px
+  max-width: 550px
+
+  mat-card-title
+    padding: 1rem
+
+  mat-card-content
+    padding: 1rem
+    justify-content: center
+    align-items: center
