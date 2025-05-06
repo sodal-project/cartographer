@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1746558113320,
+  "timestamp": 1746558212909,
   "index": "/atlas-client/index.html",
   "assetGroups": [
     {
@@ -13,7 +13,7 @@
       "urls": [
         "/atlas-client/favicon.ico",
         "/atlas-client/index.html",
-        "/atlas-client/main-RKLWTTSF.js",
+        "/atlas-client/main-DKKMNJIO.js",
         "/atlas-client/manifest.webmanifest",
         "/atlas-client/polyfills-FFHMD2TL.js",
         "/atlas-client/styles-5GJTWY2R.css",
@@ -52,8 +52,8 @@
     "/atlas-client/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
     "/atlas-client/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
     "/atlas-client/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
-    "/atlas-client/index.html": "3c774024826e5170c6d76e03f70df8b75d7a2754",
-    "/atlas-client/main-RKLWTTSF.js": "d3d21875a45d62fb7d161dae762512e62dc02fb5",
+    "/atlas-client/index.html": "b8240039278f3eae0ce36bb2de47dfcaa966c63f",
+    "/atlas-client/main-DKKMNJIO.js": "e73ee08dcba2ad96a3de0c1732b6a361bbf8a70e",
     "/atlas-client/manifest.webmanifest": "e11c1e53dc40fc19673f1f0951f61062819bc02d",
     "/atlas-client/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
     "/atlas-client/styles-5GJTWY2R.css": "64e71bba6c2a5ba168711edba9dee0dd1f4fa0e8",
