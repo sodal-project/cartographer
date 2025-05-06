@@ -4,8 +4,8 @@
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
-  "scope": "./",
-  "start_url": "./",
+  "scope": "/atlas-client/",
+  "start_url": "/atlas-client/",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

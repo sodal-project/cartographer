@@ -33,7 +33,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
 import { MatFormField, MatInput, MatLabel } from '@angular/material/input'
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'dashboard',
   standalone: true,
   imports: [
     CommonModule,
@@ -73,7 +73,7 @@ export class DashboardComponent implements OnInit {
 
   // --- Configuration ---
   // This URL will point to a hosted Registry Server in production
-  private readonly REGISTRY_SERVICE_URL = '/public/services.json'
+  private readonly REGISTRY_SERVICE_URL = '/services.json'
 
   constructor() {
     window.addEventListener('online', () => this.onlineStatus.set(true))

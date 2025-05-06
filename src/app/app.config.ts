@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core'
-// import { provideRouter, Routes } from '@angular/router'
+import { provideRouter, Routes, withHashLocation } from '@angular/router'
 
 import {
   provideClientHydration,
@@ -16,14 +16,14 @@ import { environment } from '../environments/environment'
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { provideServiceWorker } from '@angular/service-worker'
 
-// const routes: Routes = [
-//   { path: '', redirectTo: '/dashboard', pathMatch: 'full' }, // Redirect to dashboard
-//   { path: 'dashboard', component: DashboardComponent } // The dashboard route
-// ]
+const routes: Routes = [
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  { path: 'dashboard', component: DashboardComponent }
+]
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // provideRouter(routes),
+    provideRouter(routes, withHashLocation()),
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
     provideZoneChangeDetection({ eventCoalescing: true }),

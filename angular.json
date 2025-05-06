@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/atlas",
+            "outputPath": "dist",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -29,8 +29,9 @@
               {
                 "glob": "**/*",
                 "input": "public",
-                "output": "/public/"
-              }
+                "output": "./"
+              },
+              "src/assets"
             ],
             "styles": [
               "@angular/material/prebuilt-themes/azure-blue.css",
@@ -54,7 +55,8 @@
               ],
               "outputHashing": "all",
               "appShell": false,
-              "serviceWorker": "ngsw-config.json"
+              "serviceWorker": "ngsw-config.json",
+              "baseHref": "/atlas-client/"
             },
             "development": {
               "optimization": false,
@@ -97,8 +99,10 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
-              }
+                "input": "public",
+                "output": "./"
+              },
+              "src/assets"
             ],
             "styles": [
               "@angular/material/prebuilt-themes/azure-blue.css",
