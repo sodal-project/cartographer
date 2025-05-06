@@ -73,7 +73,7 @@ export class DashboardComponent implements OnInit {
 
   // --- Configuration ---
   // This URL will point to a hosted Registry Server in production
-  private readonly REGISTRY_SERVICE_URL = '/services.json'
+  private readonly REGISTRY_SERVICE_URL = './services.json'
 
   constructor() {
     window.addEventListener('online', () => this.onlineStatus.set(true))
