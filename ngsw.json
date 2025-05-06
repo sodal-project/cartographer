@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1746555141300,
+  "timestamp": 1746555263614,
   "index": "/atlas-client/index.html",
   "assetGroups": [
     {
@@ -11,8 +11,10 @@
         "ignoreVary": true
       },
       "urls": [
+        "/atlas-client/favicon.ico",
         "/atlas-client/index.html",
         "/atlas-client/main-57OYYNQ5.js",
+        "/atlas-client/manifest.webmanifest",
         "/atlas-client/polyfills-FFHMD2TL.js",
         "/atlas-client/styles-5GJTWY2R.css",
         "/atlas-client/worker-EBSBD5DK.js"
@@ -27,31 +29,33 @@
         "ignoreVary": true
       },
       "urls": [
-        "/atlas-client/public/icons/icon-128x128.png",
-        "/atlas-client/public/icons/icon-144x144.png",
-        "/atlas-client/public/icons/icon-152x152.png",
-        "/atlas-client/public/icons/icon-192x192.png",
-        "/atlas-client/public/icons/icon-384x384.png",
-        "/atlas-client/public/icons/icon-512x512.png",
-        "/atlas-client/public/icons/icon-72x72.png",
-        "/atlas-client/public/icons/icon-96x96.png"
+        "/atlas-client/icons/icon-128x128.png",
+        "/atlas-client/icons/icon-144x144.png",
+        "/atlas-client/icons/icon-152x152.png",
+        "/atlas-client/icons/icon-192x192.png",
+        "/atlas-client/icons/icon-384x384.png",
+        "/atlas-client/icons/icon-512x512.png",
+        "/atlas-client/icons/icon-72x72.png",
+        "/atlas-client/icons/icon-96x96.png"
       ],
       "patterns": []
     }
   ],
   "dataGroups": [],
   "hashTable": {
+    "/atlas-client/favicon.ico": "9c39f434fe1261f68c5e3eefdf734630d99c5670",
+    "/atlas-client/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
+    "/atlas-client/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
+    "/atlas-client/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
+    "/atlas-client/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
+    "/atlas-client/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
+    "/atlas-client/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
+    "/atlas-client/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
+    "/atlas-client/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
     "/atlas-client/index.html": "2d0f49ce9f2127dd7421031929023a91d182545d",
     "/atlas-client/main-57OYYNQ5.js": "435610c962dada6a9a85f543e752a6b4a65e60ad",
+    "/atlas-client/manifest.webmanifest": "e11c1e53dc40fc19673f1f0951f61062819bc02d",
     "/atlas-client/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
-    "/atlas-client/public/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
-    "/atlas-client/public/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
-    "/atlas-client/public/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
-    "/atlas-client/public/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
-    "/atlas-client/public/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
-    "/atlas-client/public/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
-    "/atlas-client/public/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
-    "/atlas-client/public/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
     "/atlas-client/styles-5GJTWY2R.css": "64e71bba6c2a5ba168711edba9dee0dd1f4fa0e8",
     "/atlas-client/worker-EBSBD5DK.js": "edec528f4c07b8ce6d206119d54dd3fd0aaa736c"
   },
