@@ -7,6 +7,19 @@
 
 <mat-drawer-container class="dash-container" autosize>
   <mat-drawer [opened]="showSideMenu()" class="dash-sidenav" mode="side">
+    <mat-toolbar class="nav-toolbar">Account</mat-toolbar>
+    <div style="padding: 1rem">
+      @if (authService.user$ | async; as user) {
+        <header>
+          <nav>
+            <button mat-flat-button (click)="logout()">
+              Logout {{ user.displayName || user.email }}
+              <mat-icon>logout</mat-icon>
+            </button>
+          </nav>
+        </header>
+      }
+    </div>
     <mat-toolbar class="nav-toolbar">Explore</mat-toolbar>
     <mat-nav-list class="dash-nav">
       <a mat-list-item>Dashboard</a>

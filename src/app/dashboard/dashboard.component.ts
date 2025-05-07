@@ -6,16 +6,17 @@ import {
   WritableSignal,
   ChangeDetectionStrategy
 } from '@angular/core'
-import { CommonModule } from '@angular/common'
-import { MatToolbarModule } from '@angular/material/toolbar'
-import { MatButtonModule } from '@angular/material/button'
-import { MatIconModule } from '@angular/material/icon'
-import { MatSidenavModule } from '@angular/material/sidenav'
-import { MatListModule } from '@angular/material/list'
-import { MatTooltipModule } from '@angular/material/tooltip'
-import { RegistryService } from '../services/registry.service'
-import { Service } from '../models/service.model'
-import { MatProgressSpinner } from '@angular/material/progress-spinner'
+import {AuthService} from '../auth.service'
+import {CommonModule} from '@angular/common'
+import {MatToolbarModule} from '@angular/material/toolbar'
+import {MatButtonModule} from '@angular/material/button'
+import {MatIconModule} from '@angular/material/icon'
+import {MatSidenavModule} from '@angular/material/sidenav'
+import {MatListModule} from '@angular/material/list'
+import {MatTooltipModule} from '@angular/material/tooltip'
+import {RegistryService} from '../services/registry.service'
+import {Service} from '../models/service.model'
+import {MatProgressSpinner} from '@angular/material/progress-spinner'
 import {
   MatCard,
   MatCardContent,
@@ -29,8 +30,9 @@ import {
   MatStepperNext,
   MatStepperPrevious
 } from '@angular/material/stepper'
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
-import { MatFormField, MatInput, MatLabel } from '@angular/material/input'
+import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms'
+import {MatFormField, MatInput, MatLabel} from '@angular/material/input'
+import {Router} from '@angular/router'
 
 @Component({
   selector: 'dashboard',
@@ -63,17 +65,26 @@ import { MatFormField, MatInput, MatLabel } from '@angular/material/input'
 })
 export class DashboardComponent implements OnInit {
   private registryService = inject(RegistryService)
+  protected readonly authService = inject(AuthService)
+  private readonly router = inject(Router)
   public readonly services = this.registryService.services
   public readonly error = this.registryService.error
   public readonly isLoading = this.registryService.isLoading
-
-  // --- Component State ---
   public showSideMenu: WritableSignal<boolean> = signal(true)
   public onlineStatus: WritableSignal<boolean> = signal(navigator.onLine)
 
   // --- Configuration ---
   // This URL will point to a hosted Registry Server in production
   private readonly REGISTRY_SERVICE_URL = './services.json'
+  private _formBuilder = inject<FormBuilder>(FormBuilder)
+
+  firstFormGroup = this._formBuilder.group({
+    firstCtrl: ['', Validators.required]
+  })
+  secondFormGroup = this._formBuilder.group({
+    secondCtrl: ['', Validators.required]
+  })
+  isLinear = false
 
   constructor() {
     window.addEventListener('online', () => this.onlineStatus.set(true))
@@ -102,13 +113,8 @@ export class DashboardComponent implements OnInit {
     return service.id
   }
 
-  private _formBuilder = inject<FormBuilder>(FormBuilder)
-
-  firstFormGroup = this._formBuilder.group({
-    firstCtrl: ['', Validators.required]
-  })
-  secondFormGroup = this._formBuilder.group({
-    secondCtrl: ['', Validators.required]
-  })
-  isLinear = false
+  async logout(): Promise<void> {
+    await this.authService.logout()
+    await this.router.navigate(['/login']) // Redirect to login after logout
+  }
 }

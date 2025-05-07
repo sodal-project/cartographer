@@ -1,12 +1,20 @@
 import { Component } from '@angular/core'
-import { RouterOutlet } from '@angular/router'
+import { Router, RouterOutlet } from '@angular/router'
+import { AuthService } from './auth.service'
+import { AsyncPipe } from '@angular/common'
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
+  standalone: true,
   imports: [RouterOutlet],
+  templateUrl: './app.component.html',
   styleUrl: './app.component.sass'
 })
 export class AppComponent {
   title = 'atlas'
+
+  constructor(
+    public authService: AuthService,
+    private router: Router
+  ) {}
 }
