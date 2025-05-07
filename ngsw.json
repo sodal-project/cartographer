@@ -1,7 +1,7 @@
 {
   "configVersion": 1,
-  "timestamp": 1746559797680,
-  "index": "/atlas-client/index.html",
+  "timestamp": 1746646398630,
+  "index": "/index.html",
   "assetGroups": [
     {
       "name": "app",
@@ -11,13 +11,13 @@
         "ignoreVary": true
       },
       "urls": [
-        "/atlas-client/favicon.ico",
-        "/atlas-client/index.html",
-        "/atlas-client/main-HS3BWBYX.js",
-        "/atlas-client/manifest.webmanifest",
-        "/atlas-client/polyfills-FFHMD2TL.js",
-        "/atlas-client/styles-5GJTWY2R.css",
-        "/atlas-client/worker-EBSBD5DK.js"
+        "/favicon.ico",
+        "/index.html",
+        "/main-MLGL4FEF.js",
+        "/manifest.webmanifest",
+        "/polyfills-FFHMD2TL.js",
+        "/styles-ZMIV6NIE.css",
+        "/worker-EBSBD5DK.js"
       ],
       "patterns": []
     },
@@ -29,35 +29,41 @@
         "ignoreVary": true
       },
       "urls": [
-        "/atlas-client/icons/icon-128x128.png",
-        "/atlas-client/icons/icon-144x144.png",
-        "/atlas-client/icons/icon-152x152.png",
-        "/atlas-client/icons/icon-192x192.png",
-        "/atlas-client/icons/icon-384x384.png",
-        "/atlas-client/icons/icon-512x512.png",
-        "/atlas-client/icons/icon-72x72.png",
-        "/atlas-client/icons/icon-96x96.png"
+        "/icons/atlas.png",
+        "/icons/github.svg",
+        "/icons/google.svg",
+        "/icons/icon-128x128.png",
+        "/icons/icon-144x144.png",
+        "/icons/icon-152x152.png",
+        "/icons/icon-192x192.png",
+        "/icons/icon-384x384.png",
+        "/icons/icon-512x512.png",
+        "/icons/icon-72x72.png",
+        "/icons/icon-96x96.png"
       ],
       "patterns": []
     }
   ],
   "dataGroups": [],
   "hashTable": {
-    "/atlas-client/favicon.ico": "9c39f434fe1261f68c5e3eefdf734630d99c5670",
-    "/atlas-client/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
-    "/atlas-client/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
-    "/atlas-client/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
-    "/atlas-client/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
-    "/atlas-client/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
-    "/atlas-client/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
-    "/atlas-client/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
-    "/atlas-client/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
-    "/atlas-client/index.html": "2eda1b8c638509e5f92dc21d53370c19094635d5",
-    "/atlas-client/main-HS3BWBYX.js": "85ab3baac5234c7ee3255d76b53e44503e512c20",
-    "/atlas-client/manifest.webmanifest": "e425dd51082981519cb197a76ed08e3dd835bce3",
-    "/atlas-client/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
-    "/atlas-client/styles-5GJTWY2R.css": "64e71bba6c2a5ba168711edba9dee0dd1f4fa0e8",
-    "/atlas-client/worker-EBSBD5DK.js": "edec528f4c07b8ce6d206119d54dd3fd0aaa736c"
+    "/favicon.ico": "09b8d8533121964100b5f8f9805ec4331c529a1b",
+    "/icons/atlas.png": "be94927a8f45b4ce84f8aaa4145cbc4baf668806",
+    "/icons/github.svg": "f202b6faccfd5cc46299b976c2635fee60b55aa0",
+    "/icons/google.svg": "315bf2f5d840f94c70b6fc599a15e4d5817f9e15",
+    "/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
+    "/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
+    "/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
+    "/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
+    "/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
+    "/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
+    "/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
+    "/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
+    "/index.html": "2a196d3a788fc66e9e587470fcba215db2e5986b",
+    "/main-MLGL4FEF.js": "1e6d8df0bda705303f78902ef3980b30e2702cf3",
+    "/manifest.webmanifest": "8cfa736056f146a5fbf15e10c4035fb65dba064f",
+    "/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
+    "/styles-ZMIV6NIE.css": "27fdf5edaf925bbe88f22f78fd3ed7867b5e2cff",
+    "/worker-EBSBD5DK.js": "edec528f4c07b8ce6d206119d54dd3fd0aaa736c"
   },
   "navigationUrls": [
     {
