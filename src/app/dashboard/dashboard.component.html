@@ -2,7 +2,7 @@
   <button type="button" mat-icon-button (click)="toggleSideMenu()">
     <mat-icon>menu</mat-icon>
   </button>
-  <span>Atlas Directory</span>
+  <span>Atlas ({{ version.toString() }})</span>
 </mat-toolbar>
 
 <mat-drawer-container class="dash-container" autosize>
@@ -23,8 +23,8 @@
     <mat-toolbar class="nav-toolbar">Explore</mat-toolbar>
     <mat-nav-list class="dash-nav">
       <a mat-list-item>Dashboard</a>
-      <a mat-list-item>Semantic Search</a>
-      <a mat-list-item>Graph Explorer</a>
+      <a mat-list-item>Researcher</a>
+      <a mat-list-item>Cartographer</a>
     </mat-nav-list>
 
     <mat-toolbar class="nav-toolbar">Services</mat-toolbar>
@@ -67,49 +67,18 @@
     <mat-card class="info-card">
       <mat-card-title>Data Explorer</mat-card-title>
       <mat-card-content>
-        <mat-stepper orientation="vertical" [linear]="isLinear" #stepper>
-          <mat-step [stepControl]="firstFormGroup">
-            <form [formGroup]="firstFormGroup">
-              <ng-template matStepLabel>Name</ng-template>
-              <mat-form-field>
-                <mat-label>Name</mat-label>
-                <input matInput placeholder="Last name, First name" formControlName="firstCtrl" required>
-              </mat-form-field>
-              <div>
-                <button mat-button matStepperNext>Next</button>
-              </div>
-            </form>
-          </mat-step>
-          <mat-step [stepControl]="secondFormGroup">
-            <form [formGroup]="secondFormGroup">
-              <ng-template matStepLabel>Email Address</ng-template>
-              <mat-form-field>
-                <mat-label>Email</mat-label>
-                <input matInput formControlName="secondCtrl" placeholder="test@test.com"
-                       required>
-              </mat-form-field>
-              <div>
-                <button mat-button matStepperPrevious>Back</button>
-                <button mat-button matStepperNext>Next</button>
-              </div>
-            </form>
-          </mat-step>
-          <mat-step>
-            <ng-template matStepLabel>Choose Services</ng-template>
-            <div>
-              <button mat-button matStepperPrevious>Back</button>
-              <button mat-button matStepperNext>Next</button>
-            </div>
-          </mat-step>
-          <mat-step>
-            <ng-template matStepLabel>Done</ng-template>
-            <p>You are now done.</p>
-            <div>
-              <button mat-button matStepperPrevious>Back</button>
-              <button mat-button (click)="stepper.reset()">Reset</button>
-            </div>
-          </mat-step>
-        </mat-stepper>
+        <d3-graph
+          [nodes]="[
+          {id: 'David'}, {id: 'Jeff'}, {id: 'Andy'}, {id: 'Bob'}
+          ]"
+          [edges]="[
+            {source: 'David', target: 'Jeff'},
+            {source: 'David', target: 'Andy'},
+            {source: 'Jeff', target: 'Bob'},
+            {source: 'Andy', target: 'Bob'}
+          ]"
+        ></d3-graph>
+
       </mat-card-content>
     </mat-card>
   </div>

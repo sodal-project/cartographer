@@ -23,16 +23,10 @@ import {
   MatCardSubtitle,
   MatCardTitle
 } from '@angular/material/card'
-import {
-  MatStep,
-  MatStepLabel,
-  MatStepper,
-  MatStepperNext,
-  MatStepperPrevious
-} from '@angular/material/stepper'
 import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms'
-import {MatFormField, MatInput, MatLabel} from '@angular/material/input'
 import {Router} from '@angular/router'
+import {version} from '../../../package.json'
+import {GraphComponent} from '../graph/graph.component';
 
 @Component({
   selector: 'dashboard',
@@ -49,15 +43,8 @@ import {Router} from '@angular/router'
     MatCard,
     MatCardTitle,
     MatCardContent,
-    MatStep,
     ReactiveFormsModule,
-    MatStepLabel,
-    MatFormField,
-    MatLabel,
-    MatStepperPrevious,
-    MatStepperNext,
-    MatInput,
-    MatStepper
+    GraphComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.sass'],
@@ -72,6 +59,7 @@ export class DashboardComponent implements OnInit {
   public readonly isLoading = this.registryService.isLoading
   public showSideMenu: WritableSignal<boolean> = signal(true)
   public onlineStatus: WritableSignal<boolean> = signal(navigator.onLine)
+  public version = version
 
   // --- Configuration ---
   // This URL will point to a hosted Registry Server in production

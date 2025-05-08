@@ -20,25 +20,30 @@ import {DashboardComponent} from './dashboard/dashboard.component'
 import {provideServiceWorker} from '@angular/service-worker'
 import {importProvidersFrom} from '@angular/core'
 import {LoginComponent} from './login/login.component'
-import {authGuard} from './auth.guard'
+import {authGuard, loginGuard} from './auth.guard'
 import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http'
 
 
 export const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent // Or loadComponent for lazy loading
+    component: LoginComponent,
+    canActivate: [loginGuard] // See below to implement loginGuard
   },
   {
     path: 'dashboard',
-    component: DashboardComponent, // Or loadComponent
+    component: DashboardComponent,
     canActivate: [authGuard]
   },
   {
-    path: '', // Default route
-    component: DashboardComponent, // Or loadComponent
+    path: '',
+    redirectTo: '/dashboard',
+    pathMatch: 'full'
   },
-  {path: '**', redirectTo: '/login'} // Redirect non-matching routes to login
+  {
+    path: '**',
+    redirectTo: '/dashboard'
+  }
 ]
 
 export const appConfig: ApplicationConfig = {

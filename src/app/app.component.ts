@@ -1,7 +1,8 @@
-import { Component } from '@angular/core'
-import { Router, RouterOutlet } from '@angular/router'
-import { AuthService } from './auth.service'
-import { AsyncPipe } from '@angular/common'
+import {Component, inject, OnInit} from '@angular/core'
+import {Router, RouterOutlet} from '@angular/router'
+import {AuthService} from './auth.service'
+import {AsyncPipe} from '@angular/common'
+import {SwUpdate} from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -10,11 +11,27 @@ import { AsyncPipe } from '@angular/common'
   templateUrl: './app.component.html',
   styleUrl: './app.component.sass'
 })
-export class AppComponent {
-  title = 'atlas'
+export class AppComponent implements OnInit {
+  public title = 'atlas'
+  private swUpdate = inject(SwUpdate)
+  private authService = inject(AuthService)
+  private router = inject(Router)
 
-  constructor(
-    public authService: AuthService,
-    private router: Router
-  ) {}
+  constructor() {
+  }
+
+  ngOnInit() {
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.checkForUpdate().then(() => {
+        this.swUpdate.versionUpdates.subscribe(() => {
+          console.log('app updated')
+        });
+        this.swUpdate.versionUpdates.subscribe(() => {
+          this.swUpdate.activateUpdate().then(() => {
+            console.log('app activated')
+          })
+        })
+      })
+    }
+  }
 }
