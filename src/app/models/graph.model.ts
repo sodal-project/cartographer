@@ -1,18 +1,13 @@
-import {Timestamp} from './service.model';
+import { Timestamp } from './service.model'
 
 export interface GraphNode {
   id: string // Unique identifier for the node
+  label?: string // Display label for the node
   group?: number // Optional group for styling
   createdAt?: Timestamp // Timestamp of node creation
   updatedAt?: Timestamp // Timestamp of the last update
   data?: { [key: string]: any } // Flexible data associated with the node
-}
-
-export interface GraphNodeIndex {
-  id: string // Unique identifier for the node
-  text: string // Text content to be indexed for full-text search
-  createdAt: Timestamp // Timestamp of node creation
-  updatedAt: Timestamp // Timestamp of the last update
+  [key: string]: any // Allow any additional fields
 }
 
 export interface GraphEdge {
@@ -24,6 +19,7 @@ export interface GraphEdge {
   createdAt?: Timestamp // Timestamp of edge creation
   updatedAt?: Timestamp // Timestamp of the last update
   data?: { [key: string]: any } // Flexible data associated with the edge
+  [key: string]: any // Allow any additional fields
 }
 
 export enum EdgeVerbs {
