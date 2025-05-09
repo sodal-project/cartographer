@@ -1,0 +1,64 @@
+<div class="semantic-search-container">
+  <!-- Search Box -->
+  <div class="inline-search-bar">
+    <form (submit)="performSearch()" autocomplete="off">
+      <div class="inline-search-box">
+        <input
+          matInput
+          class="inline-search-input"
+          [(ngModel)]="searchQuery"
+          name="search"
+          placeholder="Search..."
+          (keyup.enter)="performSearch()"
+          autocomplete="off"
+        />
+        <button
+          mat-icon-button
+          type="submit"
+          class="inline-search-btn"
+          aria-label="Search"
+        >
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </form>
+  </div>
+
+
+  <!-- Loading Indicator -->
+  @if (isLoading) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  <!-- Search Results -->
+  @if (searchResults.length > 0) {
+    <div class="search-results">
+      @for (result of searchResults; track result.id) {
+        <mat-card class="result-card">
+          <mat-card-header>
+            <mat-card-title>{{ result.title }}</mat-card-title>
+            <mat-card-subtitle>Score: {{ result.score.toFixed(2) }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p>{{ result.content }}</p>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-button color="primary" (click)="viewDetails(result)">
+              VIEW DETAILS
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <!-- No Results Message -->
+  @if (!isLoading && searchResults.length === 0 && searchQuery) {
+    <div class="no-results">
+      <mat-icon>search_off</mat-icon>
+      <p>No results found for "{{ searchQuery }}"</p>
+    </div>
+  }
+</div>

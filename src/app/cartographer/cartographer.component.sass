@@ -1,0 +1,40 @@
+:host
+  display: block
+  width: 100%
+  height: 100%
+  max-width: 100vw
+  max-height: 100vh
+  overflow: hidden
+
+.cartographer-root
+  width: 100%
+  height: 100%
+  max-width: 100vw
+  max-height: 100vh
+  overflow: hidden
+  display: flex
+  flex-direction: column
+
+.graph-container
+  width: 100%
+  height: 100%
+  background: transparent
+  overflow: hidden
+
+svg
+  width: 100%
+  height: 100%
+
+.node
+  rect
+    cursor: pointer
+    stroke: #fff
+    stroke-width: 1.5px
+
+  text
+    pointer-events: none
+    font-size: 14px
+
+.edge
+  stroke: #999
+  stroke-opacity: 0.6
