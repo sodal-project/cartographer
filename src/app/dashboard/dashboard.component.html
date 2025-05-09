@@ -1,4 +1,8 @@
 <mat-toolbar class="dash-toolbar">
+  <button mat-icon-button class="menu-button" (click)="toggleSideMenu()" aria-label="Toggle menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+
   <span>Cartographer Atlas</span>
   <span class="expanding-spacer"></span>
   <button mat-icon-button [matMenuTriggerFor]="profileMenu" aria-label="Profile">
