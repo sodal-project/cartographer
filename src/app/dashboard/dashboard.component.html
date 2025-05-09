@@ -1,31 +1,31 @@
 <mat-toolbar class="dash-toolbar">
-  <button type="button" mat-icon-button (click)="toggleSideMenu()">
-    <mat-icon>menu</mat-icon>
+  <span>Cartographer Atlas</span>
+  <span class="expanding-spacer"></span>
+  <button mat-icon-button [matMenuTriggerFor]="profileMenu" aria-label="Profile">
+    <mat-icon>account_circle</mat-icon>
   </button>
-  <span>Atlas ({{ version.toString() }})</span>
+  <mat-menu #profileMenu="matMenu">
+    <button mat-menu-item (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Logout</span>
+    </button>
+  </mat-menu>
 </mat-toolbar>
+
 
 <mat-drawer-container class="dash-container" autosize>
   <mat-drawer [opened]="showSideMenu()" class="dash-sidenav" mode="side">
-    <mat-toolbar class="nav-toolbar">Account</mat-toolbar>
-    <div style="padding: 1rem">
-      @if (authService.user$ | async; as user) {
-        <header>
-          <nav>
-            <button mat-flat-button (click)="logout()">
-              Logout {{ user.displayName || user.email }}
-              <mat-icon>logout</mat-icon>
-            </button>
-          </nav>
-        </header>
-      }
-    </div>
-    <mat-toolbar class="nav-toolbar">Explore</mat-toolbar>
-    <mat-nav-list class="dash-nav">
-      <a mat-list-item>Dashboard</a>
-      <a mat-list-item>Researcher</a>
-      <a mat-list-item>Cartographer</a>
-    </mat-nav-list>
+    <mat-toolbar class="nav-toolbar">Views</mat-toolbar>
+    <mat-selection-list class="dash-nav">
+      <mat-list-item routerLink="/dashboard/researcher" routerLinkActive="active-link"
+      >Researcher
+      </mat-list-item
+      >
+      <mat-list-item routerLink="/dashboard/cartographer" routerLinkActive="active-link"
+      >Cartographer
+      </mat-list-item
+      >
+    </mat-selection-list>
 
     <mat-toolbar class="nav-toolbar">Services</mat-toolbar>
 
@@ -62,32 +62,27 @@
       </mat-selection-list>
     }
   </mat-drawer>
-
-  <div class="dash-content">
-    <mat-card class="info-card">
-      <mat-card-title>Data Explorer</mat-card-title>
-      <mat-card-content>
-        <d3-graph></d3-graph>
-      </mat-card-content>
-    </mat-card>
-  </div>
+  <mat-drawer-content>
+    <router-outlet [name]="'primary'"></router-outlet>
+  </mat-drawer-content>
 </mat-drawer-container>
 
 <mat-toolbar class="status-toolbar">
-  <span>
-    Status: <strong>{{ onlineStatus() ? 'Online' : 'Offline' }}</strong>
-    <span> (Loaded {{ services()?.length }} services)</span>
-  </span>
+  <!-- Left side of the status bar -->
+  <div class="status-indicator">
+    <button mat-icon-button (click)="toggleOnlineStatus()"
+            [matTooltip]="onlineStatus() ? 'Set to Offline' : 'Set to Online'">
+      <mat-icon>{{ onlineStatus() ? 'wifi' : 'wifi_off' }}</mat-icon>
+    </button>
+    <span
+      matTooltip="{{ onlineStatus() ? 'Connection is online' : 'Connection is offline - some features might be unavailable' }}">
+      {{ onlineStatus() ? 'Online' : 'Offline' }}
+    </span>
+  </div>
+
   <span class="expanding-spacer"></span>
-  <button
-    (click)="toggleOnlineStatus()"
-    mat-mini-fab
-    matTooltip="Toggle online status (Demo)"
-    [attr.aria-label]="
-      onlineStatus()
-        ? 'Disable online access (Demo)'
-        : 'Enable online access (Demo)'
-    ">
-    <mat-icon>{{ onlineStatus() ? 'cloud' : 'cloud_off' }}</mat-icon>
-  </button>
+
+  <div>
+    <span matTooltip="Application Version" style="margin-left: 16px;">Version: {{ version }}</span>
+  </div>
 </mat-toolbar>

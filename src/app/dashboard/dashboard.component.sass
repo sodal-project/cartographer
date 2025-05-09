@@ -39,6 +39,33 @@ $dash-content-height: calc(100% - 2rem)
 .status-toolbar
   height: $toolbar-height
   background-color: $color-dark-gray
+  font-size: $font-size-small
+  display: flex
+  align-items: center
+  // This centers the direct children of status-toolbar
+  justify-content: space-between
+  // This will help position items
+  padding: 0 1.25rem
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, .05)
+  letter-spacing: 0.025em
+  border-top: 1px solid rgba(0, 0, 0, 0.06)
+  z-index: 90
+  position: fixed
+  // It's a fixed bar at the bottom
+  left: 0
+  right: 0
+  bottom: 0
+
+// New style for the status indicator group
+.status-indicator
+  display: flex
+  align-items: center
+  // This will vertically align the icon button and the text span
+
+  span
+    // Target the span specifically if you need to adjust its margin relative to the icon
+       margin-left: 8px
+// Adjust as needed, or remove if your button already has sufficient margin
 
 .dash-nav
   padding: 1rem
@@ -52,9 +79,12 @@ $dash-content-height: calc(100% - 2rem)
 .access-on
   color: rgb(0, 106, 106)
 
+mat-grid-tile
+  width: 100%
+  height: 100%
+
 .info-card
-  min-width: 500px
-  max-width: 550px
+  width: 100%
 
   mat-card-title
     padding: 1rem
@@ -63,3 +93,13 @@ $dash-content-height: calc(100% - 2rem)
     padding: 1rem
     justify-content: center
     align-items: center
+
+.search-toolbar
+  padding-left: 0
+  padding-right: 0
+
+  form
+    width: 100%
+
+    mat-form-field
+      width: 100%

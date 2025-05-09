@@ -4,29 +4,35 @@ import {
   inject,
   signal,
   WritableSignal,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  EnvironmentInjector
 } from '@angular/core'
-import {AuthService} from '../auth.service'
-import {CommonModule} from '@angular/common'
-import {MatToolbarModule} from '@angular/material/toolbar'
-import {MatButtonModule} from '@angular/material/button'
-import {MatIconModule} from '@angular/material/icon'
-import {MatSidenavModule} from '@angular/material/sidenav'
-import {MatListModule} from '@angular/material/list'
-import {MatTooltipModule} from '@angular/material/tooltip'
-import {RegistryService} from '../services/registry.service'
-import {Service} from '../models/service.model'
-import {MatProgressSpinner} from '@angular/material/progress-spinner'
 import {
-  MatCard,
-  MatCardContent,
-  MatCardSubtitle,
-  MatCardTitle
-} from '@angular/material/card'
-import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms'
-import {Router} from '@angular/router'
-import {version} from '../../../package.json'
-import {GraphComponent} from '../graph/graph.component';
+  Firestore,
+  disableNetwork,
+  enableNetwork
+} from '@angular/fire/firestore'
+import { AuthService } from '../auth.service'
+import { CommonModule } from '@angular/common'
+import { MatToolbarModule } from '@angular/material/toolbar'
+import { MatButtonModule } from '@angular/material/button'
+import { MatIconModule } from '@angular/material/icon'
+import { MatSidenavModule } from '@angular/material/sidenav'
+import { MatListModule } from '@angular/material/list'
+import { MatTooltipModule } from '@angular/material/tooltip'
+import { RegistryService } from '../services/registry.service'
+import { Service } from '../models/service.model'
+import { MatProgressSpinner } from '@angular/material/progress-spinner'
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
+import {
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet
+} from '@angular/router'
+import { version } from '../../../package.json'
+import { Cartographer } from '../cartographer/cartographer'
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu'
 
 @Component({
   selector: 'dashboard',
@@ -40,11 +46,13 @@ import {GraphComponent} from '../graph/graph.component';
     MatListModule,
     MatTooltipModule,
     MatProgressSpinner,
-    MatCard,
-    MatCardTitle,
-    MatCardContent,
     ReactiveFormsModule,
-    GraphComponent
+    RouterLink,
+    RouterOutlet,
+    RouterLinkActive,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.sass'],
@@ -54,6 +62,8 @@ export class DashboardComponent implements OnInit {
   private registryService = inject(RegistryService)
   protected readonly authService = inject(AuthService)
   private readonly router = inject(Router)
+  private readonly firestore = inject(Firestore)
+  private readonly environmentInjector = inject(EnvironmentInjector)
   public readonly services = this.registryService.services
   public readonly error = this.registryService.error
   public readonly isLoading = this.registryService.isLoading
@@ -92,9 +102,17 @@ export class DashboardComponent implements OnInit {
     this.showSideMenu.update((value) => !value)
   }
 
-  toggleOnlineStatus(): void {
+  async toggleOnlineStatus(): Promise<void> {
     this.onlineStatus.update((value) => !value)
-    console.warn('Toggling online status for UI demo only.')
+
+    // Wrap Firebase calls in runInContext
+    await this.environmentInjector.runInContext(async () => {
+      if (!this.onlineStatus()) {
+        await disableNetwork(this.firestore)
+      } else {
+        await enableNetwork(this.firestore)
+      }
+    })
   }
 
   trackServiceById(index: number, service: Service): string {
@@ -103,6 +121,6 @@ export class DashboardComponent implements OnInit {
 
   async logout(): Promise<void> {
     await this.authService.logout()
-    await this.router.navigate(['/login']) // Redirect to login after logout
+    await this.router.navigate(['/login'])
   }
 }

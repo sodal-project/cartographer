@@ -3,42 +3,53 @@ import {
   provideZoneChangeDetection,
   isDevMode
 } from '@angular/core'
-import {provideRouter, Routes, withHashLocation} from '@angular/router'
+import { provideRouter, Routes, withHashLocation } from '@angular/router'
 import {
   provideClientHydration,
   withEventReplay
 } from '@angular/platform-browser'
-import {initializeApp, provideFirebaseApp} from '@angular/fire/app'
-import {getAuth, provideAuth} from '@angular/fire/auth'
-import {getFirestore, provideFirestore} from '@angular/fire/firestore'
-import {getFunctions, provideFunctions} from '@angular/fire/functions'
-import {getMessaging, provideMessaging} from '@angular/fire/messaging'
-import {getStorage, provideStorage} from '@angular/fire/storage'
-import {getVertexAI, provideVertexAI} from '@angular/fire/vertexai'
-import {environment} from '../environments/environment'
-import {DashboardComponent} from './dashboard/dashboard.component'
-import {provideServiceWorker} from '@angular/service-worker'
-import {importProvidersFrom} from '@angular/core'
-import {LoginComponent} from './login/login.component'
-import {authGuard, loginGuard} from './auth.guard'
-import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http'
-
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app'
+import { getAuth, provideAuth } from '@angular/fire/auth'
+import { getFirestore, provideFirestore } from '@angular/fire/firestore'
+import { getFunctions, provideFunctions } from '@angular/fire/functions'
+import { getMessaging, provideMessaging } from '@angular/fire/messaging'
+import { getStorage, provideStorage } from '@angular/fire/storage'
+import { getVertexAI, provideVertexAI } from '@angular/fire/vertexai'
+import { environment } from '../environments/environment'
+import { DashboardComponent } from './dashboard/dashboard.component'
+import { provideServiceWorker } from '@angular/service-worker'
+import { importProvidersFrom } from '@angular/core'
+import { LoginComponent } from './login/login.component'
+import { authGuard, loginGuard } from './auth.guard'
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
+import { SearchComponent } from './search/search.component'
+import { Cartographer } from './cartographer/cartographer'
 
 export const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
-    canActivate: [loginGuard] // See below to implement loginGuard
+    canActivate: [loginGuard]
   },
   {
     path: 'dashboard',
     component: DashboardComponent,
-    canActivate: [authGuard]
-  },
-  {
-    path: '',
-    redirectTo: '/dashboard',
-    pathMatch: 'full'
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'researcher',
+        component: SearchComponent
+      },
+      {
+        path: 'cartographer',
+        component: Cartographer
+      },
+      {
+        path: '',
+        redirectTo: 'researcher',
+        pathMatch: 'full'
+      }
+    ]
   },
   {
     path: '**',
@@ -51,7 +62,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withHashLocation()),
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
-    provideZoneChangeDetection({eventCoalescing: true}),
+    provideZoneChangeDetection({ eventCoalescing: true }),
     provideClientHydration(withEventReplay()),
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
