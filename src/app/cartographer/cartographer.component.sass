@@ -2,39 +2,41 @@
   display: block
   width: 100%
   height: 100%
-  max-width: 100vw
-  max-height: 100vh
   overflow: hidden
-
-.cartographer-root
-  width: 100%
-  height: 100%
-  max-width: 100vw
-  max-height: 100vh
-  overflow: hidden
-  display: flex
-  flex-direction: column
+// Prevent scrollbars on host
 
 .graph-container
   width: 100%
   height: 100%
-  background: transparent
-  overflow: hidden
+  // Material Design 3 inspired background color
+  background-color: #FDF8FF
+  // A very light, neutral color (e.g., Surface from MD3)
+  // Example subtle gradient if preferred:
+  // background: linear-gradient(135deg, #F6F2FF 0%, #FEFEFF 100%)
+  display: flex
+  // Ensure SVG takes up space if needed
+  align-items: center
+  justify-content: center
 
-svg
-  width: 100%
-  height: 100%
+  svg
+    display: block
+    // Remove extra space below SVG
+    width: 100%
+    height: 100%
+    font-family: 'Roboto', 'Inter', sans-serif
+    // Apply Material font family
 
-.node
-  rect
-    cursor: pointer
-    stroke: #fff
-    stroke-width: 1.5px
+    .edges line
+      transition: stroke-opacity 0.2s ease-in-out
 
-  text
-    pointer-events: none
-    font-size: 14px
+    .node-group
+      // Base node styles, specific visual styling handled by D3 attributes
+      transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)
+      // Smooth transform for hover
 
-.edge
-  stroke: #999
-  stroke-opacity: 0.6
+      rect
+        transition: fill-opacity 0.15s ease-in-out
+// Smooth opacity for hover
+
+// Remove generic .node and .edge styles if all styling is now via D3 attributes
+// or ensure they don't conflict
