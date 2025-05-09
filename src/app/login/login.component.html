@@ -1,0 +1,25 @@
+<div class="login-page-wrapper">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>Welcome to Atlas</mat-card-title>
+      <mat-card-subtitle>version {{ version.toString() }}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <button mat-raised-button class="login-button google-button" (click)="loginWithGoogle()"
+              aria-label="Sign in with Google">
+        <span>Sign in with Google</span>
+      </button>
+      <button mat-raised-button class="login-button github-button" (click)="loginWithGitHub()"
+              aria-label="Sign in with GitHub">
+        <span>Sign in with GitHub</span>
+      </button>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <p class="terms-info">
+        By signing in, you agree to our <a href="/terms" target="_blank">Terms of Service</a>.
+      </p>
+    </mat-card-actions>
+  </mat-card>
+</div>
