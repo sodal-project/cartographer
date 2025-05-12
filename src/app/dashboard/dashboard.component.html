@@ -51,7 +51,7 @@
 
     @if (services() && !isLoading() && !error()) {
       <mat-selection-list class="dash-nav">
-        @for (service of services(); track trackServiceById) {
+        @for (service of services(); track service.id) {
           <mat-list-option [value]="service.id">
             <span matListItemTitle>{{ service.name }}</span>
             <span matListItemLine>v{{ service.version }}</span>

@@ -5,6 +5,56 @@
   overflow: hidden
 // Prevent scrollbars on host
 
+.offline-indicator
+  display: flex
+  align-items: center
+  background-color: #ffab91
+  color: #7f0000
+  padding: 8px 16px
+  border-radius: 4px
+  margin: 8px
+  position: absolute
+  z-index: 10
+  top: 0
+  left: 0
+
+  mat-icon
+    margin-right: 8px
+
+  span
+    font-size: 14px
+
+.zoom-controls
+  position: absolute
+  bottom: 16px
+  right: 16px
+  z-index: 10
+  display: flex
+  flex-direction: column
+  gap: 8px
+
+  .zoom-fit-button
+    width: 40px
+    height: 40px
+    border-radius: 50%
+    background-color: #6750A4
+    color: white
+    border: none
+    cursor: pointer
+    display: flex
+    align-items: center
+    justify-content: center
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2)
+    transition: background-color 0.2s, transform 0.2s
+
+    &:hover
+      background-color: #7B68B5
+      transform: scale(1.05)
+
+    &:active
+      background-color: #553B93
+      transform: scale(0.95)
+
 .graph-container
   width: 100%
   height: 100%

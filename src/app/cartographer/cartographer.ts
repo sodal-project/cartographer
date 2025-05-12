@@ -5,10 +5,19 @@ import {
   ElementRef,
   NgZone,
   OnDestroy,
-  ViewChild
+  ViewChild,
+  inject,
+  signal,
+  WritableSignal,
+  effect,
+  computed,
+  runInInjectionContext,
+  Injector
 } from '@angular/core'
 import { collection, collectionData, Firestore } from '@angular/fire/firestore'
-import { combineLatest, Observable, Subscription } from 'rxjs'
+import { Observable, Subscription } from 'rxjs'
+import { toSignal } from '@angular/core/rxjs-interop'
+import { MatIcon } from '@angular/material/icon'
 
 // Define interfaces for graph data (adjust as per your actual data structure)
 interface GraphNode {
@@ -41,49 +50,145 @@ interface Edge extends d3.SimulationLinkDatum<Node> {
 @Component({
   selector: 'd3-cartographer',
   standalone: true,
-  template: ` <div #container class="graph-container"></div>`,
+  imports: [MatIcon],
+  template: `
+    @if (isOffline()) {
+      <div class="offline-indicator">
+        <mat-icon>cloud_off</mat-icon>
+        <span>You are offline. The graph is displaying cached data.</span>
+      </div>
+    }
+    <div class="zoom-controls">
+      <button class="zoom-fit-button" (click)="zoomToFit()" title="Zoom to fit all nodes">
+        <mat-icon>fit_screen</mat-icon>
+      </button>
+    </div>
+    <div #container class="graph-container"></div>
+  `,
   styleUrls: ['./cartographer.component.sass']
 })
 export class Cartographer implements AfterViewInit, OnDestroy {
   @ViewChild('container', { static: true })
   containerRef!: ElementRef<HTMLDivElement>
-  private graphSub?: Subscription
+  // We no longer need the subscription since we're using signals
 
-  private graphNodes: GraphNode[] = []
-  private graphEdges: GraphEdge[] = []
+  // Convert to signals
+  private graphNodes: WritableSignal<GraphNode[]> = signal([])
+  private graphEdges: WritableSignal<GraphEdge[]> = signal([])
+  public isOffline: WritableSignal<boolean> = signal(!navigator.onLine)
 
-  constructor(
-    private firestore: Firestore,
-    private zone: NgZone
-  ) {}
+  // References for zoom functionality
+  private svgElement: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
+  private zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
+  private nodes: Node[] = [];
+  private nodeSize: { width: number; height: number } = { width: 160, height: 48 };
+
+  // Computed signal for D3 data
+  private d3Data = computed(() => this.toD3Data())
+
+  // Use inject for dependency injection
+  private firestore = inject(Firestore)
+  private zone = inject(NgZone)
+  private injector = inject(Injector)
+
+  // Store references to event listener functions for cleanup
+  private onlineListener = () => this.isOffline.set(false)
+  private offlineListener = () => this.isOffline.set(true)
+  private resizeListener = () => {
+    if (this.isVisible()) {
+      this.zoomToFit();
+    }
+  }
+
+  // Track if the component is visible
+  private isVisible: WritableSignal<boolean> = signal(false);
+  // Observer for visibility changes
+  private resizeObserver: ResizeObserver | null = null;
+
+  constructor() {
+    // Set up event listeners for online/offline status
+    window.addEventListener('online', this.onlineListener)
+    window.addEventListener('offline', this.offlineListener)
+    // Set up event listener for window resize
+    window.addEventListener('resize', this.resizeListener)
+
+    // Set up an effect to create the graph when data changes
+    effect(() => {
+      const data = this.d3Data();
+      if (data.nodes.length > 0 && this.containerRef?.nativeElement) {
+        this.zone.runOutsideAngular(() => {
+          // Initialize the graph if the component is visible or force initialization
+          if (this.isVisible()) {
+            this.createGraph();
+          }
+        })
+      }
+    });
+  }
 
   ngAfterViewInit() {
     const nodesCol = collection(this.firestore, 'nodes')
     const edgesCol = collection(this.firestore, 'edges')
 
-    this.graphSub = combineLatest([
-      collectionData(nodesCol, { idField: 'id' }) as Observable<GraphNode[]>,
-      collectionData(edgesCol, { idField: 'id' }) as Observable<GraphEdge[]>
-    ]).subscribe(([nodes, edges]) => {
-      this.graphNodes = nodes
-      this.graphEdges = edges
-      this.zone.runOutsideAngular(() => {
-        if (
-          this.containerRef.nativeElement.offsetWidth > 0 &&
-          this.containerRef.nativeElement.offsetHeight > 0
-        ) {
-          this.createGraph()
-        } else {
-          // Fallback or retry logic if dimensions are not yet available
-          setTimeout(() => this.createGraph(), 50)
+    // Convert Firestore observables to signals
+    const nodesObservable = collectionData(nodesCol, { idField: 'id' }) as Observable<GraphNode[]>
+    const edgesObservable = collectionData(edgesCol, { idField: 'id' }) as Observable<GraphEdge[]>
+
+    // Use runInInjectionContext to provide injection context for toSignal
+    runInInjectionContext(this.injector, () => {
+      // Use toSignal to convert the observables to signals
+      const nodesSignal = toSignal(nodesObservable, { initialValue: [] as GraphNode[] })
+      const edgesSignal = toSignal(edgesObservable, { initialValue: [] as GraphEdge[] })
+
+      // Set up an effect to update our signals when the Firestore data changes
+      effect(() => {
+        this.graphNodes.set(nodesSignal())
+        this.graphEdges.set(edgesSignal())
+
+        // If the graph is already created, zoom to fit when data changes
+        if (this.svgElement && this.zoomBehavior && this.isVisible()) {
+          // Use setTimeout to allow the graph to update first
+          setTimeout(() => this.zoomToFit(), 500);
         }
-      })
-    })
+      });
+    });
+
+    // Set up ResizeObserver to detect when the component becomes visible
+    this.setupVisibilityDetection();
+  }
+
+  private setupVisibilityDetection(): void {
+    // Create a ResizeObserver to detect when the container gets dimensions
+    this.resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          // Component is now visible with dimensions
+          this.isVisible.set(true);
+
+          // If we have data, create the graph
+          if (this.d3Data().nodes.length > 0) {
+            this.zone.runOutsideAngular(() => {
+              this.createGraph();
+            });
+          }
+        }
+      }
+    });
+
+    // Start observing the container
+    if (this.containerRef?.nativeElement) {
+      this.resizeObserver.observe(this.containerRef.nativeElement);
+    }
   }
 
   private toD3Data(): { nodes: Node[]; edges: Edge[] } {
-    const nodes: Node[] = this.graphNodes.map((n) => ({ ...n }))
-    const edges: Edge[] = this.graphEdges.map(
+    // Get the current values from the signals
+    const graphNodes = this.graphNodes()
+    const graphEdges = this.graphEdges()
+
+    const nodes: Node[] = graphNodes.map((n) => ({ ...n }))
+    const edges: Edge[] = graphEdges.map(
       (e) =>
         ({
           source:
@@ -100,11 +205,19 @@ export class Cartographer implements AfterViewInit, OnDestroy {
   createGraph() {
     d3.select(this.containerRef.nativeElement).select('svg').remove()
 
-    if (!this.graphNodes.length) return
+    // Get data from the computed signal
+    const { nodes, edges } = this.d3Data()
 
-    const { nodes, edges } = this.toD3Data()
+    // Check if we have nodes to display
+    if (!nodes.length) return
     const width = this.containerRef.nativeElement.offsetWidth
     const height = this.containerRef.nativeElement.offsetHeight
+
+    // Store references for zoomToFit method
+    this.svgElement = null
+    this.zoomBehavior = null
+    this.nodes = nodes
+    this.nodeSize = { width: 160, height: 48 }
 
     // Material Design 3 Inspired Colors (Light Theme)
     const md3Colors = {
@@ -134,6 +247,9 @@ export class Cartographer implements AfterViewInit, OnDestroy {
       .attr('height', height)
       .style('background-color', '#F7F2FA') // Light Material background
 
+    // Store reference to SVG element
+    this.svgElement = svg as d3.Selection<SVGSVGElement, unknown, null, undefined>;
+
     const defs = svg.append('defs')
     defs
       .append('filter')
@@ -155,6 +271,9 @@ export class Cartographer implements AfterViewInit, OnDestroy {
       .on('zoom', (event) => {
         graphContainer.attr('transform', event.transform)
       })
+
+    // Store reference to zoom behavior
+    this.zoomBehavior = zoomBehavior;
 
     svg.call(zoomBehavior as any)
 
@@ -275,53 +394,73 @@ export class Cartographer implements AfterViewInit, OnDestroy {
     // Center graph on startup
     // Wait for a few ticks of the simulation for a more stable layout before centering.
     setTimeout(() => {
-      if (!nodes.length) return
-
-      let minX = Infinity,
-        maxX = -Infinity,
-        minY = Infinity,
-        maxY = -Infinity
-      nodes.forEach((n) => {
-        if (n.x !== undefined && n.y !== undefined) {
-          minX = Math.min(minX, n.x - nodeSize.width / 2)
-          maxX = Math.max(maxX, n.x + nodeSize.width / 2)
-          minY = Math.min(minY, n.y - nodeSize.height / 2)
-          maxY = Math.max(maxY, n.y + nodeSize.height / 2)
-        }
-      })
-
-      if (
-        isFinite(minX) &&
-        isFinite(maxX) &&
-        isFinite(minY) &&
-        isFinite(maxY)
-      ) {
-        const graphActualWidth = maxX - minX
-        const graphActualHeight = maxY - minY
-
-        if (graphActualWidth === 0 || graphActualHeight === 0) return
-
-        const scaleX = width / graphActualWidth
-        const scaleY = height / graphActualHeight
-        const scale = Math.min(scaleX, scaleY) * 0.85 // 0.85 for some padding
-
-        const translateX = width / 2 - ((minX + maxX) / 2) * scale
-        const translateY = height / 2 - ((minY + maxY) / 2) * scale
-
-        const initialTransform = d3.zoomIdentity
-          .translate(translateX, translateY)
-          .scale(scale)
-        svg.call(zoomBehavior.transform as any, initialTransform)
-      } else {
-        // Fallback if bounds are not valid, center on simulation center
-        const fallbackScale = Math.min(width / 1000, height / 800) * 0.5 // Adjust default scale
-        const initialTransform = d3.zoomIdentity
-          .translate(width / 2, height / 2)
-          .scale(fallbackScale)
-          .translate(-width / 2, -height / 2)
-        svg.call(zoomBehavior.transform as any, initialTransform)
-      }
+      this.zoomToFit();
     }, 300) // Increased timeout for simulation to stabilize more
+  }
+
+  /**
+   * Zooms the view to fit all nodes on screen
+   * This ensures all graph elements remain visible
+   */
+  public zoomToFit() {
+    if (!this.nodes.length || !this.svgElement || !this.zoomBehavior) return;
+
+    const width = this.containerRef.nativeElement.offsetWidth;
+    const height = this.containerRef.nativeElement.offsetHeight;
+
+    let minX = Infinity,
+      maxX = -Infinity,
+      minY = Infinity,
+      maxY = -Infinity;
+
+    // Calculate the basic bounding box of all nodes
+    this.nodes.forEach((n) => {
+      if (n.x !== undefined && n.y !== undefined) {
+        minX = Math.min(minX, n.x - this.nodeSize.width / 2);
+        maxX = Math.max(maxX, n.x + this.nodeSize.width / 2);
+        minY = Math.min(minY, n.y - this.nodeSize.height / 2);
+        maxY = Math.max(maxY, n.y + this.nodeSize.height / 2);
+      }
+    });
+
+    if (
+      isFinite(minX) &&
+      isFinite(maxX) &&
+      isFinite(minY) &&
+      isFinite(maxY)
+    ) {
+      // Add padding to the bounding box to ensure nodes near edges have enough space
+      const padding = Math.max(this.nodeSize.width, this.nodeSize.height);
+      minX -= padding;
+      maxX += padding;
+      minY -= padding;
+      maxY += padding;
+
+      const graphActualWidth = maxX - minX;
+      const graphActualHeight = maxY - minY;
+
+      if (graphActualWidth === 0 || graphActualHeight === 0) return;
+
+      const scaleX = width / graphActualWidth;
+      const scaleY = height / graphActualHeight;
+      const scale = Math.min(scaleX, scaleY) * 0.7; // Reduced from 0.85 to 0.7 for more whitespace
+
+      const translateX = width / 2 - ((minX + maxX) / 2) * scale;
+      const translateY = height / 2 - ((minY + maxY) / 2) * scale;
+
+      const transform = d3.zoomIdentity
+        .translate(translateX, translateY)
+        .scale(scale);
+      this.svgElement.call(this.zoomBehavior.transform as any, transform);
+    } else {
+      // Fallback if bounds are not valid, center on simulation center
+      const fallbackScale = Math.min(width / 1000, height / 800) * 0.4; // Reduced from 0.5 to 0.4 for more whitespace
+      const transform = d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(fallbackScale)
+        .translate(-width / 2, -height / 2);
+      this.svgElement.call(this.zoomBehavior.transform as any, transform);
+    }
   }
 
   setupDrag(d3Instance: typeof d3) {
@@ -365,12 +504,24 @@ export class Cartographer implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.graphSub) this.graphSub.unsubscribe()
     // Clean up D3 simulation and SVG to prevent memory leaks if component is destroyed
     d3.select(this.containerRef.nativeElement).select('svg').remove()
     const simulation = d3.forceSimulation()
     if (simulation) {
       simulation.stop()
     }
+
+    // Remove event listeners to prevent memory leaks
+    window.removeEventListener('online', this.onlineListener)
+    window.removeEventListener('offline', this.offlineListener)
+    window.removeEventListener('resize', this.resizeListener)
+
+    // Clean up ResizeObserver
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+
+    // Note: Effects are automatically cleaned up when the component is destroyed
   }
 }

@@ -1,4 +1,12 @@
 <div class="semantic-search-container">
+  <!-- Offline Indicator -->
+  @if (isOffline()) {
+    <div class="offline-indicator">
+      <mat-icon>cloud_off</mat-icon>
+      <span>You are offline. Search results may be limited to previously cached data.</span>
+    </div>
+  }
+
   <!-- Search Box -->
   <div class="inline-search-bar">
     <form (submit)="performSearch()" autocomplete="off">
@@ -26,16 +34,16 @@
 
 
   <!-- Loading Indicator -->
-  @if (isLoading) {
+  @if (isLoading()) {
     <div class="loading-container">
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   }
 
   <!-- Search Results -->
-  @if (searchResults.length > 0) {
+  @if (searchResults().length > 0) {
     <div class="search-results">
-      @for (result of searchResults; track result.id) {
+      @for (result of searchResults(); track result.id) {
         <mat-card class="result-card">
           <mat-card-header>
             <mat-card-title>{{ result.title }}</mat-card-title>
@@ -55,10 +63,10 @@
   }
 
   <!-- No Results Message -->
-  @if (!isLoading && searchResults.length === 0 && searchQuery) {
+  @if (!isLoading && searchResults.length === 0 && searchQuery()) {
     <div class="no-results">
       <mat-icon>search_off</mat-icon>
-      <p>No results found for "{{ searchQuery }}"</p>
+      <p>No results found for "{{ searchQuery() }}"</p>
     </div>
   }
 </div>

@@ -1,4 +1,5 @@
-import {inject, Injectable} from '@angular/core'
+import {inject, Injectable, signal, WritableSignal} from '@angular/core'
+import {toObservable} from '@angular/core/rxjs-interop'
 import {
   Auth,
   GithubAuthProvider,
@@ -7,21 +8,28 @@ import {
   signOut,
   User
 } from '@angular/fire/auth'
-import {filter, Observable} from 'rxjs'
+import {Observable} from 'rxjs'
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  public readonly user: WritableSignal<User | null> = signal(null)
+  // Keep the Observable for backward compatibility
   public readonly user$: Observable<User | null>
   private auth = inject(Auth)
 
   constructor() {
-    this.user$ = new Observable<User | null>((observer) => {
-      return this.auth.onAuthStateChanged(observer)
-    }).pipe(
-      filter(user => user !== undefined) // Ignore undefined
-    )
+    // Set up the auth state listener
+    this.auth.onAuthStateChanged(user => {
+      // Only update the signal if user is defined (not undefined)
+      if (user !== undefined) {
+        this.user.set(user)
+      }
+    })
+
+    // Initialize the user$ Observable from the user signal for backward compatibility
+    this.user$ = toObservable(this.user)
   }
 
   async googleSignIn(): Promise<void> {

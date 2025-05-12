@@ -1,8 +1,7 @@
-import {Component, inject} from '@angular/core'
+import {Component, inject, OnInit, effect} from '@angular/core'
 import {CommonModule} from '@angular/common'
 import {AuthService} from '../auth.service'
 import {Router} from '@angular/router'
-import {take} from 'rxjs/operators'
 import {MatButton} from '@angular/material/button'
 import {MatIconModule, MatIconRegistry} from '@angular/material/icon'
 import {
@@ -33,7 +32,7 @@ import {version} from '../../../package.json'
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.sass']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private matIconRegistry = inject(MatIconRegistry);
   private domSanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
@@ -50,23 +49,29 @@ export class LoginComponent {
       'github-logo',
       this.domSanitizer.bypassSecurityTrustResourceUrl('icons/github.svg')
     )
+
+    // Set up an effect to navigate to dashboard when user is authenticated
+    effect(() => {
+      const user = this.authService.user();
+      if (user) {
+        this.router.navigate(['/dashboard']).catch(err =>
+          console.error('Navigation error:', err)
+        );
+      }
+    });
   }
 
   ngOnInit(): void {
-    this.authService.user$.pipe(take(1)).subscribe(async user => {
-      if (user) {
-        await this.router.navigate(['/dashboard'])
-      }
-    })
+    // Initial check is now handled by the effect
   }
 
   async loginWithGoogle(): Promise<void> {
     await this.authService.googleSignIn()
-    window.location.reload()
+    // No need to reload - the effect will handle navigation when the user signal changes
   }
 
   async loginWithGitHub(): Promise<void> {
     await this.authService.githubSignIn()
-    window.location.reload()
+    // No need to reload - the effect will handle navigation when the user signal changes
   }
 }

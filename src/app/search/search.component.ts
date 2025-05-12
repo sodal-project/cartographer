@@ -1,4 +1,11 @@
-import { Component, OnInit } from '@angular/core'
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  signal,
+  WritableSignal,
+  inject
+} from '@angular/core'
 import { FirebaseApp } from '@angular/fire/app'
 import {
   Firestore,
@@ -47,34 +54,53 @@ interface SearchResult {
   ],
   styleUrls: ['./search.component.sass']
 })
-export class SearchComponent implements OnInit {
-  searchQuery: string = ''
-  searchResults: SearchResult[] = []
-  isLoading: boolean = false
+export class SearchComponent implements OnInit, OnDestroy {
+  // Convert state properties to signals
+  searchQuery: WritableSignal<string> = signal('')
+  searchResults: WritableSignal<SearchResult[]> = signal([])
+  isLoading: WritableSignal<boolean> = signal(false)
+  isOffline: WritableSignal<boolean> = signal(!navigator.onLine)
 
-  constructor(private firestore: Firestore) {}
+  // Use inject for dependency injection
+  private firestore = inject(Firestore)
+
+  // Store references to event listener functions for cleanup
+  private onlineListener = () => this.isOffline.set(false)
+  private offlineListener = () => this.isOffline.set(true)
+
+  constructor() {
+    // Set up event listeners for online/offline status
+    window.addEventListener('online', this.onlineListener)
+    window.addEventListener('offline', this.offlineListener)
+  }
+
+  ngOnDestroy(): void {
+    // Remove event listeners to prevent memory leaks
+    window.removeEventListener('online', this.onlineListener)
+    window.removeEventListener('offline', this.offlineListener)
+  }
 
   ngOnInit(): void {}
 
   async performSearch(): Promise<void> {
-    if (!this.searchQuery.trim()) return
+    if (!this.searchQuery().trim()) return
 
-    this.isLoading = true
-    this.searchResults = []
+    this.isLoading.set(true)
+    this.searchResults.set([])
 
     try {
       const searchRef = collection(this.firestore, 'searchIndex')
-      // You might want to adjust this query based on your Firebase structure
       const q = query(
         searchRef,
-        where('keywords', 'array-contains', this.searchQuery.toLowerCase())
+        where('keywords', 'array-contains', this.searchQuery().toLowerCase())
       )
 
       const querySnapshot = await getDocs(q)
 
+      const results: SearchResult[] = []
       querySnapshot.forEach((doc) => {
         const data = doc.data()
-        this.searchResults.push({
+        results.push({
           id: doc.id,
           title: data['title'],
           content: data['content'],
@@ -82,18 +108,30 @@ export class SearchComponent implements OnInit {
         })
       })
 
-      // Sort results by score in descending order
-      this.searchResults.sort((a, b) => b.score - a.score)
+      results.sort((a, b) => b.score - a.score)
+
+      this.searchResults.set(results)
+
+      // If we're offline but got results from cache, update the UI to reflect this
+      if (this.isOffline() && results.length > 0) {
+        console.log('Search completed using cached data while offline')
+      }
     } catch (error) {
       console.error('Search error:', error)
-      // You might want to add error handling here
+
+      // If we're offline and the error is related to network connectivity,
+      // provide a more specific error message
+      if (this.isOffline()) {
+        console.warn('Search attempted while offline. Some results may be from cache.')
+      }
     } finally {
-      this.isLoading = false
+      this.isLoading.set(false)
     }
   }
 
   viewDetails(result: SearchResult): void {
-    // Implement detail view logic here
+    // This method receives a SearchResult object directly, not from a signal
+    // It's typically called from the template with an item from *ngFor="let result of searchResults()"
     console.log('Viewing details for:', result)
   }
 }

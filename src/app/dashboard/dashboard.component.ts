@@ -4,8 +4,7 @@ import {
   inject,
   signal,
   WritableSignal,
-  ChangeDetectionStrategy,
-  EnvironmentInjector
+  ChangeDetectionStrategy
 } from '@angular/core'
 import {
   Firestore,
@@ -63,7 +62,6 @@ export class DashboardComponent implements OnInit {
   protected readonly authService = inject(AuthService)
   private readonly router = inject(Router)
   private readonly firestore = inject(Firestore)
-  private readonly environmentInjector = inject(EnvironmentInjector)
   public readonly services = this.registryService.services
   public readonly error = this.registryService.error
   public readonly isLoading = this.registryService.isLoading
@@ -105,22 +103,20 @@ export class DashboardComponent implements OnInit {
   async toggleOnlineStatus(): Promise<void> {
     this.onlineStatus.update((value) => !value)
 
-    // Wrap Firebase calls in runInContext
-    await this.environmentInjector.runInContext(async () => {
-      if (!this.onlineStatus()) {
-        await disableNetwork(this.firestore)
-      } else {
-        await enableNetwork(this.firestore)
-      }
-    })
+    if (!this.onlineStatus()) {
+      await disableNetwork(this.firestore)
+    } else {
+      await enableNetwork(this.firestore)
+    }
   }
 
-  trackServiceById(index: number, service: Service): string {
-    return service.id
-  }
 
   async logout(): Promise<void> {
     await this.authService.logout()
-    await this.router.navigate(['/login'])
+    // Ensure we navigate to the login page after logout
+    // Use a small timeout to ensure the auth state has been updated
+    setTimeout(() => {
+      this.router.navigate(['/login'])
+    }, 100)
   }
 }
