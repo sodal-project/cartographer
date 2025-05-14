@@ -6,6 +6,17 @@ $color-light-gray: lightgray
 $color-red: red
 $color-green: green
 
+@keyframes pulse
+  0%
+    opacity: 1
+    transform: scale(1)
+  50%
+    opacity: 0.8
+    transform: scale(1.1)
+  100%
+    opacity: 1
+    transform: scale(1)
+
 $toolbar-height: 4rem
 $font-size-small: 0.8rem
 $dash-container-height: calc(100vh - #{$toolbar-height * 2})
@@ -64,11 +75,78 @@ $dash-content-height: calc(100% - 2rem)
 
   span
     // Target the span specifically if you need to adjust its margin relative to the icon
-       margin-left: 8px
-// Adjust as needed, or remove if your button already has sufficient margin
+    margin-left: 8px
+    // Adjust as needed, or remove if your button already has sufficient margin
+
+.version-update-container
+  display: flex
+  align-items: center
+
+  .update-button
+    color: $color-green
+    animation: pulse 1.5s infinite
 
 .dash-nav
-  padding: 1rem
+  border-radius: 0
+
+  // Styles for mat-accordion
+  .mat-expansion-panel
+    background-color: rgba(255, 255, 255, 0.05)
+    border-radius: 0
+    margin: 0
+    padding: 0.5rem
+
+  .service-description
+    font-style: italic
+    color: rgba(50, 50, 50, 0.9)
+    font-size: 0.9rem
+    margin-top: 4px
+    margin-bottom: 8px
+
+  .service-details
+    margin-top: 8px
+    padding: 8px
+    background-color: rgba(0, 0, 0, 0.1)
+    border-radius: 4px
+    font-size: 0.85rem
+
+    .endpoints, .authentication
+      margin-bottom: 8px
+
+      div
+        color: rgba(50, 50, 50, 0.9)
+
+      strong
+        display: block
+        margin-bottom: 4px
+        color: rgba(0, 0, 0, 0.9)
+
+    .endpoint
+      margin-bottom: 6px
+      padding-left: 8px
+      border-left: 2px solid rgba(0, 0, 0, 0.3)
+
+      .method
+        display: inline-block
+        font-weight: bold
+        color: #2e7d32
+        margin-right: 8px
+        padding: 2px 4px
+        border-radius: 3px
+        background-color: rgba(46, 125, 50, 0.1)
+
+      .path
+        display: inline-block
+        color: #0d47a1
+        margin-right: 8px
+        padding: 2px 4px
+        border-radius: 3px
+        background-color: rgba(13, 71, 161, 0.1)
+
+      .description
+        display: block
+        color: rgba(50, 50, 50, 0.9)
+        margin-top: 2px
 
 .expanding-spacer
   flex-grow: 1

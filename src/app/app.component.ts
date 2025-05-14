@@ -1,15 +1,14 @@
 import {
   Component,
   inject,
-  OnInit,
+  // OnInit, // Removed unused import
   signal,
-  WritableSignal,
-  effect
+  WritableSignal
 } from '@angular/core'
-import { Router, RouterOutlet } from '@angular/router'
-import { AuthService } from './auth.service'
-import { AsyncPipe } from '@angular/common'
-import { SwUpdate } from '@angular/service-worker'
+import { /* Router, */ RouterOutlet } from '@angular/router' // Commented out unused Router import
+// import { AuthService } from './auth.service' // Commented out unused import
+// import { AsyncPipe } from '@angular/common' // Removed unused import
+import { UpdateService } from './services/update.service'
 
 @Component({
   selector: 'app-root',
@@ -18,35 +17,18 @@ import { SwUpdate } from '@angular/service-worker'
   templateUrl: './app.component.html',
   styleUrl: './app.component.sass'
 })
-export class AppComponent implements OnInit {
+export class AppComponent { // Removed OnInit implementation
   public title: WritableSignal<string> = signal('atlas')
-  private swUpdate = inject(SwUpdate)
-  private authService = inject(AuthService)
-  private router = inject(Router)
-
-  // Signal to track if an update is available
-  private updateAvailable: WritableSignal<boolean> = signal(false)
+  private updateService = inject(UpdateService)
+  // private authService = inject(AuthService) // Commented out unused service
+  // private router = inject(Router) // Commented out unused router
 
   constructor() {
-    // Set up an effect to activate updates when available
-    effect(() => {
-      if (this.updateAvailable()) {
-        this.swUpdate.activateUpdate().then(() => {
-          console.log('app activated')
-        })
-      }
-    })
+    // No automatic update activation
   }
 
-  ngOnInit() {
-    if (this.swUpdate.isEnabled) {
-      this.swUpdate.checkForUpdate().then(() => {
-        // Use a single subscription to handle updates
-        this.swUpdate.versionUpdates.subscribe(() => {
-          console.log('app updated')
-          this.updateAvailable.set(true)
-        })
-      })
-    }
-  }
+  // Commented out empty method
+  // ngOnInit() {
+  //   // UpdateService will handle checking for updates
+  // }
 }

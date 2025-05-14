@@ -40,38 +40,45 @@
 
     <mat-toolbar class="nav-toolbar">Services</mat-toolbar>
 
-    @if (isLoading()) {
-      <div style="padding: 10px; text-align: center">
-        Loading services...
-        <mat-spinner diameter="30"></mat-spinner>
-      </div>
-    }
+    <mat-accordion displayMode="flat" class="dash-nav">
+      @for (service of staticServices; track service.id) {
+        <mat-expansion-panel [disabled]="service.disabled">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              {{ service.name }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
 
-    @if (error()) {
-      <div style="padding: 10px; color: red">
-        Error loading services: {{ error() }}
-        <button mat-button color="warn" (click)="fetchServiceList()">
-          Retry
-        </button>
-      </div>
-    }
+          @if (service.description) {
+            <div class="service-description">{{ service.description }}</div>
+          }
 
-    @if (services() && !isLoading() && !error()) {
-      <mat-selection-list class="dash-nav">
-        @for (service of services(); track service.id) {
-          <mat-list-option [value]="service.id">
-            <span matListItemTitle>{{ service.name }}</span>
-            <span matListItemLine>v{{ service.version }}</span>
-          </mat-list-option>
-        }
-
-        @if (services()?.length === 0) {
-          <mat-list-item>
-            No services found.
-          </mat-list-item>
-        }
-      </mat-selection-list>
-    }
+          @if (service.endpoints || service.authentication) {
+            <div class="service-details">
+              @if (service.endpoints) {
+                <div class="endpoints">
+                  <strong>Endpoints:</strong>
+                  @for (endpoint of service.endpoints; track endpoint.path + endpoint.method) {
+                    <div class="endpoint">
+                      <span class="method">{{ endpoint.method }}</span>
+                      <span class="path">{{ endpoint.path }}</span>
+                      <span class="description">{{ endpoint.description }}</span>
+                    </div>
+                  }
+                </div>
+              }
+              @if (service.authentication) {
+                <div class="authentication">
+                  <strong>Authentication:</strong>
+                  <div>Type: {{ service.authentication.type }}</div>
+                  <div>{{ service.authentication.description }}</div>
+                </div>
+              }
+            </div>
+          }
+        </mat-expansion-panel>
+      }
+    </mat-accordion>
   </mat-drawer>
   <mat-drawer-content>
     <router-outlet [name]="'primary'"></router-outlet>
@@ -93,7 +100,13 @@
 
   <span class="expanding-spacer"></span>
 
-  <div>
-    <span matTooltip="Application Version" style="margin-left: 16px;">Version: {{ version }}</span>
+  <div class="version-update-container">
+    <span matTooltip="Application Version" style="margin-right: 16px;">Version: {{ version }}</span>
+    <button mat-icon-button
+            (click)="activateUpdate()"
+            [matTooltip]="updateAvailable() ? 'Update available. Click to update.' : 'Check for updates'"
+            [class.update-button]="updateAvailable()">
+      <mat-icon>system_update</mat-icon>
+    </button>
   </div>
 </mat-toolbar>

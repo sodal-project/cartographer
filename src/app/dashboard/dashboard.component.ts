@@ -20,9 +20,10 @@ import { MatSidenavModule } from '@angular/material/sidenav'
 import { MatListModule } from '@angular/material/list'
 import { MatTooltipModule } from '@angular/material/tooltip'
 import { RegistryService } from '../services/registry.service'
-import { Service } from '../models/service.model'
-import { MatProgressSpinner } from '@angular/material/progress-spinner'
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
+import { UpdateService } from '../services/update.service'
+import { STATIC_SERVICES } from '../models/static-services'
+// Commented out unused imports
+// import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
 import {
   Router,
   RouterLink,
@@ -30,8 +31,8 @@ import {
   RouterOutlet
 } from '@angular/router'
 import { version } from '../../../package.json'
-import { Cartographer } from '../cartographer/cartographer'
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu'
+import { MatExpansionModule } from '@angular/material/expansion'
 
 @Component({
   selector: 'dashboard',
@@ -44,14 +45,14 @@ import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu'
     MatSidenavModule,
     MatListModule,
     MatTooltipModule,
-    MatProgressSpinner,
-    ReactiveFormsModule,
+    // ReactiveFormsModule, // Commented out unused import
     RouterLink,
     RouterOutlet,
     RouterLinkActive,
     MatMenu,
     MatMenuItem,
-    MatMenuTrigger
+    MatMenuTrigger,
+    MatExpansionModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.sass'],
@@ -62,25 +63,29 @@ export class DashboardComponent implements OnInit {
   protected readonly authService = inject(AuthService)
   private readonly router = inject(Router)
   private readonly firestore = inject(Firestore)
+  protected readonly updateService = inject(UpdateService)
   public readonly services = this.registryService.services
   public readonly error = this.registryService.error
   public readonly isLoading = this.registryService.isLoading
   public showSideMenu: WritableSignal<boolean> = signal(true)
   public onlineStatus: WritableSignal<boolean> = signal(navigator.onLine)
+  public readonly updateAvailable = this.updateService.updateAvailable
   public version = version
+  public staticServices = STATIC_SERVICES
 
   // --- Configuration ---
-  // This URL will point to a hosted Registry Server in production
-  private readonly REGISTRY_SERVICE_URL = './services.json'
-  private _formBuilder = inject<FormBuilder>(FormBuilder)
+  // URL for the service model endpoint
+  private readonly REGISTRY_SERVICE_URL = '/service-model'
+  // private _formBuilder = inject<FormBuilder>(FormBuilder) // Commented out unused injection
 
-  firstFormGroup = this._formBuilder.group({
-    firstCtrl: ['', Validators.required]
-  })
-  secondFormGroup = this._formBuilder.group({
-    secondCtrl: ['', Validators.required]
-  })
-  isLinear = false
+  // Commented out unused form groups
+  // firstFormGroup = this._formBuilder.group({
+  //   firstCtrl: ['', Validators.required]
+  // })
+  // secondFormGroup = this._formBuilder.group({
+  //   secondCtrl: ['', Validators.required]
+  // })
+  // isLinear = false
 
   constructor() {
     window.addEventListener('online', () => this.onlineStatus.set(true))
@@ -88,12 +93,8 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.fetchServiceList()
-  }
-
-  fetchServiceList(): void {
-    console.log('DashboardComponent: Requesting service list fetch.')
-    this.registryService.fetchServices(this.REGISTRY_SERVICE_URL)
+    // Using static services instead of fetching from an endpoint
+    console.log('DashboardComponent: Using static services.')
   }
 
   toggleSideMenu(): void {
@@ -110,7 +111,6 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-
   async logout(): Promise<void> {
     await this.authService.logout()
     // Ensure we navigate to the login page after logout
@@ -118,5 +118,23 @@ export class DashboardComponent implements OnInit {
     setTimeout(() => {
       this.router.navigate(['/login'])
     }, 100)
+  }
+
+  /**
+   * Activates the available update or checks for updates if none are available
+   */
+  activateUpdate(): void {
+    if (this.updateAvailable()) {
+      // If an update is available, activate it
+      this.updateService.activateUpdate()
+        .then(success => {
+          if (!success) {
+            console.error('Failed to activate update')
+          }
+        })
+    } else {
+      // If no update is available, check for updates
+      this.updateService.checkForUpdate()
+    }
   }
 }
