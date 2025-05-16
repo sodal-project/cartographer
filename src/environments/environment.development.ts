@@ -4,11 +4,11 @@ export const environment = {
   production: false,
   version: packageInfo.version,
   firebaseConfig: {
-    apiKey: 'AIzaSyAE51-19a35ObDktOabeqHuXNxUKAtNgaI',
-    authDomain: 'atlas-directory-client.firebaseapp.com',
-    projectId: 'atlas-directory-client',
-    storageBucket: 'atlas-directory-client.firebasestorage.app',
-    messagingSenderId: '53180776924',
-    appId: '1:53180776924:web:b317c52087c94c6956cf19'
+    apiKey: 'AIzaSyCZCUuI2DzlWwwDOuRzzIpQiJ_4jSg7RrA',
+    authDomain: 'cartographer-a03db.firebaseapp.com',
+    projectId: 'cartographer-a03db',
+    storageBucket: 'cartographer-a03db.firebasestorage.app',
+    messagingSenderId: '507004338227',
+    appId: '1:507004338227:web:5043e93b116671f24f6346'
   }
 }
