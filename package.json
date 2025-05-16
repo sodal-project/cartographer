@@ -1,6 +1,6 @@
 {
   "name": "atlas",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "engines": {
     "node": ">=22.0.0"
   },
