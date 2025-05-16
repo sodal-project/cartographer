@@ -1,6 +1,5 @@
 import {
   Component,
-  OnInit,
   inject,
   signal,
   WritableSignal,
@@ -9,7 +8,11 @@ import {
 import {
   Firestore,
   disableNetwork,
-  enableNetwork
+  enableNetwork,
+  collection,
+  getDocs,
+  doc,
+  getDoc
 } from '@angular/fire/firestore'
 import { AuthService } from '../auth.service'
 import { CommonModule } from '@angular/common'
@@ -21,9 +24,6 @@ import { MatListModule } from '@angular/material/list'
 import { MatTooltipModule } from '@angular/material/tooltip'
 import { RegistryService } from '../services/registry.service'
 import { UpdateService } from '../services/update.service'
-import { STATIC_SERVICES } from '../models/static-services'
-// Commented out unused imports
-// import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms'
 import {
   Router,
   RouterLink,
@@ -33,6 +33,7 @@ import {
 import { version } from '../../../package.json'
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu'
 import { MatExpansionModule } from '@angular/material/expansion'
+import { Service } from '../models/service.model'
 
 @Component({
   selector: 'dashboard',
@@ -45,7 +46,6 @@ import { MatExpansionModule } from '@angular/material/expansion'
     MatSidenavModule,
     MatListModule,
     MatTooltipModule,
-    // ReactiveFormsModule, // Commented out unused import
     RouterLink,
     RouterOutlet,
     RouterLinkActive,
@@ -58,43 +58,21 @@ import { MatExpansionModule } from '@angular/material/expansion'
   styleUrls: ['./dashboard.component.sass'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   private registryService = inject(RegistryService)
   protected readonly authService = inject(AuthService)
   private readonly router = inject(Router)
   private readonly firestore = inject(Firestore)
   protected readonly updateService = inject(UpdateService)
-  public readonly services = this.registryService.services
-  public readonly error = this.registryService.error
-  public readonly isLoading = this.registryService.isLoading
   public showSideMenu: WritableSignal<boolean> = signal(true)
   public onlineStatus: WritableSignal<boolean> = signal(navigator.onLine)
   public readonly updateAvailable = this.updateService.updateAvailable
   public version = version
-  public staticServices = STATIC_SERVICES
-
-  // --- Configuration ---
-  // URL for the service model endpoint
-  private readonly REGISTRY_SERVICE_URL = '/service-model'
-  // private _formBuilder = inject<FormBuilder>(FormBuilder) // Commented out unused injection
-
-  // Commented out unused form groups
-  // firstFormGroup = this._formBuilder.group({
-  //   firstCtrl: ['', Validators.required]
-  // })
-  // secondFormGroup = this._formBuilder.group({
-  //   secondCtrl: ['', Validators.required]
-  // })
-  // isLinear = false
+  private servicesCache: Service[] | null = null
 
   constructor() {
     window.addEventListener('online', () => this.onlineStatus.set(true))
     window.addEventListener('offline', () => this.onlineStatus.set(false))
-  }
-
-  ngOnInit(): void {
-    // Using static services instead of fetching from an endpoint
-    console.log('DashboardComponent: Using static services.')
   }
 
   toggleSideMenu(): void {
@@ -121,17 +99,51 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
+   * Fetches the services list from Firestore _services collection
+   * @returns An array of Service objects
+   */
+  staticServices(): Service[] {
+    if (this.servicesCache) {
+      return this.servicesCache
+    }
+
+    // Create an empty array to return while we're fetching the data
+    const emptyServices: Service[] = []
+
+    // Fetch the services list from Firestore _services collection
+    const servicesCollection = collection(this.firestore, '_services')
+    getDocs(servicesCollection)
+      .then((querySnapshot) => {
+        if (!querySnapshot.empty) {
+          const services: Service[] = []
+          querySnapshot.forEach((doc) => {
+            const serviceData = doc.data() as Service
+            serviceData.id = doc.id // Ensure the id is set from the document id
+            services.push(serviceData)
+          })
+          this.servicesCache = services
+        } else {
+          console.error('No services found in _services collection')
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching services:', error)
+      })
+
+    return emptyServices
+  }
+
+  /**
    * Activates the available update or checks for updates if none are available
    */
   activateUpdate(): void {
     if (this.updateAvailable()) {
       // If an update is available, activate it
-      this.updateService.activateUpdate()
-        .then(success => {
-          if (!success) {
-            console.error('Failed to activate update')
-          }
-        })
+      this.updateService.activateUpdate().then((success) => {
+        if (!success) {
+          console.error('Failed to activate update')
+        }
+      })
     } else {
       // If no update is available, check for updates
       this.updateService.checkForUpdate()

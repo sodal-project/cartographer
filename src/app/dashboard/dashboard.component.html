@@ -41,7 +41,7 @@
     <mat-toolbar class="nav-toolbar">Services</mat-toolbar>
 
     <mat-accordion displayMode="flat" class="dash-nav">
-      @for (service of staticServices; track service.id) {
+      @for (service of staticServices(); track service.id) {
         <mat-expansion-panel [disabled]="service.disabled">
           <mat-expansion-panel-header>
             <mat-panel-title>

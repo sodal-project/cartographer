@@ -1,7 +1,3 @@
-export interface Timestamp {
-  seconds: number
-  nanoseconds: number
-}
 
 export interface Endpoint {
   path: string
@@ -23,11 +19,4 @@ export interface Service {
   description?: string
   endpoints?: Endpoint[]
   authentication?: Authentication
-}
-
-export interface ServiceAPI {
-  services: Service[]
-  error?: string
-  isLoading: boolean
-  fetchServices: (registryUrl: string) => void
 }
