@@ -6,6 +6,7 @@ export interface GraphNode {
     model: string
     modelVersion: string
   }
+  noun: Nouns
   createdAt: Timestamp // Timestamp of node creation
   updatedAt: Timestamp // Timestamp of the last update
   data?: { [key: string]: any } // Flexible data associated with the node
@@ -24,20 +25,55 @@ export interface GraphEdge {
   embedding?: number[] // Vector embedding for the edge relationship
 }
 
-export enum Nouns {
-  Person = "person",
-  Content = "content",
-  Action = "action",
-  URI = "uri"
+/**
+ * EmbeddedGraphEdge is a version of GraphEdge that can be embedded directly in a parent document
+ * in a subcollection, reducing the need to create separate GraphEdge documents.
+ * The parent document is implicitly the source of the edge.
+ */
+export interface EmbeddedGraphEdge {
+  id: string // Unique identifier for the edge
+  target: string // ID of the target node (the source is the parent document)
+  label?: string // Optional label describing the relationship
+  verb: EdgeVerbs
+  createdAt: Timestamp // Timestamp of edge creation
+  updatedAt: Timestamp // Timestamp of the last update
+  data?: { [key: string]: any } // Flexible data associated with the edge
+  embedding?: number[] // Vector embedding for the edge relationship
 }
 
-export enum EdgeVerbs {
-  AttributedTo = "attributedTo",
-  Controls = "controls",
-  Created = "created",
-  Earned = "earned",
-  Owns = "owns"
+// Proper Nouns (as first-class citizens in the data model)
+export interface Profile extends GraphNode {
+  noun: 'person'
 }
+
+export interface Content extends GraphNode {
+  noun: 'content'
+}
+
+export interface Action extends GraphNode {
+  noun: 'action'
+}
+
+// End Proper Nouns
+
+export const Nouns = {
+  Person: 'person',
+  Content: 'content',
+  Action: 'action',
+  URI: 'uri'
+} as const
+
+export type Nouns = (typeof Nouns)[keyof typeof Nouns]
+
+export const EdgeVerbs = {
+  AttributedTo: 'attributedTo',
+  Controls: 'controls',
+  Created: 'created',
+  Earned: 'earned',
+  Owns: 'owns'
+} as const
+
+export type EdgeVerbs = (typeof EdgeVerbs)[keyof typeof EdgeVerbs]
 
 interface CreationMetadata {
   module: string
@@ -58,18 +94,20 @@ export interface Timestamp {
 }
 
 // Supported model types with more specific categorization
-export enum ModelType {
-  TextEmbedding = "text-embedding",
-  TextGeneration = "text-generation",
-  ImageEmbedding = "image-embedding",
-  ImageGeneration = "image-generation",
-  MultiModal = "multi-modal"
-}
+export const ModelType = {
+  TextEmbedding: 'text-embedding',
+  TextGeneration: 'text-generation',
+  ImageEmbedding: 'image-embedding',
+  ImageGeneration: 'image-generation',
+  MultiModal: 'multi-modal'
+} as const
+
+export type ModelType = (typeof ModelType)[keyof typeof ModelType]
 
 // Supported embedding dimensions and datatypes
 export interface EmbeddingConfig {
   dimensions: number
-  dataType: "float32" | "float64" | "int8"
+  dataType: 'float32' | 'float64' | 'int8'
   contextWindow?: number
   maxTokens?: number
 }
