@@ -23,6 +23,8 @@ export interface GraphEdge {
   updatedAt: Timestamp // Timestamp of the last update
   data?: { [key: string]: any } // Flexible data associated with the edge
   embedding?: number[] // Vector embedding for the edge relationship
+  confidence?: number // Confidence score as a probability (0-1)
+  weight?: number // Influence or weight score indicating the strength of the relationship
 }
 
 /**
@@ -30,16 +32,7 @@ export interface GraphEdge {
  * in a subcollection, reducing the need to create separate GraphEdge documents.
  * The parent document is implicitly the source of the edge.
  */
-export interface EmbeddedGraphEdge {
-  id: string // Unique identifier for the edge
-  target: string // ID of the target node (the source is the parent document)
-  label?: string // Optional label describing the relationship
-  verb: EdgeVerbs
-  createdAt: Timestamp // Timestamp of edge creation
-  updatedAt: Timestamp // Timestamp of the last update
-  data?: { [key: string]: any } // Flexible data associated with the edge
-  embedding?: number[] // Vector embedding for the edge relationship
-}
+export type EmbeddedGraphEdge = Omit<GraphEdge, 'source'>
 
 // Proper Nouns (as first-class citizens in the data model)
 export interface Profile extends GraphNode {
@@ -74,19 +67,6 @@ export const EdgeVerbs = {
 } as const
 
 export type EdgeVerbs = (typeof EdgeVerbs)[keyof typeof EdgeVerbs]
-
-interface CreationMetadata {
-  module: string
-  version: string
-  model: string
-  modelVersion: string
-}
-
-export type DocRef<T> = {
-  path: string
-  id: string
-  collection: string
-}
 
 export interface Timestamp {
   seconds: number
