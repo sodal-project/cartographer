@@ -28,12 +28,12 @@
   <mat-drawer [opened]="showSideMenu()" class="dash-sidenav" mode="side">
     <mat-toolbar class="nav-toolbar">Views</mat-toolbar>
     <mat-selection-list class="dash-nav">
-      <mat-list-item routerLink="/dashboard/researcher" routerLinkActive="active-link"
-      >Researcher
-      </mat-list-item
-      >
       <mat-list-item routerLink="/dashboard/cartographer" routerLinkActive="active-link"
       >Cartographer
+      </mat-list-item
+      >
+      <mat-list-item routerLink="/dashboard/researcher" routerLinkActive="active-link"
+      >Researcher
       </mat-list-item
       >
     </mat-selection-list>
@@ -43,6 +43,7 @@
     <mat-accordion displayMode="flat" class="dash-nav">
       @for (service of staticServices(); track service.id) {
         <mat-expansion-panel [disabled]="service.disabled">
+
           <mat-expansion-panel-header>
             <mat-panel-title>
               {{ service.name }}
