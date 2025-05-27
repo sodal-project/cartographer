@@ -14,9 +14,6 @@ import {
   getDocs,
   doc,
   getDoc,
-  query,
-  where,
-  limit,
   setDoc,
   vector
 } from '@angular/fire/firestore'
@@ -66,9 +63,7 @@ import { Profile } from '../models/cartographer.model'
     MatInputModule,
     MatFormFieldModule,
     MatProgressSpinnerModule,
-    RouterLink,
     RouterOutlet,
-    RouterLinkActive,
     MatMenu,
     MatMenuItem,
     MatMenuTrigger,
