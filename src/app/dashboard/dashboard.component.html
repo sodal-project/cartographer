@@ -38,28 +38,48 @@
       >
     </mat-selection-list>
 
-    <mat-toolbar class="nav-toolbar">
-      Services
-      <span class="expanding-spacer"></span>
-      <button mat-icon-button (click)="refreshServices()" matTooltip="Refresh services"
-              [disabled]="isLoadingServices()">
-        @if (isLoadingServices()) {
-          <mat-spinner diameter="20"></mat-spinner>
-        } @else {
-          <mat-icon>refresh</mat-icon>
-        }
-      </button>
-    </mat-toolbar>
+    <mat-toolbar class="nav-toolbar">Services</mat-toolbar>
 
-    <mat-selection-list class="dash-nav services-list" (selectionChange)="onServiceSelectionChange($event)">
-      @for (service of services(); track service.id) {
-        <mat-list-option [disabled]="service.disabled" [value]="service.id">
-          <div class="service-item">
-            <div class="service-name">{{ service.name }}</div>
-          </div>
-        </mat-list-option>
+    <mat-accordion displayMode="flat" class="dash-nav">
+      @for (service of staticServices(); track service.id) {
+        <mat-expansion-panel [disabled]="service.disabled">
+
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              {{ service.name }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          @if (service.description) {
+            <div class="service-description">{{ service.description }}</div>
+          }
+
+          @if (service.endpoints || service.authentication) {
+            <div class="service-details">
+              @if (service.endpoints) {
+                <div class="endpoints">
+                  <strong>Endpoints:</strong>
+                  @for (endpoint of service.endpoints; track endpoint.path + endpoint.method) {
+                    <div class="endpoint">
+                      <span class="method">{{ endpoint.method }}</span>
+                      <span class="path">{{ endpoint.path }}</span>
+                      <span class="description">{{ endpoint.description }}</span>
+                    </div>
+                  }
+                </div>
+              }
+              @if (service.authentication) {
+                <div class="authentication">
+                  <strong>Authentication:</strong>
+                  <div>Type: {{ service.authentication.type }}</div>
+                  <div>{{ service.authentication.description }}</div>
+                </div>
+              }
+            </div>
+          }
+        </mat-expansion-panel>
       }
-    </mat-selection-list>
+    </mat-accordion>
   </mat-drawer>
   <mat-drawer-content>
     <router-outlet [name]="'primary'"></router-outlet>
