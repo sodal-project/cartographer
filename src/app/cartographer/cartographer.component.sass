@@ -5,6 +5,110 @@
   overflow: hidden
 // Prevent scrollbars on host
 
+.search-container
+  position: absolute
+  top: 16px
+  left: 50%
+  transform: translateX(-50%)
+  z-index: 10
+  width: 820px
+  max-width: 95%
+
+  .search-boxes
+    display: flex
+    justify-content: space-between
+    gap: 40px
+    margin-bottom: 8px
+
+    @media (max-width: 768px)
+      flex-direction: column
+      gap: 15px
+
+  .search-form
+    flex: 1
+    width: 100%
+
+  .search-box
+    display: flex
+    align-items: center
+    background-color: white
+    border-radius: 24px
+    padding: 4px 8px 4px 16px
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+    transition: box-shadow 0.2s, transform 0.2s
+    width: 100%
+
+    &:hover, &:focus-within
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2)
+      transform: translateY(-1px)
+
+    .search-input
+      flex: 1
+      border: none
+      outline: none
+      font-size: 16px
+      background: transparent
+      padding: 8px 0
+      color: #1C1B1F
+      width: 100%
+
+      &::placeholder
+        color: #79747E
+
+    .search-btn
+      color: #6750A4
+      margin-left: 4px
+
+    .search-spinner
+      margin: 0 4px
+
+  .search-results-actions
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-top: 8px
+    background-color: rgba(255, 255, 255, 0.8)
+    border-radius: 16px
+    padding: 4px 12px
+    width: 100%
+
+    .search-results-count
+      font-size: 14px
+      color: #6750A4
+
+    .search-actions
+      display: flex
+      gap: 8px
+
+      .action-button
+        width: 32px
+        height: 32px
+        border-radius: 50%
+        background-color: #6750A4
+        color: white
+        border: none
+        cursor: pointer
+        display: flex
+        align-items: center
+        justify-content: center
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2)
+        transition: background-color 0.2s, transform 0.2s
+        padding: 0
+
+        &:hover
+          background-color: #7B68B5
+          transform: scale(1.05)
+
+        &:active
+          background-color: #553B93
+          transform: scale(0.95)
+
+        mat-icon
+          font-size: 18px
+          width: 18px
+          height: 18px
+          line-height: 18px
+
 .offline-indicator
   display: flex
   align-items: center
@@ -77,7 +181,13 @@
     // Apply Material font family
 
     .edges line
-      transition: stroke-opacity 0.2s ease-in-out
+      transition: stroke-opacity 0.2s ease-in-out, opacity 0.2s ease-in-out
+
+      &.edge-dimmed
+        stroke-opacity: 0.2
+
+      &.edge-hidden
+        display: none
 
     .node-group
       // Base node styles, specific visual styling handled by D3 attributes
@@ -90,3 +200,21 @@
 
 // Remove generic .node and .edge styles if all styling is now via D3 attributes
 // or ensure they don't conflict
+
+// Search result highlighting styles
+.node-group
+  &.search-result
+    transform: scale(2)
+    z-index: 10
+    // Ensure matching nodes appear above others
+    rect
+      stroke: #6750A4
+      stroke-width: 3
+      filter: drop-shadow(0 0 10px rgba(103, 80, 164, 0.8))
+      fill: #F2EAFF
+    // Light purple background for matching nodes
+
+    text
+      font-weight: bold
+      fill: #1A1A1A
+  // Darker text for better contrast

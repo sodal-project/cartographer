@@ -9,5 +9,5 @@ import { RouterOutlet } from '@angular/router'
   styleUrl: './app.component.sass'
 })
 export class AppComponent {
-  public title: WritableSignal<string> = signal('atlas')
+  public title: WritableSignal<string> = signal('cartographer')
 }
