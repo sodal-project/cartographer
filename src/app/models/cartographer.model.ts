@@ -1,4 +1,7 @@
 export interface GraphNode {
+  _graph_node: {
+    embedding?: number[] // Vector embedding for the node content
+  }
   id: string // Unique identifier for the node
   createdBy: {
     module: string
@@ -14,6 +17,9 @@ export interface GraphNode {
 }
 
 export interface GraphEdge {
+  _graph_node: {
+    embedding?: number[] // Vector embedding for the node content
+  }
   id: string // Unique identifier for the edge
   source: string // ID of the source node
   target: string // ID of the target node

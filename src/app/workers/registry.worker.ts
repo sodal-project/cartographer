@@ -1,8 +1,23 @@
 import { Service } from '../models/service.model'
+import { initializeApp } from 'firebase/app'
+import { getFirestore, collection, getDocs } from 'firebase/firestore'
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: 'AIzaSyCZCUuI2DzlWwwDOuRzzIpQiJ_4jSg7RrA',
+  authDomain: 'cartographer-a03db.firebaseapp.com',
+  projectId: 'cartographer-a03db',
+  storageBucket: 'cartographer-a03db.firebasestorage.app',
+  messagingSenderId: '507004338227',
+  appId: '1:507004338227:web:5043e93b116671f24f6346'
+}
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig)
+const firestore = getFirestore(app)
 
 interface WorkerCommand {
   command: 'getServices'
-  registryUrl: string
 }
 
 type WorkerResponse =
@@ -13,28 +28,32 @@ type WorkerResponse =
 addEventListener('message', async ({ data }: MessageEvent<WorkerCommand>) => {
   console.log('Worker: Message received from main script:', data)
 
-  const { command, registryUrl } = data
+  const { command } = data
 
   if (command === 'getServices') {
-    if (!registryUrl) {
-      postMessage({
-        status: 'error',
-        error: 'Registry URL not provided.'
-      } satisfies WorkerResponse)
-      return
-    }
-
-    console.log(`Worker: Fetching services from ${registryUrl}...`)
+    console.log(
+      'Worker: Fetching services from Firestore _services collection...'
+    )
     try {
-      const response = await fetch(registryUrl)
+      const servicesCollection = collection(firestore, '_services')
+      const querySnapshot = await getDocs(servicesCollection)
 
-      if (!response.ok) {
-        throw new Error(
-          `HTTP error! Status: ${response.status} ${response.statusText}`
-        )
+      if (querySnapshot.empty) {
+        console.warn('Worker: No services found in _services collection')
+        postMessage({
+          status: 'success',
+          data: []
+        } satisfies WorkerResponse)
+        return
       }
 
-      const services: Service[] = await response.json()
+      const services: Service[] = []
+      querySnapshot.forEach((doc) => {
+        const serviceData = doc.data() as Service
+        serviceData.id = doc.id // Ensure the id is set from the document id
+        services.push(serviceData)
+      })
+
       console.log('Worker: Successfully fetched services:', services)
 
       postMessage({

@@ -79,10 +79,9 @@ export class RegistryService implements OnDestroy {
   }
 
   /**
-   * Tells the worker to fetch the list of services.
-   * @param registryUrl The URL of the service registry endpoint.
+   * Tells the worker to fetch the list of services from Firestore.
    */
-  fetchServices(registryUrl: string): void {
+  fetchServices(): void {
     if (!this.worker) {
       this.error.set('Cannot fetch services: Worker is not available.')
       console.warn(
@@ -96,12 +95,11 @@ export class RegistryService implements OnDestroy {
     this.services.set(null)
 
     console.log(
-      `RegistryService: Sending 'getServices' command to worker for URL: ${registryUrl}`
+      'RegistryService: Sending getServices command to worker to fetch from Firestore'
     )
 
     this.worker.postMessage({
-      command: 'getServices',
-      registryUrl: registryUrl
+      command: 'getServices'
     })
   }
 

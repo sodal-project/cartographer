@@ -1,4 +1,4 @@
-import {Component, inject, OnInit, effect} from '@angular/core'
+import {Component, inject, OnInit, effect, signal} from '@angular/core'
 import {CommonModule} from '@angular/common'
 import {AuthService} from '../auth.service'
 import {Router} from '@angular/router'
@@ -37,7 +37,7 @@ export class LoginComponent implements OnInit {
   private domSanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
   private router = inject(Router);
-  public version = version
+  public readonly version = signal(version)
 
   constructor() {
     this.matIconRegistry.addSvgIcon(

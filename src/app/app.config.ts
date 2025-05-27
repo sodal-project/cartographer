@@ -22,7 +22,7 @@ import { LoginComponent } from './login/login.component'
 import { authGuard, loginGuard } from './auth.guard'
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { SearchComponent } from './search/search.component'
-import { Cartographer } from './cartographer/cartographer'
+import { ExploreComponent } from './explore/explore.component'
 
 export const routes: Routes = [
   {
@@ -36,16 +36,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
-        path: 'researcher',
+        path: 'search', // UI label: "Search"
         component: SearchComponent
       },
       {
-        path: 'cartographer',
-        component: Cartographer
+        path: 'explore', // UI label: "Explore"
+        component: ExploreComponent
       },
       {
         path: '',
-        redirectTo: 'cartographer',
+        redirectTo: 'explore',
         pathMatch: 'full'
       }
     ]

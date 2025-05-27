@@ -7,30 +7,6 @@
     </div>
   }
 
-  <!-- Search Box -->
-  <div class="inline-search-bar">
-    <form (submit)="performSearch()" autocomplete="off">
-      <div class="inline-search-box">
-        <input
-          matInput
-          class="inline-search-input"
-          [(ngModel)]="searchQuery"
-          name="search"
-          placeholder="Search..."
-          (keyup.enter)="performSearch()"
-          autocomplete="off"
-        />
-        <button
-          mat-icon-button
-          type="submit"
-          class="inline-search-btn"
-          aria-label="Search"
-        >
-          <mat-icon>search</mat-icon>
-        </button>
-      </div>
-    </form>
-  </div>
 
 
   <!-- Loading Indicator -->
@@ -43,19 +19,45 @@
   <!-- Search Results -->
   @if (searchResults().length > 0) {
     <div class="search-results">
-      @for (result of searchResults(); track result.id) {
+      @for (result of searchResults(); track result.profile.id) {
         <mat-card class="result-card">
           <mat-card-header>
-            <mat-card-title>{{ result.title }}</mat-card-title>
-            <mat-card-subtitle>Score: {{ result.score.toFixed(2) }}</mat-card-subtitle>
+            <!-- Display avatar image if available -->
+            @if (result.profile.data?.avatar) {
+              <img mat-card-avatar [src]="result.profile.data.avatar" alt="Avatar"
+                   (error)="handleImageError($event)">
+            } @else {
+              <img mat-card-avatar src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+                   alt="Default Avatar">
+            }
+            <mat-card-title>{{ result.profile.data?.displayName || result.profile.data?.handle || result.profile['name'] || result.profile.id }}</mat-card-title>
+            <mat-card-subtitle>Similarity: {{ result.similarity.toFixed(2) }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            <p>{{ result.content }}</p>
+            @if (result.profile['description'] || result.profile.data?.description) {
+              <p>{{ result.profile.data?.description || result.profile['description'] }}</p>
+            }
+            @if (result.profile['email'] || result.profile.data?.email) {
+              <p><strong>Email:</strong> {{ result.profile.data?.email || result.profile['email'] }}</p>
+            }
+            @if (result.profile['phone'] || result.profile.data?.phone) {
+              <p><strong>Phone:</strong> {{ result.profile.data?.phone || result.profile['phone'] }}</p>
+            }
+            @if (result.profile['company'] || result.profile.data?.company) {
+              <p><strong>Company:</strong> {{ result.profile.data?.company || result.profile['company'] }}</p>
+            }
+
+            <!-- Display all other data fields -->
+            @if (result.profile.data) {
+              @for (item of getDataEntries(result.profile.data); track item.key) {
+                @if (!['avatar', 'displayName', 'handle', 'description', 'email', 'phone', 'company'].includes(item.key)) {
+                  <p><strong>{{ item.key }}:</strong> {{ item.value }}</p>
+                }
+              }
+            }
           </mat-card-content>
           <mat-card-actions align="end">
-            <button mat-button color="primary" (click)="viewDetails(result)">
-              VIEW DETAILS
-            </button>
+
           </mat-card-actions>
         </mat-card>
       }
@@ -63,10 +65,10 @@
   }
 
   <!-- No Results Message -->
-  @if (!isLoading && searchResults.length === 0 && searchQuery()) {
+  @if (!isLoading() && searchResults().length === 0) {
     <div class="no-results">
       <mat-icon>search_off</mat-icon>
-      <p>No results found for "{{ searchQuery() }}"</p>
+      <p>No profiles found</p>
     </div>
   }
 </div>

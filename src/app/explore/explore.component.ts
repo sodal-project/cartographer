@@ -18,7 +18,9 @@ import {
 import { collection, collectionData, Firestore } from '@angular/fire/firestore'
 import { Observable } from 'rxjs'
 import { toSignal } from '@angular/core/rxjs-interop'
-import { MatIcon } from '@angular/material/icon'
+import { MatIcon, MatIconModule } from '@angular/material/icon'
+import { BrainyData } from '@soulcraft/brainy'
+import { ProfileService } from '../services/profile.service'
 
 // Define interfaces for graph data (adjust as per your actual data structure)
 interface GraphNode {
@@ -31,6 +33,9 @@ interface GraphNode {
   vy?: number
   fx?: number | null
   fy?: number | null
+
+  // Allow accessing arbitrary string properties
+  [key: string]: any
 }
 
 interface GraphEdge {
@@ -58,7 +63,7 @@ interface CustomNode extends Node {
 }
 
 @Component({
-  selector: 'd3-cartographer',
+  selector: 'd3-explore',
   standalone: true,
   imports: [MatIcon],
   template: `
@@ -78,9 +83,9 @@ interface CustomNode extends Node {
     </div>
     <div #container class="graph-container"></div>
   `,
-  styleUrls: ['./cartographer.component.sass']
+  styleUrls: ['./explorer.component.sass']
 })
-export class Cartographer implements AfterViewInit, OnDestroy {
+export class ExploreComponent implements AfterViewInit, OnDestroy {
   @ViewChild('container', { static: true })
   containerRef!: ElementRef<HTMLDivElement>
   // We no longer need the subscription since we're using signals
@@ -88,6 +93,7 @@ export class Cartographer implements AfterViewInit, OnDestroy {
   // Convert to signals
   private graphNodes: WritableSignal<GraphNode[]> = signal([])
   private graphEdges: WritableSignal<GraphEdge[]> = signal([])
+  private searchResults: WritableSignal<any[]> = signal([])
   public isOffline: WritableSignal<boolean> = signal(!navigator.onLine)
 
   // References for zoom functionality
@@ -119,6 +125,8 @@ export class Cartographer implements AfterViewInit, OnDestroy {
   private firestore = inject(Firestore)
   private zone = inject(NgZone)
   private injector = inject(Injector)
+  private profileService = inject(ProfileService)
+  private brainyService = new BrainyData()
 
   // Store references to event listener functions for cleanup
   private onlineListener = () => this.isOffline.set(false)
@@ -153,6 +161,61 @@ export class Cartographer implements AfterViewInit, OnDestroy {
         })
       }
     })
+
+    // Wait for ProfileService to initialize before fetching initial search results
+    this.profileService
+      .waitForInitialization()
+      .then(() => {
+        console.log(
+          'ProfileService initialized, fetching initial search results'
+        )
+        return this.fetchSearchResults()
+      })
+      .catch((error) => {
+        console.error(
+          'Error initializing ProfileService or fetching initial search results:',
+          error
+        )
+      })
+  }
+
+  /**
+   * Fetches the latest search results from the Brainy database
+   * @param limit The maximum number of results to return (default: 100)
+   */
+  private async fetchSearchResults(limit: number = 100): Promise<void> {
+    try {
+      console.log('Fetching search results from Brainy database')
+
+      // Initialize the database if needed
+      await this.brainyService.init()
+
+      // Use an empty string query to get all results
+      // Increased limit to show all profiles initially
+      const searchResults = await this.brainyService.search("", limit)
+
+      // Transform the search results to match the expected format
+      const transformedResults = searchResults.map((result) => ({
+        profile: {
+          id: result.id,
+          ...result.metadata,
+          data: result.metadata
+        },
+        similarity: result.score
+      }))
+
+      console.log(
+        `Search results from Brainy: ${transformedResults.length} profiles found`
+      )
+
+      if (transformedResults.length > 0) {
+        this.searchResults.set(transformedResults)
+      } else {
+        console.warn('No profiles found in BrainyData. The graph may be empty.')
+      }
+    } catch (error) {
+      console.error('Error fetching search results from Brainy:', error)
+    }
   }
 
   ngAfterViewInit() {
@@ -203,12 +266,31 @@ export class Cartographer implements AfterViewInit, OnDestroy {
           // Component is now visible with dimensions
           this.isVisible.set(true)
 
-          // If we have data, create the graph
-          if (this.d3Data().nodes.length > 0) {
-            this.zone.runOutsideAngular(() => {
-              this.createGraph()
+          // Wait for ProfileService to initialize before fetching search results
+          this.profileService
+            .waitForInitialization()
+            .then(() => {
+              console.log('ProfileService initialized, fetching search results')
+
+              // Refresh search results when component becomes visible
+              return this.fetchSearchResults()
             })
-          }
+            .then(() => {
+              // If we have data, create the graph
+              if (this.d3Data().nodes.length > 0) {
+                this.zone.runOutsideAngular(() => {
+                  this.createGraph()
+                })
+              } else {
+                console.log('No nodes available when component became visible')
+              }
+            })
+            .catch((error) => {
+              console.error(
+                'Error initializing or fetching search results:',
+                error
+              )
+            })
         }
       }
     })
@@ -223,12 +305,85 @@ export class Cartographer implements AfterViewInit, OnDestroy {
     // Get the current values from the signals
     const graphNodes = this.graphNodes()
     const graphEdges = this.graphEdges()
+    const searchResultsData = this.searchResults()
 
     // Transform GraphNode objects to match the CustomNode interface expected by D3
     const nodes: CustomNode[] = graphNodes.map((n) => {
       // Create a copy of the node with the data property structured as expected by D3
       return n as CustomNode
     })
+
+    // Add search results from Brainy to the nodes array if available
+    if (searchResultsData.length > 0) {
+      console.log('Adding search results to D3 data:', searchResultsData)
+
+      // Convert search results to CustomNode format
+      const searchResultNodes: CustomNode[] = searchResultsData.map(
+        (result) => {
+          // Extract the profile from the search result
+          const profile = result.profile
+
+          // Create a CustomNode from the profile, ensuring it has the required properties
+          const node: CustomNode = {
+            id: profile.id,
+            group: 1, // Use a different group to highlight search results
+            ...profile, // Spread other properties from profile
+            data: {
+              displayName:
+                profile.data?.displayName || profile.displayName || 'Unknown',
+              handle: profile.data?.handle || profile.handle || '',
+              avatar: profile.data?.avatar || profile.avatar || '',
+              ...profile.data // Spread other data properties
+            }
+          }
+
+          // Add similarity score to the node data if available
+          if (result['similarity'] !== undefined) {
+            node.data['similarity'] = result['similarity']
+          }
+
+          return node
+        }
+      )
+
+      // Add search result nodes to the nodes array
+      // Use a Set to deduplicate nodes by ID
+      const nodeIds = new Set(nodes.map((n) => n.id))
+      for (const node of searchResultNodes) {
+        if (!nodeIds.has(node.id)) {
+          nodes.push(node)
+          nodeIds.add(node.id)
+        } else {
+          // If the node already exists, update its group to highlight it
+          const existingNode = nodes.find((n) => n.id === node.id)
+          if (existingNode) {
+            existingNode.group = 1
+
+            // Ensure existingNode.data is initialized
+            if (!existingNode.data) {
+              existingNode.data = {
+                displayName: node.data?.displayName || 'Unknown',
+                handle: node.data?.handle || '',
+                avatar: node.data?.avatar || ''
+              }
+            }
+
+            // Copy similarity score if available
+            if (node.data?.['similarity'] !== undefined) {
+              existingNode.data['similarity'] = node.data?.['similarity']
+            }
+
+            // Update other data properties if needed
+            if (node.data) {
+              existingNode.data = {
+                ...existingNode.data,
+                ...node.data
+              }
+            }
+          }
+        }
+      }
+    }
 
     const edges: Edge[] = graphEdges.map(
       (e) =>
@@ -351,18 +506,6 @@ export class Cartographer implements AfterViewInit, OnDestroy {
       .join('g')
       .attr('class', 'node-group')
       .style('cursor', 'pointer')
-
-    // Create a clip path for circular avatars
-    // const clipPaths = defs
-    //   .selectAll('.avatar-clip')
-    //   .data(nodes)
-    //   .enter()
-    //   .append('clipPath')
-    //   .attr('id', (d) => `avatar-clip-${d.id}`)
-    //   .append('circle')
-    //   .attr('r', avatarRadius)
-    //   .attr('cx', 0)
-    //   .attr('cy', 0)
 
     // Add card background with squared left corners and rounded right corners
     node
@@ -721,7 +864,9 @@ export class Cartographer implements AfterViewInit, OnDestroy {
     // Using the same cornerRadius as defined above
     popup
       .append('path')
-      .attr('d', `
+      .attr(
+        'd',
+        `
         M ${popupX} ${popupY + titleBarHeight}
         H ${popupX + labelWidth}
         V ${popupY + popupHeight}
@@ -729,7 +874,8 @@ export class Cartographer implements AfterViewInit, OnDestroy {
         Q ${popupX} ${popupY + popupHeight} ${popupX} ${popupY + popupHeight - cornerRadius}
         V ${popupY + titleBarHeight}
         Z
-      `)
+      `
+      )
       .attr('fill', md3Colors.labelBackground)
 
     // Helper function to force wrap text to fit available width without ellipsis
@@ -761,7 +907,9 @@ export class Cartographer implements AfterViewInit, OnDestroy {
       const charsToKeep = Math.floor(maxWidth / avgCharWidth)
 
       // Ensure we keep at least one character
-      return charsToKeep > 0 ? text.substring(0, charsToKeep) : text.substring(0, 1)
+      return charsToKeep > 0
+        ? text.substring(0, charsToKeep)
+        : text.substring(0, 1)
     }
 
     // Function to add a data row
@@ -926,9 +1074,9 @@ export class Cartographer implements AfterViewInit, OnDestroy {
     popup.select('rect').attr('height', finalPopupHeight)
 
     // Update label area background height by recreating the path with new height
-    popup
-      .select('path[fill="' + md3Colors.labelBackground + '"]')
-      .attr('d', `
+    popup.select('path[fill="' + md3Colors.labelBackground + '"]').attr(
+      'd',
+      `
         M ${popupX} ${popupY + titleBarHeight}
         H ${popupX + labelWidth}
         V ${popupY + finalPopupHeight}
@@ -936,7 +1084,8 @@ export class Cartographer implements AfterViewInit, OnDestroy {
         Q ${popupX} ${popupY + finalPopupHeight} ${popupX} ${popupY + finalPopupHeight - cornerRadius}
         V ${popupY + titleBarHeight}
         Z
-      `)
+      `
+    )
 
     // Add click handler to SVG to close popup when clicking outside
     this.svgElement?.on('click.popup', (event) => {

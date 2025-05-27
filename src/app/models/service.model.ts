@@ -1,4 +1,3 @@
-
 export interface Endpoint {
   path: string
   method: string
@@ -19,4 +18,5 @@ export interface Service {
   description?: string
   endpoints?: Endpoint[]
   authentication?: Authentication
+  lastUpdated?: string
 }

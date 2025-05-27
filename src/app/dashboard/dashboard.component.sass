@@ -1,4 +1,5 @@
 @use '@angular/material' as mat
+@use 'sass:color'
 
 $color-dark-gray: darkgray
 $color-dim-gray: dimgray
@@ -19,7 +20,8 @@ $color-green: green
 
 $toolbar-height: 4rem
 $font-size-small: 0.8rem
-$dash-container-height: calc(100vh - #{$toolbar-height * 2})
+$search-container-height: 5rem
+$dash-container-height: calc(100vh - #{$toolbar-height * 2} - #{$search-container-height})
 $dash-content-height: calc(100% - 2rem)
 
 .dash-container
@@ -43,6 +45,99 @@ $dash-content-height: calc(100% - 2rem)
 
 .dash-toolbar
   background-color: $color-dark-gray
+
+// Search container styles
+.search-container
+  display: flex
+  padding: 1.25rem 1.5rem
+  background-color: color.scale($color-dark-gray, $lightness: 5%)
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1)
+  gap: 1rem
+
+  .search-box
+    flex: 1
+
+  .view-toggle-button
+    align-self: center
+    height: 56px
+    width: 120px
+    border-radius: 28px
+    padding: 0 20px
+    font-weight: 500
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
+    transition: all 0.3s ease
+
+    &:hover
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15)
+      transform: translateY(-1px)
+
+    mat-icon
+      margin-right: 8px
+
+  mat-form-field
+    width: 100%
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper
+      display: none
+
+    &.modern-search
+      ::ng-deep .mat-mdc-text-field-wrapper
+        background-color: white
+        border-radius: 28px
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
+        transition: all 0.3s ease
+        padding: 0
+
+        &:hover
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15)
+          transform: translateY(-1px)
+
+      ::ng-deep .mat-mdc-form-field-flex
+        align-items: center
+        min-height: 56px
+        padding: 0 16px
+        border-radius: 28px
+
+      // Hide the notched outline completely
+      ::ng-deep .mdc-notched-outline
+        display: none
+
+      ::ng-deep .mat-mdc-form-field-infix
+        padding: 8px 0
+        border-top: 0
+
+      // Style for the input
+      ::ng-deep input.mat-mdc-input-element
+        font-size: 20px
+        letter-spacing: 0.15px
+        color: rgba(0, 0, 0, 0.87)
+        line-height: 40px
+        padding-top: 0
+
+      // Style for the placeholder
+      ::ng-deep input.mat-mdc-input-element::placeholder
+        color: rgba(0, 0, 0, 0.45)
+        font-size: 20px
+        font-weight: 500
+        text-align: left
+        width: 100%
+        line-height: 40px
+        padding-top: 0
+
+      // Focus state
+      ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2)
+        border-color: #6200ee
+
+      mat-icon
+        color: rgba(0, 0, 0, 0.54)
+        margin-right: 4px
+
+      button[mat-icon-button]
+        transition: all 0.2s ease
+
+        &:hover
+          background-color: rgba(0, 0, 0, 0.04)
 
 .nav-toolbar
   background-color: $color-dim-gray
@@ -76,7 +171,7 @@ $dash-content-height: calc(100% - 2rem)
   span
     // Target the span specifically if you need to adjust its margin relative to the icon
     margin-left: 8px
-    // Adjust as needed, or remove if your button already has sufficient margin
+// Adjust as needed, or remove if your button already has sufficient margin
 
 .version-update-container
   display: flex
@@ -95,6 +190,22 @@ $dash-content-height: calc(100% - 2rem)
     border-radius: 0
     margin: 0
     padding: 0.5rem
+
+  .service-info
+    margin-top: 8px
+    margin-bottom: 8px
+    padding: 8px
+    background-color: rgba(0, 0, 0, 0.05)
+    border-radius: 4px
+    font-size: 0.9rem
+
+    div
+      margin-bottom: 4px
+      color: rgba(50, 50, 50, 0.9)
+
+      strong
+        color: rgba(0, 0, 0, 0.9)
+        margin-right: 4px
 
   .service-description
     font-style: italic

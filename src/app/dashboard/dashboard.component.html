@@ -23,17 +23,70 @@
   </mat-menu>
 </mat-toolbar>
 
+<!-- Search boxes -->
+<div class="search-container">
+  <div class="search-box">
+    <mat-form-field appearance="outline" class="modern-search">
+      <input matInput
+             type="text"
+             [ngModel]="vectorSearchQuery()"
+             (ngModelChange)="performVectorSearch($event)"
+             placeholder="Search the Network">
+      @if (vectorSearchQuery()) {
+        <button matSuffix
+                mat-icon-button
+                aria-label="Clear"
+                (click)="performVectorSearch('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+      @if (!vectorSearchQuery() && !isSearching()) {
+        <mat-icon matSuffix>search</mat-icon>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="search-box">
+    <mat-form-field appearance="outline" class="modern-search">
+      <input matInput
+             type="text"
+             [ngModel]="localSearchQuery()"
+             (ngModelChange)="performLocalSearch($event)"
+             placeholder="Search Locally">
+      @if (localSearchQuery()) {
+        <button matSuffix
+                mat-icon-button
+                aria-label="Clear"
+                (click)="performLocalSearch('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+      @if (!localSearchQuery()) {
+        <mat-icon matSuffix>filter_list</mat-icon>
+      }
+    </mat-form-field>
+  </div>
+
+  <button mat-flat-button
+          color="primary"
+          class="view-toggle-button"
+          (click)="toggleView()"
+          [matTooltip]="currentView() === 'explore' ? 'Switch to Search View' : 'Switch to Explore View'">
+    <mat-icon>{{ currentView() === 'explore' ? 'search' : 'explore' }}</mat-icon>
+    {{ currentView() === 'explore' ? 'Search' : 'Explore' }}
+  </button>
+</div>
 
 <mat-drawer-container class="dash-container" autosize>
   <mat-drawer [opened]="showSideMenu()" class="dash-sidenav" mode="side">
     <mat-toolbar class="nav-toolbar">Views</mat-toolbar>
     <mat-selection-list class="dash-nav">
-      <mat-list-item routerLink="/dashboard/cartographer" routerLinkActive="active-link"
-      >Cartographer
+      <mat-list-item routerLink="/dashboard/explore" routerLinkActive="active-link"
+      >Explore
       </mat-list-item
       >
-      <mat-list-item routerLink="/dashboard/researcher" routerLinkActive="active-link"
-      >Researcher
+      <mat-list-item routerLink="/dashboard/search" routerLinkActive="active-link"
+      >Search
       </mat-list-item
       >
     </mat-selection-list>
@@ -49,6 +102,14 @@
               {{ service.name }}
             </mat-panel-title>
           </mat-expansion-panel-header>
+
+          <div class="service-info">
+            <div><strong>Name:</strong> {{ service.name }}</div>
+            <div><strong>Version:</strong> {{ service.version }}</div>
+            @if (service.lastUpdated) {
+              <div><strong>Last Updated:</strong> {{ service.lastUpdated | date:'medium' }}</div>
+            }
+          </div>
 
           @if (service.description) {
             <div class="service-description">{{ service.description }}</div>
@@ -102,7 +163,7 @@
   <span class="expanding-spacer"></span>
 
   <div class="version-update-container">
-    <span matTooltip="Application Version" style="margin-right: 16px;">Version: {{ version }}</span>
+    <span matTooltip="Application Version" style="margin-right: 16px;">Version: {{ version() }}</span>
     <button mat-icon-button
             (click)="activateUpdate()"
             [matTooltip]="updateAvailable() ? 'Update available. Click to update.' : 'Check for updates'"
