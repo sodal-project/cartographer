@@ -1,6 +1,6 @@
 {
-  "name": "atlas",
-  "short_name": "atlas",
+  "name": "cartographer",
+  "short_name": "cartographer",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",

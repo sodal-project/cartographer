@@ -1,7 +1,7 @@
 {
   "configVersion": 1,
-  "timestamp": 1747776675324,
-  "index": "/atlas/index.html",
+  "timestamp": 1748368009628,
+  "index": "/cartographer/index.html",
   "assetGroups": [
     {
       "name": "app",
@@ -11,13 +11,13 @@
         "ignoreVary": true
       },
       "urls": [
-        "/atlas/favicon.ico",
-        "/atlas/index.html",
-        "/atlas/main-XDLI6DR6.js",
-        "/atlas/manifest.webmanifest",
-        "/atlas/polyfills-FFHMD2TL.js",
-        "/atlas/styles-ZMIV6NIE.css",
-        "/atlas/worker-EBSBD5DK.js"
+        "/cartographer/favicon.ico",
+        "/cartographer/index.html",
+        "/cartographer/main-VIZQ4WPS.js",
+        "/cartographer/manifest.webmanifest",
+        "/cartographer/polyfills-B6TNHZQ6.js",
+        "/cartographer/styles-ZMIV6NIE.css",
+        "/cartographer/worker-EBSBD5DK.js"
       ],
       "patterns": []
     },
@@ -29,41 +29,41 @@
         "ignoreVary": true
       },
       "urls": [
-        "/atlas/icons/atlas.png",
-        "/atlas/icons/github.svg",
-        "/atlas/icons/google.svg",
-        "/atlas/icons/icon-128x128.png",
-        "/atlas/icons/icon-144x144.png",
-        "/atlas/icons/icon-152x152.png",
-        "/atlas/icons/icon-192x192.png",
-        "/atlas/icons/icon-384x384.png",
-        "/atlas/icons/icon-512x512.png",
-        "/atlas/icons/icon-72x72.png",
-        "/atlas/icons/icon-96x96.png"
+        "/cartographer/icons/cartographer.png",
+        "/cartographer/icons/github.svg",
+        "/cartographer/icons/google.svg",
+        "/cartographer/icons/icon-128x128.png",
+        "/cartographer/icons/icon-144x144.png",
+        "/cartographer/icons/icon-152x152.png",
+        "/cartographer/icons/icon-192x192.png",
+        "/cartographer/icons/icon-384x384.png",
+        "/cartographer/icons/icon-512x512.png",
+        "/cartographer/icons/icon-72x72.png",
+        "/cartographer/icons/icon-96x96.png"
       ],
       "patterns": []
     }
   ],
   "dataGroups": [],
   "hashTable": {
-    "/atlas/favicon.ico": "09b8d8533121964100b5f8f9805ec4331c529a1b",
-    "/atlas/icons/atlas.png": "be94927a8f45b4ce84f8aaa4145cbc4baf668806",
-    "/atlas/icons/github.svg": "f202b6faccfd5cc46299b976c2635fee60b55aa0",
-    "/atlas/icons/google.svg": "315bf2f5d840f94c70b6fc599a15e4d5817f9e15",
-    "/atlas/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
-    "/atlas/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
-    "/atlas/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
-    "/atlas/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
-    "/atlas/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
-    "/atlas/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
-    "/atlas/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
-    "/atlas/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
-    "/atlas/index.html": "3429d7e4493405a66dc597b7efbb53b8ec058132",
-    "/atlas/main-XDLI6DR6.js": "eae41d4b18c54aab0e32d9c8bda52e38a3068da1",
-    "/atlas/manifest.webmanifest": "8cfa736056f146a5fbf15e10c4035fb65dba064f",
-    "/atlas/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
-    "/atlas/styles-ZMIV6NIE.css": "27fdf5edaf925bbe88f22f78fd3ed7867b5e2cff",
-    "/atlas/worker-EBSBD5DK.js": "edec528f4c07b8ce6d206119d54dd3fd0aaa736c"
+    "/cartographer/favicon.ico": "09b8d8533121964100b5f8f9805ec4331c529a1b",
+    "/cartographer/icons/cartographer.png": "be94927a8f45b4ce84f8aaa4145cbc4baf668806",
+    "/cartographer/icons/github.svg": "f202b6faccfd5cc46299b976c2635fee60b55aa0",
+    "/cartographer/icons/google.svg": "315bf2f5d840f94c70b6fc599a15e4d5817f9e15",
+    "/cartographer/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
+    "/cartographer/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
+    "/cartographer/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
+    "/cartographer/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
+    "/cartographer/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
+    "/cartographer/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
+    "/cartographer/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
+    "/cartographer/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
+    "/cartographer/index.html": "2e90e2d4a26134374e954f743e575f3d3c241ad1",
+    "/cartographer/main-VIZQ4WPS.js": "a78204679f356af04b538fd22d8f9d91732a9117",
+    "/cartographer/manifest.webmanifest": "90f8f6e4756bcc3f8ec0aa6457bf23621185e14d",
+    "/cartographer/polyfills-B6TNHZQ6.js": "bf76ac291d7f51c1139b7edcf86b359a30c08c64",
+    "/cartographer/styles-ZMIV6NIE.css": "27fdf5edaf925bbe88f22f78fd3ed7867b5e2cff",
+    "/cartographer/worker-EBSBD5DK.js": "edec528f4c07b8ce6d206119d54dd3fd0aaa736c"
   },
   "navigationUrls": [
     {
