@@ -1,6 +1,6 @@
 {
   "name": "cartographer",
-  "version": "0.2.6",
+  "version": "0.2.8",
   "engines": {
     "node": ">=22.0.0"
   },
