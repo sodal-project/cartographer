@@ -21,6 +21,7 @@ import { toSignal } from '@angular/core/rxjs-interop'
 import { MatIcon, MatIconModule } from '@angular/material/icon'
 import { BrainyData } from '@soulcraft/brainy'
 import { ProfileService } from '../services/profile.service'
+import { EdgeVerbs } from '../models/cartographer.model'
 
 // Define interfaces for graph data (adjust as per your actual data structure)
 interface GraphNode {
@@ -51,6 +52,8 @@ interface Node extends d3.SimulationNodeDatum, GraphNode {}
 interface Edge extends d3.SimulationLinkDatum<Node> {
   source: string | Node // D3 expects source/target to be Node objects or IDs after processing
   target: string | Node
+  verb?: keyof typeof EdgeVerbs // Verb name from EdgeVerbs
+  confidence?: number // Confidence score between 0 and 1
 }
 
 interface CustomNode extends Node {
@@ -192,7 +195,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
 
       // Use an empty string query to get all results
       // Increased limit to show all profiles initially
-      const searchResults = await this.brainyService.search("", limit)
+      const searchResults = await this.brainyService.search('', limit)
 
       // Transform the search results to match the expected format
       const transformedResults = searchResults.map((result) => ({
@@ -396,7 +399,85 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
             typeof e.target === 'string' ? e.target : (e.target as GraphNode).id
         }) as Edge
     )
+
+    // Add random edges for testing layout
+    this.addRandomEdges(nodes, edges)
+
     return { nodes, edges }
+  }
+
+  /**
+   * Adds random edges between existing nodes for testing layout
+   * @param nodes The array of nodes
+   * @param edges The array of edges to add random edges to
+   */
+  private addRandomEdges(nodes: CustomNode[], edges: Edge[]): void {
+    if (nodes.length < 2) return // Need at least 2 nodes to create edges
+
+    // Create a set of existing edges to avoid duplicates
+    const existingEdges = new Set<string>()
+    edges.forEach((edge) => {
+      const sourceId =
+        typeof edge.source === 'string' ? edge.source : (edge.source as Node).id
+      const targetId =
+        typeof edge.target === 'string' ? edge.target : (edge.target as Node).id
+      existingEdges.add(`${sourceId}-${targetId}`)
+      existingEdges.add(`${targetId}-${sourceId}`) // Consider undirected graph
+    })
+
+    // Determine number of random edges to add (e.g., 20% of node count)
+    const numRandomEdges = Math.max(Math.floor(nodes.length * 0.2), 1)
+    console.log(`Adding ${numRandomEdges} random edges for layout testing`)
+
+    // Get array of verb keys for random selection
+    const verbKeys = Object.keys(EdgeVerbs) as Array<keyof typeof EdgeVerbs>
+
+    // Add random edges
+    let addedEdges = 0
+    let attempts = 0
+    const maxAttempts = nodes.length * 10 // Avoid infinite loop
+
+    while (addedEdges < numRandomEdges && attempts < maxAttempts) {
+      attempts++
+
+      // Pick two random nodes
+      const sourceIndex = Math.floor(Math.random() * nodes.length)
+      const targetIndex = Math.floor(Math.random() * nodes.length)
+
+      // Skip if same node (no self-loops)
+      if (sourceIndex === targetIndex) continue
+
+      const sourceId = nodes[sourceIndex].id
+      const targetId = nodes[targetIndex].id
+
+      // Skip if edge already exists
+      if (existingEdges.has(`${sourceId}-${targetId}`)) continue
+
+      // Generate random verb and confidence score
+      const randomVerbIndex = Math.floor(Math.random() * verbKeys.length)
+      const randomVerb = verbKeys[randomVerbIndex]
+      const randomConfidence = Math.random() // Random value between 0 and 1
+
+      // Add the new edge with verb and confidence
+      edges.push({
+        source: sourceId,
+        target: targetId,
+        verb: randomVerb,
+        confidence: randomConfidence
+      } as Edge)
+
+      // Mark as existing to avoid duplicates
+      existingEdges.add(`${sourceId}-${targetId}`)
+      existingEdges.add(`${targetId}-${sourceId}`) // Consider undirected graph
+
+      addedEdges++
+    }
+
+    if (attempts >= maxAttempts && addedEdges < numRandomEdges) {
+      console.warn(
+        `Could only add ${addedEdges} random edges after ${attempts} attempts`
+      )
+    }
   }
 
   createGraph() {
@@ -483,15 +564,184 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .append('g')
       .attr('class', 'graph-content-container')
 
-    const link = graphContainer
+    // Create edge groups to hold both the line and the label
+    const linkGroup = graphContainer
       .append('g')
       .attr('class', 'edges')
-      .selectAll('line')
+      .selectAll('g')
       .data(edges)
-      .join('line')
+      .join('g')
+      .attr('class', 'edge-group')
+
+    // Add the lines with thickness based on confidence
+    const link = linkGroup
+      .append('line')
       .attr('stroke', md3Colors.outline)
-      .attr('stroke-opacity', 0.5)
-      .attr('stroke-width', 1.5)
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', (d) => {
+        // Scale stroke width based on confidence with more dramatic effect (default to 1.5 if no confidence)
+        return d.confidence ? 1 + d.confidence * 5 : 1.5
+      })
+
+    // Create a function to create a centered label group with two lines of text
+    const createCenteredLabelGroup = (
+      parent: d3.Selection<any, any, any, any>
+    ) => {
+      // Store reference to component for use in event handlers
+      const component = this
+
+      // Add edge label group to hold background and text
+      const labelGroup = parent
+        .append('g')
+        .attr('class', 'edge-label-group')
+        .style('cursor', 'pointer') // Add pointer cursor to indicate clickability
+
+      // Add background circle for edge labels
+      labelGroup
+        .append('circle')
+        .attr('class', 'edge-label-background')
+        .attr('fill', 'white')
+        .attr('fill-opacity', 0.95) // High opacity for better visibility
+        .attr('stroke', md3Colors.outline)
+        .attr('stroke-width', 0.5)
+        .attr('stroke-opacity', 0.7)
+        .attr('r', 0) // Will be updated based on text width
+        .attr('cx', 0)
+        .attr('cy', 0)
+        .style('filter', 'url(#md-shadow)')
+
+      // Add pie chart arc for confidence percentage (hollow in the middle for better text visibility)
+      const arcGenerator = d3
+        .arc<any>()
+        .innerRadius(0) // Will be updated to create a hollow center
+        .outerRadius(0) // Will be updated based on text width
+        .startAngle(0)
+        .endAngle(function (d) {
+          const edge = d as Edge
+          if (edge.confidence !== undefined) {
+            // Convert confidence to radians (full circle = 2π)
+            return edge.confidence * 2 * Math.PI
+          }
+          return 0
+        })
+
+      // Add the pie chart arc
+      labelGroup
+        .append('path')
+        .attr('class', 'edge-label-pie')
+        .attr('fill', '#4DB6AC') // Soft teal color
+        .attr('fill-opacity', 0.7)
+        .attr('d', function (d) {
+          return arcGenerator(d)
+        })
+
+      // Add directional arrow at the bottom of the circle
+      labelGroup
+        .append('path')
+        .attr('class', 'edge-label-arrow')
+        .attr('d', 'M-5,0 L5,0 M2,-3 L5,0 L2,3') // Shorter arrow shape
+        .attr('stroke', 'red') // Changed to red for better visibility
+        .attr('stroke-width', 1.5)
+        .attr('fill', 'none')
+      // Initial transform is just for positioning, will be updated in tick function
+      // No need to set rotation here as it will be set in the tick function
+
+      // Create a text element for the label
+      const labelText = labelGroup
+        .append('text')
+        .attr('class', 'edge-label')
+        .attr('text-anchor', 'middle')
+        .attr('fill', md3Colors.outline)
+        .style('font-family', "'Roboto', 'Inter', sans-serif")
+        .style('font-size', '12px') // Increased font size
+        .style('font-weight', '900') // Extra bold text
+        .style('pointer-events', 'none') // Allow clicks to pass through to the group
+
+      // Helper function to split camelCase and capitalize each word
+      const formatVerbLabel = (verb: string): string => {
+        // Split camelCase into separate words
+        const words = verb.replace(/([a-z])([A-Z])/g, '$1 $2').split(' ')
+        // Capitalize each word
+        return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+      }
+
+      // Add verb name (positioned slightly above center to avoid overlap with arrow)
+      labelText
+        .append('tspan')
+        .attr('x', 0)
+        .attr('dy', '-5') // Moved up slightly from center
+        .text(function (d) {
+          const edge = d as Edge
+          return edge.verb ? formatVerbLabel(EdgeVerbs[edge.verb]) : ''
+        })
+
+      // We no longer need the second line of text for confidence percentage
+      // as we'll be using a pie chart visualization instead
+
+      // Adjust background circle and pie chart size based on text width
+      labelText.each(function () {
+        const textWidth = this.getComputedTextLength()
+        const padding = 24 // Increased padding for better appearance
+        // Use the maximum of textWidth and a minimum size to ensure the circle is not too small
+        const diameter = Math.max(textWidth + padding, 80)
+        const radius = diameter / 2
+
+        const parentGroup = d3.select(this.parentNode as Element)
+
+        // Update circle radius
+        parentGroup.select('circle').attr('r', radius)
+
+        // Update pie chart arc radius - make it hollow in the middle (donut chart)
+        arcGenerator.outerRadius(radius).innerRadius(radius * 0.8) // Set inner radius to 80% of outer radius to create a larger hollow center
+
+        // Update the pie chart path with the correct data
+        parentGroup.select('.edge-label-pie').attr('d', function (d) {
+          return arcGenerator(d)
+        })
+      })
+
+      // Add click event to select connected nodes and zoom to fit
+      labelGroup.on('click', function (event, d) {
+        event.stopPropagation() // Prevent event bubbling
+
+        const edge = d as Edge
+        const sourceId =
+          typeof edge.source === 'string'
+            ? edge.source
+            : (edge.source as Node).id
+        const targetId =
+          typeof edge.target === 'string'
+            ? edge.target
+            : (edge.target as Node).id
+
+        // Clear any previous selections
+        d3.selectAll('.node-group').classed('selected', false)
+
+        // Select the connected nodes
+        d3.selectAll('.node-group').each(function (nodeData: any) {
+          const node = nodeData as CustomNode
+          if (node.id === sourceId || node.id === targetId) {
+            d3.select(this)
+              .classed('selected', true)
+              .select('path') // Select the node background path
+              .attr('stroke', md3Colors.primary) // Highlight with primary color
+              .attr('stroke-width', 2) // Make the stroke thicker
+              .attr('stroke-opacity', 1) // Full opacity
+          }
+        })
+
+        // Zoom to fit the selected nodes using the component's method
+        component.zoomToFitSelected()
+      })
+
+      return labelGroup
+    }
+
+    // Create a single centered label group for each edge
+    linkGroup.each(function () {
+      const linkElement = d3.select(this)
+      createCenteredLabelGroup(linkElement)
+    })
 
     // Adjust node size for contact card layout
     const nodeSize = { width: 280, height: 80 } // Increased width to accommodate longer displayNames
@@ -699,12 +949,76 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       )
 
     simulation.on('tick', () => {
+      // Update link positions
       link
-        .attr('x1', (d) => (d.source as unknown as CustomNode).x!)
-        .attr('y1', (d) => (d.source as unknown as CustomNode).y!)
-        .attr('x2', (d) => (d.target as unknown as CustomNode).x!)
-        .attr('y2', (d) => (d.target as unknown as CustomNode).y!)
-      node.attr('transform', (d) => {
+        .attr('x1', function (d) {
+          const edge = d as Edge
+          return (edge.source as unknown as CustomNode).x!
+        })
+        .attr('y1', function (d) {
+          const edge = d as Edge
+          return (edge.source as unknown as CustomNode).y!
+        })
+        .attr('x2', function (d) {
+          const edge = d as Edge
+          return (edge.target as unknown as CustomNode).x!
+        })
+        .attr('y2', function (d) {
+          const edge = d as Edge
+          return (edge.target as unknown as CustomNode).y!
+        })
+
+      // Update edge label group positions to the center of each edge
+      linkGroup
+        .selectAll('.edge-label-group')
+        .attr('transform', function (d) {
+          const edge = d as Edge
+          const sourceX = (edge.source as unknown as CustomNode).x!
+          const targetX = (edge.target as unknown as CustomNode).x!
+          const sourceY = (edge.source as unknown as CustomNode).y!
+          const targetY = (edge.target as unknown as CustomNode).y!
+
+          // Calculate vector from source to target
+          const dx = targetX - sourceX
+          const dy = targetY - sourceY
+          const length = Math.sqrt(dx * dx + dy * dy)
+
+          // Normalize the vector
+          const nx = dx / length
+          const ny = dy / length
+
+          // Calculate perpendicular vector for offset (rotate 90 degrees)
+          const px = -ny
+          const py = nx
+
+          // Position label at the center (50%) of the edge
+          // directly on the line for better alignment
+          const offset = 0 // No offset to center directly on the line
+          const posX = sourceX + dx * 0.5 + px * offset
+          const posY = sourceY + dy * 0.5 + py * offset
+
+          return `translate(${posX}, ${posY})`
+        })
+        .each(function (d) {
+          // Rotate the arrow to align with the edge direction
+          const edge = d as Edge
+          const sourceX = (edge.source as unknown as CustomNode).x!
+          const targetX = (edge.target as unknown as CustomNode).x!
+          const sourceY = (edge.source as unknown as CustomNode).y!
+          const targetY = (edge.target as unknown as CustomNode).y!
+
+          // Calculate angle in degrees from source to target
+          const angle =
+            (Math.atan2(targetY - sourceY, targetX - sourceX) * 180) / Math.PI
+
+          // Select the arrow and rotate it, positioning it inside the hollowed out portion of the circle
+          d3.select(this)
+            .select('.edge-label-arrow')
+            .attr('transform', `translate(0, 10) rotate(${angle})`)
+        })
+
+      // Update node positions
+      node.attr('transform', function (d) {
         const customNode = d as CustomNode
         return `translate(${customNode.x!},${customNode.y!})`
       })
@@ -1184,6 +1498,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Zooms to fit all nodes in the view
+   */
   public zoomToFit() {
     if (!this.nodes.length || !this.svgElement || !this.zoomBehavior) return
 
@@ -1240,6 +1557,68 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         .translate(width / 2, height / 2)
         .scale(fallbackScale)
         .translate(-width / 2, -height / 2)
+      this.svgElement
+        .transition()
+        .duration(500) // Add smooth transition
+        .call(this.zoomBehavior.transform as any, transform)
+    }
+  }
+
+  /**
+   * Zooms to fit only the selected nodes in the view
+   */
+  public zoomToFitSelected() {
+    if (!this.svgElement || !this.zoomBehavior) return
+
+    const width = this.containerRef.nativeElement.offsetWidth
+    const height = this.containerRef.nativeElement.offsetHeight
+    const nodeSize = this.nodeSize // Store reference to nodeSize for use in the callback
+
+    let minX = Infinity,
+      maxX = -Infinity,
+      minY = Infinity,
+      maxY = -Infinity
+
+    let hasSelectedNodes = false
+
+    // Calculate the bounding box of only the selected nodes
+    d3.selectAll('.node-group.selected').each(function (d: any) {
+      hasSelectedNodes = true
+      const customNode = d as CustomNode
+      if (customNode.x !== undefined && customNode.y !== undefined) {
+        minX = Math.min(minX, customNode.x - nodeSize.width / 2)
+        maxX = Math.max(maxX, customNode.x + nodeSize.width / 2)
+        minY = Math.min(minY, customNode.y - nodeSize.height / 2)
+        maxY = Math.max(maxY, customNode.y + nodeSize.height / 2)
+      }
+    })
+
+    // If no nodes are selected, return without zooming
+    if (!hasSelectedNodes) return
+
+    if (isFinite(minX) && isFinite(maxX) && isFinite(minY) && isFinite(maxY)) {
+      // Add padding to the bounding box to ensure nodes near edges have enough space
+      const padding = Math.max(this.nodeSize.width, this.nodeSize.height)
+      minX -= padding
+      maxX += padding
+      minY -= padding
+      maxY += padding
+
+      const graphActualWidth = maxX - minX
+      const graphActualHeight = maxY - minY
+
+      if (graphActualWidth === 0 || graphActualHeight === 0) return
+
+      const scaleX = width / graphActualWidth
+      const scaleY = height / graphActualHeight
+      const scale = Math.min(scaleX, scaleY) * 0.7 // Reduced from 0.85 to 0.7 for more whitespace
+
+      const translateX = width / 2 - ((minX + maxX) / 2) * scale
+      const translateY = height / 2 - ((minY + maxY) / 2) * scale
+
+      const transform = d3.zoomIdentity
+        .translate(translateX, translateY)
+        .scale(scale)
       this.svgElement
         .transition()
         .duration(500) // Add smooth transition
