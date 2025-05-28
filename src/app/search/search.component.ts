@@ -47,7 +47,6 @@ interface SearchResult {
     MatCardContent,
     MatCardActions,
     MatCardAvatar,
-    MatProgressSpinner,
     FormsModule,
     MatCardSubtitle,
     MatCardTitle
@@ -147,7 +146,7 @@ export class SearchComponent implements OnInit, OnDestroy {
       await this.brainyService.init()
 
       // Use an empty string query to get all results
-      const searchResults = await this.brainyService.search("", limit)
+      const searchResults = await this.brainyService.search('', limit)
 
       // Transform the search results to match the expected format
       const transformedResults = searchResults.map((result) => ({

@@ -6,16 +6,7 @@
       <span>You are offline. Search results may be limited to previously cached data.</span>
     </div>
   }
-
-
-
-  <!-- Loading Indicator -->
-  @if (isLoading()) {
-    <div class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
-  }
-
+  
   <!-- Search Results -->
   @if (searchResults().length > 0) {
     <div class="search-results">

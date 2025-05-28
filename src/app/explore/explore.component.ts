@@ -83,7 +83,7 @@ interface CustomNode extends Node {
     </div>
     <div #container class="graph-container"></div>
   `,
-  styleUrls: ['./explorer.component.sass']
+  styleUrls: ['./explore.component.sass']
 })
 export class ExploreComponent implements AfterViewInit, OnDestroy {
   @ViewChild('container', { static: true })

@@ -31,7 +31,7 @@
              type="text"
              [ngModel]="vectorSearchQuery()"
              (ngModelChange)="performVectorSearch($event)"
-             placeholder="Search the Network">
+             placeholder="Interrogate Network">
       @if (vectorSearchQuery()) {
         <button matSuffix
                 mat-icon-button
@@ -52,7 +52,7 @@
              type="text"
              [ngModel]="localSearchQuery()"
              (ngModelChange)="performLocalSearch($event)"
-             placeholder="Search Locally">
+             placeholder="Interrogate Local">
       @if (localSearchQuery()) {
         <button matSuffix
                 mat-icon-button
@@ -71,9 +71,9 @@
           color="primary"
           class="view-toggle-button"
           (click)="toggleView()"
-          [matTooltip]="currentView() === 'explore' ? 'Switch to Search View' : 'Switch to Explore View'">
-    <mat-icon>{{ currentView() === 'explore' ? 'search' : 'explore' }}</mat-icon>
-    {{ currentView() === 'explore' ? 'Search' : 'Explore' }}
+          [matTooltip]="currentView() === 'explore' ? 'Switch to List View' : 'Switch to Explore View'">
+    <mat-icon>{{ currentView() === 'explore' ? 'list' : 'explore' }}</mat-icon>
+    {{ currentView() === 'explore' ? 'List' : 'Explore' }}
   </button>
 </div>
 

@@ -23,6 +23,15 @@
 .search-results
   .result-card
     margin-bottom: 16px
+    background: linear-gradient(to bottom, white, #f8f8f8)
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
+    transition: all 0.3s ease
+    transform-origin: center
+
+    &:hover
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25)
+      animation: jiggle 0.5s ease
+      transform: translateY(-2px)
 
     mat-card-title
       font-size: 18px
@@ -37,6 +46,18 @@
       border-radius: 50%
       object-fit: cover
       background-color: #f5f5f5
+
+@keyframes jiggle
+  0%
+    transform: rotate(0deg)
+  25%
+    transform: rotate(0.5deg) scale(1.01)
+  50%
+    transform: rotate(-0.5deg) scale(1.01)
+  75%
+    transform: rotate(0.5deg) scale(1.01)
+  100%
+    transform: rotate(0deg)
 
 .no-results
   text-align: center

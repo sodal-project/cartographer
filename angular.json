@@ -26,6 +26,12 @@
             ],
             "tsConfig": "tsconfig.json",
             "inlineStyleLanguage": "sass",
+            "allowedCommonJsDependencies": [
+              "seedrandom",
+              "node-fetch",
+              "string_decoder",
+              "long"
+            ],
             "assets": [
               {
                 "glob": "**/*",
