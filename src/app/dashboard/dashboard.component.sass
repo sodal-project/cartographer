@@ -7,6 +7,11 @@ $color-light-gray: lightgray
 $color-red: red
 $color-green: green
 
+$breakpoint-xs: 599px
+$breakpoint-sm: 959px
+$breakpoint-md: 1279px
+$breakpoint-lg: 1919px
+
 @keyframes pulse
   0%
     opacity: 1
@@ -20,7 +25,7 @@ $color-green: green
 
 $toolbar-height: 4rem
 $font-size-small: 0.8rem
-$search-container-height: 5rem
+$search-container-height: 4.5rem
 $dash-container-height: calc(100vh - #{$toolbar-height * 2} - #{$search-container-height})
 $dash-content-height: calc(100% - 2rem)
 
@@ -28,6 +33,12 @@ $dash-content-height: calc(100% - 2rem)
   border: none
   width: 100%
   height: $dash-container-height
+
+  @media (max-width: $breakpoint-xs)
+    height: calc(100vh - #{$toolbar-height * 2.5} - #{$search-container-height * 1.5})
+
+  @media (max-width: $breakpoint-sm) and (min-width: $breakpoint-xs + 1)
+    height: calc(100vh - #{$toolbar-height * 2.2} - #{$search-container-height * 1.2})
 
   .dash-content
     background-color: $color-light-gray
@@ -38,41 +49,164 @@ $dash-content-height: calc(100% - 2rem)
     justify-content: center
     padding: 1rem
 
+    @media (max-width: $breakpoint-xs)
+      padding: 0.5rem
+
   .dash-sidenav
     border-radius: 0
     background-color: $color-dark-gray
     padding: 0
 
+    width: 250px
+
+    @media (max-width: $breakpoint-sm)
+      width: 200px
+
+    @media (max-width: $breakpoint-xs)
+      width: 85%
+
 .dash-toolbar
   background-color: $color-dark-gray
 
-// Search container styles
 .search-container
   display: flex
-  padding: 1.25rem 1.5rem
+  padding: 1rem 1.5rem
   background-color: color.scale($color-dark-gray, $lightness: 5%)
   border-bottom: 1px solid rgba(0, 0, 0, 0.1)
   gap: 1rem
+  align-items: center
+  flex-wrap: nowrap
 
-  .search-box
+  @media (max-width: $breakpoint-xs)
+    padding: 0.625rem 0.75rem
+    gap: 0.5rem
+
+  .combined-search-box
     flex: 1
+    min-width: 0
+
+    .modern-search
+      width: 100%
+
+      ::ng-deep .mat-mdc-form-field-flex
+        border-radius: 24px
+        overflow: hidden
+        padding-left: 0
+        min-height: 40px !important
+        max-height: 40px !important
+        height: 40px !important
+        padding: 0 16px 0 0
+        display: flex
+        align-items: center
+        box-sizing: border-box !important
+
+        @media (max-width: $breakpoint-xs)
+          min-height: 36px !important
+          max-height: 36px !important
+          height: 36px !important
+
+      ::ng-deep .mat-mdc-form-field-icon-suffix
+        display: flex
+        align-items: center
+        margin-right: 4px
+
+        mat-icon
+          font-size: 18px
+          height: 18px
+          width: 18px
+          line-height: 18px
+
+        button
+          height: 36px
+          width: 36px
+          line-height: 36px
+
+      .search-toggle
+        position: absolute
+        left: 8px
+        top: 50%
+        z-index: 1
+        display: flex
+        align-items: center
+        transform-origin: left center
+        transform: translateY(-50%) scale(0.8)
+
+        ::ng-deep .mdc-form-field
+          margin: 0
+
+        ::ng-deep .mdc-switch
+          margin-right: 8px
+
+        .network-icon, .local-icon
+          font-size: 18px
+          height: 18px
+          width: 18px
+          line-height: 18px
+          opacity: 0.5
+          margin: 0 4px
+          transition: opacity 0.2s ease
+
+          &.active
+            opacity: 1
+
+        @media (max-width: $breakpoint-xs)
+          left: 8px
+
+      .input-wrapper
+        flex: 1
+        display: flex
+        align-items: center
+        width: 100%
+        min-width: 0
+        box-sizing: border-box
+        position: relative
+
+      input
+        flex: 1
+        width: 100%
+        border-top-left-radius: 0
+        border-bottom-left-radius: 0
 
   .view-toggle-button
     align-self: center
-    height: 56px
-    width: 130px
-    border-radius: 28px
-    padding: 0 20px
-    font-weight: 500
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
     transition: all 0.3s ease
+    padding: 0 16px
+    flex-shrink: 0
+    height: 40px
+    line-height: 40px
+
+    .button-text
+      margin-left: 6px
+      font-weight: 500
+      transition: all 0.3s ease
+      font-size: 14px
+
+    @media (max-width: $breakpoint-xs)
+      padding: 0
+      min-width: 36px
+      height: 36px
+      line-height: 36px
+
+      .button-text
+        display: none
+
+      &[extended]
+        width: 36px
+        height: 36px
+        padding: 0
+        border-radius: 50%
 
     &:hover
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15)
       transform: translateY(-1px)
 
     mat-icon
-      margin-right: 8px
+      margin: 0
+      font-size: 18px
+      height: 18px
+      width: 18px
+      line-height: 18px
 
   mat-form-field
     width: 100%
@@ -83,10 +217,19 @@ $dash-content-height: calc(100% - 2rem)
     &.modern-search
       ::ng-deep .mat-mdc-text-field-wrapper
         background-color: white
-        border-radius: 28px
+        border-radius: 24px
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1)
         transition: all 0.3s ease
-        padding: 0
+        padding: 0 !important
+        height: 40px !important
+        min-height: 40px !important
+        max-height: 40px !important
+        box-sizing: border-box !important
+
+        @media (max-width: $breakpoint-xs)
+          height: 36px !important
+          min-height: 36px !important
+          max-height: 36px !important
 
         &:hover
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15)
@@ -94,37 +237,65 @@ $dash-content-height: calc(100% - 2rem)
 
       ::ng-deep .mat-mdc-form-field-flex
         align-items: center
-        min-height: 56px
+        min-height: 40px
         padding: 0 16px
-        border-radius: 28px
+        border-radius: 24px
 
-      // Hide the notched outline completely
+        @media (max-width: $breakpoint-xs)
+          min-height: 36px
+
       ::ng-deep .mdc-notched-outline
         display: none
 
       ::ng-deep .mat-mdc-form-field-infix
-        padding: 8px 0
-        border-top: 0
+        padding: 0 !important
+        border-top: 0 !important
+        display: flex
+        align-items: center
+        height: 40px !important
+        min-height: 40px !important
+        max-height: 40px !important
+        box-sizing: border-box !important
 
-      // Style for the input
+        @media (max-width: $breakpoint-xs)
+          height: 36px !important
+          min-height: 36px !important
+          max-height: 36px !important
+
       ::ng-deep input.mat-mdc-input-element
-        font-size: 20px
+        font-size: 16px
         letter-spacing: 0.15px
         color: rgba(0, 0, 0, 0.87)
-        line-height: 40px
-        padding-top: 0
+        line-height: 40px !important
+        padding: 0 !important
+        margin: 0 !important
+        height: 40px !important
+        min-height: 40px !important
+        max-height: 40px !important
+        box-sizing: border-box !important
 
-      // Style for the placeholder
+        @media (max-width: $breakpoint-xs)
+          line-height: 36px !important
+          height: 36px !important
+          min-height: 36px !important
+          max-height: 36px !important
+
       ::ng-deep input.mat-mdc-input-element::placeholder
         color: rgba(0, 0, 0, 0.45)
-        font-size: 20px
-        font-weight: 500
+        font-size: 16px
+        font-weight: 400
         text-align: left
         width: 100%
-        line-height: 40px
-        padding-top: 0
+        line-height: 40px !important
+        padding: 0 !important
+        margin: 0 !important
+        height: 40px !important
+        box-sizing: border-box !important
 
-      // Focus state
+        @media (max-width: $breakpoint-xs)
+          line-height: 36px !important
+          height: 36px !important
+
       ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2)
         border-color: #6200ee
@@ -144,47 +315,187 @@ $dash-content-height: calc(100% - 2rem)
 
 .status-toolbar
   height: $toolbar-height
+  min-height: $toolbar-height
+  max-height: $toolbar-height
   background-color: $color-dark-gray
   font-size: $font-size-small
   display: flex
   align-items: center
-  // This centers the direct children of status-toolbar
   justify-content: space-between
-  // This will help position items
   padding: 0 1.25rem
   box-shadow: 0 -1px 3px rgba(0, 0, 0, .05)
   letter-spacing: 0.025em
   border-top: 1px solid rgba(0, 0, 0, 0.06)
   z-index: 90
   position: fixed
-  // It's a fixed bar at the bottom
   left: 0
   right: 0
   bottom: 0
 
-// New style for the status indicator group
+  @media (max-width: $breakpoint-xs)
+    padding: 0 0.25rem
+    height: $toolbar-height
+    min-height: $toolbar-height
+    justify-content: space-between
+    white-space: nowrap
+    overflow-x: auto
+
+  @media (max-width: $breakpoint-sm) and (min-width: $breakpoint-xs + 1)
+    padding: 0 0.5rem
+
 .status-indicator
   display: flex
   align-items: center
-  // This will vertically align the icon button and the text span
+  flex-shrink: 0
+
+  @media (max-width: $breakpoint-xs)
+    transform: scale(0.9)
+    margin-right: -4px
 
   span
-    // Target the span specifically if you need to adjust its margin relative to the icon
     margin-left: 8px
-// Adjust as needed, or remove if your button already has sufficient margin
+
+.storage-info-button
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+
+  @media (max-width: $breakpoint-xs)
+    transform: scale(0.9)
+    margin-left: -4px
+    margin-right: -4px
+
+  button
+    background-color: rgba(255, 255, 255, 0.1)
+    transition: background-color 0.2s ease
+
+    &:hover
+      background-color: rgba(255, 255, 255, 0.2)
 
 .version-update-container
   display: flex
   align-items: center
 
+  @media (max-width: $breakpoint-xs)
+    flex-shrink: 1
+    justify-content: flex-end
+    margin: 0
+    font-size: 0.7rem
+
+  @media (max-width: $breakpoint-sm) and (min-width: $breakpoint-xs + 1)
+    margin-left: 0.5rem
+
   .update-button
     color: $color-green
     animation: pulse 1.5s infinite
 
+  .version-text
+    margin-right: 16px
+
+    @media (max-width: $breakpoint-xs)
+      font-size: 0.7rem
+      max-width: 120px
+      overflow: hidden
+      text-overflow: ellipsis
+      white-space: nowrap
+      display: inline-block
+      margin-right: 8px
+
+    @media (max-width: 400px)
+      display: none
+
+::ng-deep .storage-info-bottom-sheet
+  max-width: 100% !important
+  width: 100%
+
+  @media (min-width: $breakpoint-sm)
+    max-width: 500px !important
+
+  .mat-bottom-sheet-container
+    padding: 0
+    max-height: 80vh
+    overflow-y: auto
+
+.storage-bottom-sheet
+  padding: 24px
+
+  .bottom-sheet-title
+    margin: 0 0 24px 0
+    font-size: 22px
+    font-weight: 500
+    color: var(--md-sys-color-primary)
+
+  .bottom-sheet-item
+    margin-bottom: 0
+    padding: 24px 0
+
+    .item-header
+      display: flex
+      align-items: center
+      margin-bottom: 16px
+
+      mat-icon
+        margin-right: 16px
+        color: rgba(0, 0, 0, 0.6)
+        font-size: 24px
+        height: 24px
+        width: 24px
+
+      h3
+        margin: 0
+        font-size: 18px
+        font-weight: 500
+        color: rgba(0, 0, 0, 0.87)
+
+    .item-details
+      padding-left: 40px
+
+      .item-row
+        display: flex
+        align-items: center
+        margin-bottom: 12px
+        flex-wrap: wrap
+
+        .label
+          min-width: 90px
+          color: rgba(0, 0, 0, 0.6)
+          font-size: 14px
+
+        .value
+          font-weight: 500
+          color: rgba(0, 0, 0, 0.87)
+          font-size: 14px
+
+        .progress-bar
+          margin-top: 8px
+          width: 100%
+          height: 8px
+          background-color: rgba(0, 0, 0, 0.1)
+          border-radius: 4px
+          overflow: hidden
+
+          .progress-fill
+            height: 100%
+            background-color: #6750A4
+            border-radius: 4px
+
+  mat-divider
+    margin: 8px 0
+
+  .bottom-sheet-actions
+    display: flex
+    justify-content: flex-end
+    margin-top: 24px
+
+    button
+      text-transform: uppercase
+      font-weight: 500
+      padding: 8px 16px
+
 .dash-nav
   border-radius: 0
 
-  // Styles for mat-accordion
   .mat-expansion-panel
     background-color: rgba(255, 255, 255, 0.05)
     border-radius: 0
@@ -262,6 +573,10 @@ $dash-content-height: calc(100% - 2rem)
 .expanding-spacer
   flex-grow: 1
 
+  @media (max-width: $breakpoint-xs)
+    flex-grow: 0.5
+    min-width: 8px
+
 .user-info
   margin-right: 12px
   font-size: 14px
@@ -269,6 +584,13 @@ $dash-content-height: calc(100% - 2rem)
   overflow: hidden
   text-overflow: ellipsis
   max-width: 200px
+
+  @media (max-width: $breakpoint-xs)
+    max-width: 120px
+    font-size: 12px
+
+  @media (max-width: 400px)
+    display: none
 
 .profile-image
   width: 24px

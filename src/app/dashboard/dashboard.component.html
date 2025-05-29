@@ -23,79 +23,58 @@
   </mat-menu>
 </mat-toolbar>
 
-<!-- Search boxes -->
+<!-- Combined Search box -->
 <div class="search-container">
-  <div class="search-box">
+  <div class="combined-search-box">
     <mat-form-field appearance="outline" class="modern-search">
-      <input matInput
-             type="text"
-             [ngModel]="vectorSearchQuery()"
-             (ngModelChange)="performVectorSearch($event)"
-             placeholder="Interrogate Network">
-      @if (vectorSearchQuery()) {
-        <button matSuffix
-                mat-icon-button
-                aria-label="Clear"
-                (click)="performVectorSearch('')">
-          <mat-icon>close</mat-icon>
-        </button>
+      <mat-slide-toggle
+        class="search-toggle"
+        [checked]="searchMode() === 'network'"
+        (change)="toggleSearchMode($event.checked)"
+        aria-label="Toggle search mode">
+      </mat-slide-toggle>
+
+      <div class="input-wrapper" [style.margin-left.px]="isMobile() ? 40 : 50">
+        <input matInput
+               type="text"
+               [ngModel]="searchMode() === 'network' ? vectorSearchQuery() : localSearchQuery()"
+               (ngModelChange)="searchMode() === 'network' ? performVectorSearch($event) : performLocalSearch($event)"
+               [placeholder]="searchMode() === 'network' ? 'Interrogate Network' : 'Interrogate Local'"
+               [style.padding-left.px]="isMobile() ? 10 : 10"
+               [style.text-indent.px]="10">
+      </div>
+
+      @if ((searchMode() === 'network' && vectorSearchQuery()) || (searchMode() === 'local' && localSearchQuery())) {
+        <mat-icon style="cursor:pointer"
+                  (click)="searchMode() === 'network' ? performVectorSearch('') : performLocalSearch('')">close
+        </mat-icon>
       }
-      @if (!vectorSearchQuery() && !isSearching()) {
-        <mat-icon matSuffix>search</mat-icon>
+
+      @if ((searchMode() === 'network' && !vectorSearchQuery() && !isSearching()) || (searchMode() === 'local' && !localSearchQuery())) {
+        <mat-icon style="margin-right: -1rem" matSuffix>{{ searchMode() === 'network' ? 'search' : 'filter_list' }}
+        </mat-icon>
       }
     </mat-form-field>
   </div>
 
-  <div class="search-box">
-    <mat-form-field appearance="outline" class="modern-search">
-      <input matInput
-             type="text"
-             [ngModel]="localSearchQuery()"
-             (ngModelChange)="performLocalSearch($event)"
-             placeholder="Interrogate Local">
-      @if (localSearchQuery()) {
-        <button matSuffix
-                mat-icon-button
-                aria-label="Clear"
-                (click)="performLocalSearch('')">
-          <mat-icon>close</mat-icon>
-        </button>
-      }
-      @if (!localSearchQuery()) {
-        <mat-icon matSuffix>filter_list</mat-icon>
-      }
-    </mat-form-field>
-  </div>
-
-  <button mat-flat-button
+  <button mat-fab
+          extended
           color="primary"
           class="view-toggle-button"
           (click)="toggleView()"
           [matTooltip]="currentView() === 'explore' ? 'Switch to List View' : 'Switch to Explore View'">
     <mat-icon>{{ currentView() === 'explore' ? 'list' : 'explore' }}</mat-icon>
-    {{ currentView() === 'explore' ? 'List' : 'Explore' }}
+    <span class="button-text">{{ currentView() === 'explore' ? 'List' : 'Explore' }}</span>
   </button>
 </div>
 
 <mat-drawer-container class="dash-container" autosize>
-  <mat-drawer [opened]="showSideMenu()" class="dash-sidenav" mode="side">
-    <!--    <mat-toolbar class="nav-toolbar">Views</mat-toolbar>-->
-    <!--    <mat-selection-list class="dash-nav">-->
-    <!--      <mat-list-item routerLink="/dashboard/explore" routerLinkActive="active-link"-->
-    <!--      >Explore-->
-    <!--      </mat-list-item-->
-    <!--      >-->
-    <!--      <mat-list-item routerLink="/dashboard/search" routerLinkActive="active-link"-->
-    <!--      >Search-->
-    <!--      </mat-list-item-->
-    <!--      >-->
-    <!--    </mat-selection-list>-->
-
+  <mat-drawer [opened]="showSideMenu()" class="dash-sidenav" [mode]="sidenavMode()">
     <mat-toolbar class="nav-toolbar">Services</mat-toolbar>
 
     <mat-accordion displayMode="flat" class="dash-nav">
       @for (service of staticServices(); track service.id) {
-        <mat-expansion-panel [disabled]="service.disabled">
+        <mat-expansion-panel [disabled]="service.disabled" (afterExpand)="closeSideMenu()">
 
           <mat-expansion-panel-header>
             <mat-panel-title>
@@ -148,22 +127,19 @@
 </mat-drawer-container>
 
 <mat-toolbar class="status-toolbar">
-  <!-- Left side of the status bar -->
-  <div class="status-indicator">
-    <button mat-icon-button (click)="toggleOnlineStatus()"
-            [matTooltip]="onlineStatus() ? 'Set to Offline' : 'Set to Online'">
-      <mat-icon>{{ onlineStatus() ? 'wifi' : 'wifi_off' }}</mat-icon>
+  <!-- Storage information button - opens bottom sheet on click -->
+  <div class="storage-info-button">
+    <button mat-icon-button
+            (click)="openStorageInfoBottomSheet(storageInfoBottomSheet)"
+            matTooltip="View Storage Information">
+      <mat-icon>data_usage</mat-icon>
     </button>
-    <span
-      matTooltip="{{ onlineStatus() ? 'Connection is online' : 'Connection is offline - some features might be unavailable' }}">
-      {{ onlineStatus() ? 'Online' : 'Offline' }}
-    </span>
   </div>
 
   <span class="expanding-spacer"></span>
 
   <div class="version-update-container">
-    <span matTooltip="Application Version" style="margin-right: 16px;">Version: {{ version() }}</span>
+    <span matTooltip="Application Version" class="version-text">Version: {{ version() }}</span>
     <button mat-icon-button
             (click)="activateUpdate()"
             [matTooltip]="updateAvailable() ? 'Update available. Click to update.' : 'Check for updates'"
@@ -172,3 +148,108 @@
     </button>
   </div>
 </mat-toolbar>
+
+<!-- Bottom sheet template for storage information -->
+<ng-template #storageInfoBottomSheet>
+  <div class="storage-bottom-sheet">
+    <h2 class="bottom-sheet-title">Storage Information</h2>
+
+    <div class="bottom-sheet-item">
+      <div class="item-header">
+        <mat-icon>storage</mat-icon>
+        <h3>Filesystem Storage</h3>
+      </div>
+      <div class="item-details">
+        <div class="item-row">
+          <span class="label">Used:</span>
+          <span class="value">{{ storageInfoService.formatBytes(filesystemStorage().used) }}</span>
+        </div>
+        <div class="item-row">
+          <span class="label">Available:</span>
+          <span class="value">{{ storageInfoService.formatBytes(filesystemStorage().available) }}</span>
+        </div>
+        <div class="item-row">
+          <span class="label">Total:</span>
+          <span class="value">{{ storageInfoService.formatBytes(filesystemStorage().total) }}</span>
+        </div>
+        @if (filesystemStorage().percentage !== null) {
+          <div class="item-row">
+            <span class="label">Usage:</span>
+            <span class="value">{{ filesystemStorage().percentage!.toFixed(1) }}%</span>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="filesystemStorage().percentage"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="bottom-sheet-item">
+      <div class="item-header">
+        <mat-icon>folder</mat-icon>
+        <h3>Origin Private File System (OPFS)</h3>
+      </div>
+      <div class="item-details">
+        <div class="item-row">
+          <span class="label">Used:</span>
+          <span class="value">{{ storageInfoService.formatBytes(opfsStorage().used) }}</span>
+        </div>
+        <div class="item-row">
+          <span class="label">Available:</span>
+          <span class="value">{{ storageInfoService.formatBytes(opfsStorage().available) }}</span>
+        </div>
+        <div class="item-row">
+          <span class="label">Total:</span>
+          <span class="value">{{ storageInfoService.formatBytes(opfsStorage().total) }}</span>
+        </div>
+        @if (opfsStorage().percentage !== null) {
+          <div class="item-row">
+            <span class="label">Usage:</span>
+            <span class="value">{{ opfsStorage().percentage!.toFixed(1) }}%</span>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="opfsStorage().percentage"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="bottom-sheet-item">
+      <div class="item-header">
+        <mat-icon>memory</mat-icon>
+        <h3>Memory Usage</h3>
+      </div>
+      <div class="item-details">
+        <div class="item-row">
+          <span class="label">Used:</span>
+          <span class="value">{{ storageInfoService.formatBytes(memoryStorage().used) }}</span>
+        </div>
+        <div class="item-row">
+          <span class="label">Available:</span>
+          <span class="value">{{ storageInfoService.formatBytes(memoryStorage().available) }}</span>
+        </div>
+        <div class="item-row">
+          <span class="label">Total:</span>
+          <span class="value">{{ storageInfoService.formatBytes(memoryStorage().total) }}</span>
+        </div>
+        @if (memoryStorage().percentage !== null) {
+          <div class="item-row">
+            <span class="label">Usage:</span>
+            <span class="value">{{ memoryStorage().percentage!.toFixed(1) }}%</span>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="memoryStorage().percentage"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="bottom-sheet-actions">
+      <button mat-button (click)="closeStorageInfoBottomSheet()">Close</button>
+    </div>
+  </div>
+</ng-template>

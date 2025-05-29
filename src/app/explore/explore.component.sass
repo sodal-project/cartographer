@@ -3,39 +3,55 @@
   width: 100%
   height: 100%
   overflow: hidden
-// Prevent scrollbars on host
 
 .offline-indicator
   display: flex
   align-items: center
   background-color: #ffab91
   color: #7f0000
-  padding: 8px 16px
-  border-radius: 4px
-  margin: 8px
+  padding: 0.5rem 1rem
+  border-radius: 0.25rem
+  margin: 0.5rem
   position: absolute
   z-index: 10
   top: 0
   left: 0
 
+  @media (max-width: 599px)
+    padding: 0.25rem 0.5rem
+    margin: 0.25rem
+
   mat-icon
-    margin-right: 8px
+    margin-right: 0.5rem
+
+    @media (max-width: 599px)
+      font-size: 1.125rem
+      height: 1.125rem
+      width: 1.125rem
 
   span
-    font-size: 14px
+    font-size: 0.875rem
+
+    @media (max-width: 599px)
+      font-size: 0.75rem
 
 .zoom-controls
   position: absolute
-  bottom: 24px
-  right: 16px
+  bottom: 1.5rem
+  right: 1rem
   z-index: 10
   display: flex
   flex-direction: column
-  gap: 8px
+  gap: 0.5rem
+
+  @media (max-width: 599px)
+    bottom: 1rem
+    right: 0.5rem
+    gap: 0.25rem
 
   .zoom-fit-button
-    width: 40px
-    height: 40px
+    width: 2.5rem
+    height: 2.5rem
     border-radius: 50%
     background-color: #6750A4
     color: white
@@ -44,8 +60,17 @@
     display: flex
     align-items: center
     justify-content: center
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2)
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2)
     transition: background-color 0.2s, transform 0.2s
+
+    @media (max-width: 599px)
+      width: 2.25rem
+      height: 2.25rem
+
+      mat-icon
+        font-size: 1.125rem
+        height: 1.125rem
+        width: 1.125rem
 
     &:hover
       background-color: #7B68B5
@@ -58,43 +83,31 @@
 .graph-container
   width: 100%
   height: 100%
-  // Material Design 3 inspired background color
   background-color: #FDF8FF
-  // A very light, neutral color (e.g., Surface from MD3)
-  // Example subtle gradient if preferred:
-  // background: linear-gradient(135deg, #F6F2FF 0%, #FEFEFF 100%)
   display: flex
-  // Ensure SVG takes up space if needed
   align-items: center
   justify-content: center
 
   svg
     display: block
-    // Remove extra space below SVG
     width: 100%
     height: 100%
     font-family: 'Roboto', 'Inter', sans-serif
-    // Apply Material font family
 
     .edges line
       transition: stroke-opacity 0.2s ease-in-out
 
     .node-group
-      // Base node styles, specific visual styling handled by D3 attributes
       transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease
-      // Smooth transform for hover
       transform-origin: center
 
       &:hover
-        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25))
+        filter: drop-shadow(0 0.5rem 1rem rgba(0, 0, 0, 0.25))
         animation: jiggle 0.5s ease
 
       path
         transition: fill-opacity 0.15s ease-in-out
-// Smooth opacity for hover
 
-// Remove generic .node and .edge styles if all styling is now via D3 attributes
-// or ensure they don't conflict
 
 @keyframes jiggle
   0%

@@ -4,7 +4,11 @@ import {
   signal,
   WritableSignal,
   ChangeDetectionStrategy,
-  effect
+  effect,
+  OnInit,
+  OnDestroy,
+  HostListener,
+  TemplateRef
 } from '@angular/core'
 import {
   Firestore,
@@ -45,8 +49,16 @@ import {
 import { version } from '../../../package.json'
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu'
 import { MatExpansionModule } from '@angular/material/expansion'
+import { MatBottomSheet, MatBottomSheetRef, MatBottomSheetModule } from '@angular/material/bottom-sheet'
+import { MatDividerModule } from '@angular/material/divider'
+import { MatButtonToggleModule } from '@angular/material/button-toggle'
+import { MatSlideToggleModule } from '@angular/material/slide-toggle'
 import { Service } from '../models/service.model'
 import { Profile } from '../models/cartographer.model'
+import {
+  StorageInfoService,
+  StorageInfo
+} from '../services/storage-info.service'
 
 @Component({
   selector: 'dashboard',
@@ -67,26 +79,61 @@ import { Profile } from '../models/cartographer.model'
     MatMenu,
     MatMenuItem,
     MatMenuTrigger,
-    MatExpansionModule
+    MatExpansionModule,
+    MatBottomSheetModule,
+    MatDividerModule,
+    MatButtonToggleModule,
+    MatSlideToggleModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.sass'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit, OnDestroy {
   private registryService = inject(RegistryService)
   protected readonly authService = inject(AuthService)
   private readonly router = inject(Router)
   private readonly firestore = inject(Firestore)
   protected readonly updateService = inject(UpdateService)
+  protected readonly storageInfoService = inject(StorageInfoService)
+  private readonly bottomSheet = inject(MatBottomSheet)
   private readonly brainyService = new BrainyData()
   public showSideMenu: WritableSignal<boolean> = signal(false)
   public onlineStatus: WritableSignal<boolean> = signal(navigator.onLine)
+
+  // Responsive design properties
+  public isMobile: WritableSignal<boolean> = signal(window.innerWidth < 600)
+  public isTablet: WritableSignal<boolean> = signal(
+    window.innerWidth >= 600 && window.innerWidth < 960
+  )
+  public sidenavMode: WritableSignal<'over' | 'side'> = signal(
+    window.innerWidth < 960 ? 'over' : 'side'
+  )
   public readonly updateAvailable = this.updateService.updateAvailable
   public readonly version = signal(version)
   private servicesCache: Service[] | null = null
   public services: WritableSignal<Service[]> = signal([])
   public profiles: WritableSignal<Profile[]> = signal([])
+
+  // Storage information signals
+  public filesystemStorage: WritableSignal<StorageInfo> = signal({
+    used: 0,
+    available: null,
+    total: null,
+    percentage: null
+  })
+  public opfsStorage: WritableSignal<StorageInfo> = signal({
+    used: 0,
+    available: null,
+    total: null,
+    percentage: null
+  })
+  public memoryStorage: WritableSignal<StorageInfo> = signal({
+    used: 0,
+    available: null,
+    total: null,
+    percentage: null
+  })
 
   // Search related properties
   public vectorSearchQuery: WritableSignal<string> = signal('')
@@ -96,11 +143,9 @@ export class DashboardComponent {
   public filteredServices: WritableSignal<Service[]> = signal([])
   public isSearching: WritableSignal<boolean> = signal(false)
   public currentView: WritableSignal<'explore' | 'search'> = signal('explore')
+  public searchMode: WritableSignal<'network' | 'local'> = signal('network')
 
   constructor() {
-    window.addEventListener('online', () => this.onlineStatus.set(true))
-    window.addEventListener('offline', () => this.onlineStatus.set(false))
-
     // Create an effect to watch for changes to the RegistryService's services signal
     effect(() => {
       const services = this.registryService.services()
@@ -113,6 +158,12 @@ export class DashboardComponent {
         this.servicesCache = services
       }
     })
+  }
+
+  ngOnInit(): void {
+    // Set up event listeners
+    window.addEventListener('online', this.handleOnlineStatus)
+    window.addEventListener('offline', this.handleOfflineStatus)
 
     // Fetch services when component initializes (for the left-hand menu)
     this.fetchServices()
@@ -124,10 +175,70 @@ export class DashboardComponent {
     if (this.localSearchQuery()) {
       this.performLocalSearch(this.localSearchQuery())
     }
+
+    // Initialize storage information
+    this.updateStorageInfo()
+
+    // Update storage information every 30 seconds
+    setInterval(() => this.updateStorageInfo(), 30000)
+  }
+
+  ngOnDestroy(): void {
+    // Clean up event listeners
+    window.removeEventListener('online', this.handleOnlineStatus)
+    window.removeEventListener('offline', this.handleOfflineStatus)
+  }
+
+  // Event handlers for online/offline status
+  private handleOnlineStatus = (): void => this.onlineStatus.set(true)
+  private handleOfflineStatus = (): void => this.onlineStatus.set(false)
+
+  // Window resize handler
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event): void {
+    const width = window.innerWidth
+    this.isMobile.set(width < 600)
+    this.isTablet.set(width >= 600 && width < 960)
+    this.sidenavMode.set(width < 960 ? 'over' : 'side')
+
+    // Auto-close sidenav on mobile when window is resized to mobile size
+    if (width < 960 && this.showSideMenu()) {
+      this.showSideMenu.set(false)
+    }
+  }
+
+  /**
+   * Updates storage information for filesystem, OPFS, and memory
+   */
+  async updateStorageInfo(): Promise<void> {
+    try {
+      // Get filesystem storage information
+      const filesystemInfo = await this.storageInfoService.getFilesystemInfo()
+      this.filesystemStorage.set(filesystemInfo)
+
+      // Get OPFS storage information
+      const opfsInfo = await this.storageInfoService.getOPFSInfo()
+      this.opfsStorage.set(opfsInfo)
+
+      // Get memory storage information
+      const memoryInfo = await this.storageInfoService.getMemoryInfo()
+      this.memoryStorage.set(memoryInfo)
+    } catch (error) {
+      console.error('Error updating storage information:', error)
+    }
   }
 
   toggleSideMenu(): void {
     this.showSideMenu.update((value) => !value)
+  }
+
+  /**
+   * Closes the side menu - useful for mobile views after a selection is made
+   */
+  closeSideMenu(): void {
+    if (this.isMobile() || this.isTablet()) {
+      this.showSideMenu.set(false)
+    }
   }
 
   async toggleOnlineStatus(): Promise<void> {
@@ -461,5 +572,34 @@ export class DashboardComponent {
     const newView = this.currentView() === 'explore' ? 'search' : 'explore'
     this.currentView.set(newView)
     this.router.navigate([`/dashboard/${newView}`])
+  }
+
+  /**
+   * Toggles between network and local search modes
+   * @param checked Whether the slide toggle is checked
+   */
+  toggleSearchMode(checked: boolean): void {
+    const mode = checked ? 'network' : 'local'
+    this.searchMode.set(mode)
+    console.log('Search mode toggled to:', mode)
+  }
+
+  /**
+   * Opens the storage information bottom sheet
+   * @param templateRef The template reference to the bottom sheet content
+   */
+  openStorageInfoBottomSheet(templateRef: TemplateRef<any>): void {
+    this.bottomSheet.open(templateRef, {
+      panelClass: 'storage-info-bottom-sheet',
+      hasBackdrop: true,
+      disableClose: false
+    });
+  }
+
+  /**
+   * Closes the storage information bottom sheet
+   */
+  closeStorageInfoBottomSheet(): void {
+    this.bottomSheet.dismiss();
   }
 }
