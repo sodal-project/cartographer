@@ -22,10 +22,8 @@ export class AuthService {
   constructor() {
     // Set up the auth state listener
     this.auth.onAuthStateChanged(user => {
-      // Only update the signal if user is defined (not undefined)
-      if (user !== undefined) {
-        this.user.set(user)
-      }
+      // Always update the signal when auth state changes
+      this.user.set(user)
     })
 
     // Initialize the user$ Observable from the user signal for backward compatibility
