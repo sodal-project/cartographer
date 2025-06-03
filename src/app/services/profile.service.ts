@@ -86,10 +86,15 @@ export class ProfileService implements OnDestroy {
         profiles.push(profileData)
       })
 
-      console.log(`ProfileService: Successfully loaded ${profiles.length} profiles from Firebase`)
+      console.log(
+        `ProfileService: Successfully loaded ${profiles.length} profiles from Firebase`
+      )
       return profiles
     } catch (error) {
-      console.error('ProfileService: Error loading profiles from Firebase', error)
+      console.error(
+        'ProfileService: Error loading profiles from Firebase',
+        error
+      )
       return []
     }
   }
@@ -98,7 +103,9 @@ export class ProfileService implements OnDestroy {
    * Stores profiles in BrainyData
    */
   private async storeProfilesInBrainyData(profiles: Profile[]): Promise<void> {
-    console.log(`ProfileService: Storing ${profiles.length} profiles in BrainyData...`)
+    console.log(
+      `ProfileService: Storing ${profiles.length} profiles in BrainyData...`
+    )
 
     try {
       // Convert profiles to the format expected by BrainyData.addBatch
@@ -117,7 +124,10 @@ export class ProfileService implements OnDestroy {
 
       console.log('ProfileService: Successfully stored profiles in BrainyData')
     } catch (error) {
-      console.error('ProfileService: Error storing profiles in BrainyData', error)
+      console.error(
+        'ProfileService: Error storing profiles in BrainyData',
+        error
+      )
     }
   }
 

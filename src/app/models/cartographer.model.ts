@@ -59,7 +59,9 @@ export const Nouns = {
   Person: 'person',
   Content: 'content',
   Action: 'action',
-  URI: 'uri'
+  URI: 'uri',
+  Group: 'group',
+  List: 'list'
 } as const
 
 export type Nouns = (typeof Nouns)[keyof typeof Nouns]
@@ -69,7 +71,17 @@ export const EdgeVerbs = {
   Controls: 'controls',
   Created: 'created',
   Earned: 'earned',
-  Owns: 'owns'
+  Owns: 'owns',
+  // Adding better relationship verbs from Brainy verbTypes
+  Knows: 'knows',
+  Follows: 'follows',
+  Collaborates: 'collaborates',
+  Mentors: 'mentors',
+  IsFriendOf: 'isFriendOf',
+  IsRelatedTo: 'isRelatedTo',
+  WorksWith: 'worksWith',
+  // Group and List membership
+  MemberOf: 'memberOf'
 } as const
 
 export type EdgeVerbs = (typeof EdgeVerbs)[keyof typeof EdgeVerbs]

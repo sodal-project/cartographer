@@ -9,6 +9,7 @@ import {
   runInInjectionContext,
   effect
 } from '@angular/core'
+import { ViewStateService } from '../services/view-state.service'
 import { Firestore, collection, collectionData } from '@angular/fire/firestore'
 import { MatIcon } from '@angular/material/icon'
 import {
@@ -20,13 +21,15 @@ import {
   MatCardSubtitle,
   MatCardTitle
 } from '@angular/material/card'
-import { MatProgressSpinner } from '@angular/material/progress-spinner'
 import { FormsModule } from '@angular/forms'
 import { BrainyData } from '@soulcraft/brainy'
 import { ProfileService } from '../services/profile.service'
 import { GraphNode, GraphEdge } from '../models/cartographer.model'
 import { Observable } from 'rxjs'
 import { toSignal } from '@angular/core/rxjs-interop'
+import { Router } from '@angular/router'
+import { MatButtonModule } from '@angular/material/button'
+import { MatTooltipModule } from '@angular/material/tooltip'
 
 interface SearchResult {
   profile: {
@@ -49,7 +52,9 @@ interface SearchResult {
     MatCardAvatar,
     FormsModule,
     MatCardSubtitle,
-    MatCardTitle
+    MatCardTitle,
+    MatButtonModule,
+    MatTooltipModule
   ],
   styleUrls: ['./search.component.sass']
 })
@@ -69,6 +74,8 @@ export class SearchComponent implements OnInit, OnDestroy {
   private profileService = inject(ProfileService)
   private brainyService = new BrainyData()
   private injector = inject(Injector)
+  private router = inject(Router)
+  private viewStateService = inject(ViewStateService)
 
   // Store references to event listener functions for cleanup
   private onlineListener = () => this.isOffline.set(false)
@@ -87,6 +94,9 @@ export class SearchComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Ensure the current view is set to 'search' when this component is initialized
+    this.viewStateService.setCurrentView('search')
+
     // Set up Firestore data collection
     const nodesCol = collection(this.firestore, 'Profiles')
     const edgesCol = collection(this.firestore, 'edges')
@@ -260,14 +270,75 @@ export class SearchComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Converts a camelCase string to Title Case Words
+   * @param str The camelCase string to convert
+   * @returns The string converted to Title Case Words
+   */
+  formatCamelCase(str: string): string {
+    // Insert a space before all uppercase letters, then capitalize the first letter of each word
+    return (
+      str
+        // Insert space before uppercase letters
+        .replace(/([A-Z])/g, ' $1')
+        // Capitalize the first letter of the string
+        .replace(/^./, (str) => str.toUpperCase())
+        // Ensure the rest is properly capitalized (first letter of each word)
+        .replace(/\s[a-z]/g, (match) => match.toUpperCase())
+        .trim()
+    )
+  }
+
+  /**
    * Helper method to convert data object to an array of key-value pairs for iteration in the template
    * @param data The data object to convert
    * @returns An array of key-value pairs
    */
-  getDataEntries(data: { [key: string]: any }): { key: string; value: any }[] {
+  getDataEntries(data: {
+    [key: string]: any
+  }): { key: string; value: any; isObject: boolean; isArray: boolean }[] {
     if (!data) return []
 
     return Object.entries(data).map(([key, value]) => {
+      // Format the value based on its type
+      let displayValue = value
+      let isObject = false
+      let isArray = false
+
+      if (typeof value === 'object' && value !== null) {
+        if (Array.isArray(value)) {
+          isArray = true
+          displayValue = value
+        } else {
+          isObject = true
+          displayValue = value
+        }
+
+        // Fallback if we can't process it as a structured object
+        if (!isObject && !isArray) {
+          try {
+            displayValue = JSON.stringify(value)
+          } catch (e) {
+            displayValue = '[Complex Object]'
+          }
+        }
+      }
+
+      // Format the key from camelCase to Title Case Words
+      const formattedKey = this.formatCamelCase(key)
+
+      return { key: formattedKey, value: displayValue, isObject, isArray }
+    })
+  }
+
+  /**
+   * Helper method to convert an object to an array of key-value pairs for nested display
+   * @param obj The object to convert
+   * @returns An array of key-value pairs
+   */
+  getObjectEntries(obj: { [key: string]: any }): { key: string; value: any }[] {
+    if (!obj) return []
+
+    return Object.entries(obj).map(([key, value]) => {
       // Format the value based on its type
       let displayValue = value
       if (typeof value === 'object' && value !== null) {
@@ -278,7 +349,10 @@ export class SearchComponent implements OnInit, OnDestroy {
         }
       }
 
-      return { key, value: displayValue }
+      // Format the key from camelCase to Title Case Words
+      const formattedKey = this.formatCamelCase(key)
+
+      return { key: formattedKey, value: displayValue }
     })
   }
 
@@ -292,5 +366,49 @@ export class SearchComponent implements OnInit, OnDestroy {
       imgElement.src =
         'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
     }
+  }
+
+  /**
+   * Handles the message button click for a profile
+   * @param profileId The ID of the profile to message
+   * @param event The click event
+   */
+  messageProfile(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`Message profile: ${profileId}`)
+    // Implement messaging functionality here
+  }
+
+  /**
+   * Handles the posts button click for a profile
+   * @param profileId The ID of the profile to view posts
+   * @param event The click event
+   */
+  viewProfilePosts(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`View posts for profile: ${profileId}`)
+    // Implement posts viewing functionality here
+  }
+
+  /**
+   * Handles the tag button click for a profile
+   * @param profileId The ID of the profile to tag
+   * @param event The click event
+   */
+  tagProfile(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`Tag profile: ${profileId}`)
+    // Implement tagging functionality here
+  }
+
+  /**
+   * Handles the add to lists button click for a profile
+   * @param profileId The ID of the profile to add to lists
+   * @param event The click event
+   */
+  addToLists(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`Add profile to lists: ${profileId}`)
+    // Implement add to lists functionality here
   }
 }

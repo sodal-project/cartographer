@@ -1,4 +1,4 @@
-<mat-toolbar class="dash-toolbar">
+<mat-toolbar class="dash-toolbar" [class.hidden]="!showToolbar()">
   <button mat-icon-button class="menu-button" (click)="toggleSideMenu()" aria-label="Toggle menu">
     <mat-icon>menu</mat-icon>
   </button>
@@ -8,6 +8,10 @@
   @if (authService.user()) {
     <span class="user-info">{{ authService.user()?.displayName || authService.user()?.email }}</span>
   }
+  <!--  <button mat-icon-button (click)="toggleToolbar()" matTooltip="Hide toolbar" aria-label="Hide toolbar">-->
+  <!--    <mat-icon>keyboard_arrow_up</mat-icon>-->
+  <!--  </button>-->
+
   <button mat-icon-button [matMenuTriggerFor]="profileMenu" aria-label="Profile">
     @if (authService.user()?.photoURL) {
       <img [src]="authService.user()?.photoURL" class="profile-image" alt="Profile picture">
@@ -24,7 +28,7 @@
 </mat-toolbar>
 
 <!-- Combined Search box -->
-<div class="search-container">
+<div class="search-container" [class.hidden]="!showToolbar()">
   <div class="combined-search-box">
     <mat-form-field appearance="outline" class="modern-search">
       <mat-slide-toggle
@@ -68,7 +72,17 @@
   </button>
 </div>
 
-<mat-drawer-container class="dash-container" autosize>
+<!-- Toolbar reveal button -->
+<button
+  mat-mini-fab
+  class="toolbar-reveal-button"
+  [class.visible]="!showToolbar()"
+  (click)="showToolbarAndResize()"
+  matTooltip="Show toolbar">
+  <mat-icon>arrow_upward</mat-icon>
+</button>
+
+<mat-drawer-container class="dash-container" [class.toolbar-hidden]="!showToolbar()" autosize>
   <mat-drawer [opened]="showSideMenu()" class="dash-sidenav" [mode]="sidenavMode()">
     <mat-toolbar class="nav-toolbar">Services</mat-toolbar>
 
@@ -249,6 +263,8 @@
     </div>
 
     <div class="bottom-sheet-actions">
+      <button mat-button color="warn" (click)="clearBrainyData()">Clear BrainyData</button>
+      <span class="expanding-spacer"></span>
       <button mat-button (click)="closeStorageInfoBottomSheet()">Close</button>
     </div>
   </div>

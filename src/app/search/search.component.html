@@ -3,10 +3,13 @@
   @if (isOffline()) {
     <div class="offline-indicator">
       <mat-icon>cloud_off</mat-icon>
-      <span>You are offline. Search results may be limited to previously cached data.</span>
+      <span
+      >You are offline. Search results may be limited to previously cached
+        data.</span
+      >
     </div>
   }
-  
+
   <!-- Search Results -->
   @if (searchResults().length > 0) {
     <div class="search-results">
@@ -15,40 +18,143 @@
           <mat-card-header>
             <!-- Display avatar image if available -->
             @if (result.profile.data?.avatar) {
-              <img mat-card-avatar [src]="result.profile.data.avatar" alt="Avatar"
-                   (error)="handleImageError($event)">
+              <img
+                mat-card-avatar
+                [src]="result.profile.data.avatar"
+                alt="Avatar"
+                (error)="handleImageError($event)" />
             } @else {
-              <img mat-card-avatar src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
-                   alt="Default Avatar">
+              <img
+                mat-card-avatar
+                src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y"
+                alt="Default Avatar" />
             }
-            <mat-card-title>{{ result.profile.data?.displayName || result.profile.data?.handle || result.profile['name'] || result.profile.id }}</mat-card-title>
-            <mat-card-subtitle>Similarity: {{ result.similarity.toFixed(2) }}</mat-card-subtitle>
+            <mat-card-title>{{
+                result.profile.data?.displayName ||
+                result.profile.data?.handle ||
+                result.profile['name'] ||
+                result.profile.id
+              }}
+            </mat-card-title>
+            <mat-card-subtitle
+            ><strong>Similarity:</strong>
+              {{ result.similarity.toFixed(2) }}
+            </mat-card-subtitle
+            >
           </mat-card-header>
           <mat-card-content>
             @if (result.profile['description'] || result.profile.data?.description) {
-              <p>{{ result.profile.data?.description || result.profile['description'] }}</p>
+              <p>
+                {{
+                  result.profile.data?.description ||
+                  result.profile['description']
+                }}
+              </p>
             }
             @if (result.profile['email'] || result.profile.data?.email) {
-              <p><strong>Email:</strong> {{ result.profile.data?.email || result.profile['email'] }}</p>
+              <p>
+                <strong>Email:</strong>
+                {{ result.profile.data?.email || result.profile['email'] }}
+              </p>
             }
             @if (result.profile['phone'] || result.profile.data?.phone) {
-              <p><strong>Phone:</strong> {{ result.profile.data?.phone || result.profile['phone'] }}</p>
+              <p>
+                <strong>Phone:</strong>
+                {{ result.profile.data?.phone || result.profile['phone'] }}
+              </p>
             }
             @if (result.profile['company'] || result.profile.data?.company) {
-              <p><strong>Company:</strong> {{ result.profile.data?.company || result.profile['company'] }}</p>
+              <p>
+                <strong>Company:</strong>
+                {{ result.profile.data?.company || result.profile['company'] }}
+              </p>
             }
 
             <!-- Display all other data fields -->
             @if (result.profile.data) {
-              @for (item of getDataEntries(result.profile.data); track item.key) {
-                @if (!['avatar', 'displayName', 'handle', 'description', 'email', 'phone', 'company'].includes(item.key)) {
-                  <p><strong>{{ item.key }}:</strong> {{ item.value }}</p>
+              @for (item of getDataEntries(result.profile.data);
+                track item.key) {
+                @if (![
+                  'avatar',
+                  'displayName',
+                  'handle',
+                  'description',
+                  'email',
+                  'phone',
+                  'company'
+                ].includes(item.key)) {
+                  @if (item.isObject) {
+                    <div class="nested-data">
+                      <p>
+                        <strong>{{ item.key }}:</strong>
+                      </p>
+                      <ul>
+                        @for (entry of getObjectEntries(item.value);
+                          track entry.key) {
+                          <li>
+                            <strong>{{ entry.key }}:</strong> {{ entry.value }}
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  } @else if (item.isArray) {
+                    <div class="nested-data">
+                      <p>
+                        <strong>{{ item.key }}:</strong>
+                      </p>
+                      <ul>
+                        @for (arrayItem of item.value; track $index) {
+                          @if (typeof arrayItem === 'object' && arrayItem !== null) {
+                            @for (entry of getObjectEntries(arrayItem);
+                              track entry.key) {
+                              <li>
+                                <strong>{{ entry.key }}:</strong>
+                                {{ entry.value }}
+                              </li>
+                            }
+                          } @else {
+                            <li>
+                              <strong>Item {{ $index }}:</strong>
+                              {{ arrayItem }}
+                            </li>
+                          }
+                        }
+                      </ul>
+                    </div>
+                  } @else {
+                    <p>
+                      <strong>{{ item.key }}:</strong> {{ item.value }}
+                    </p>
+                  }
                 }
               }
             }
           </mat-card-content>
-          <mat-card-actions align="end">
-
+          <mat-card-actions>
+            <button mat-icon-button
+                    color="primary"
+                    (click)="messageProfile(result.profile.id, $event)"
+                    matTooltip="Send a message">
+              <mat-icon>message</mat-icon>
+            </button>
+            <button mat-icon-button
+                    color="accent"
+                    (click)="viewProfilePosts(result.profile.id, $event)"
+                    matTooltip="View posts">
+              <mat-icon>article</mat-icon>
+            </button>
+            <button mat-icon-button
+                    color="warn"
+                    (click)="tagProfile(result.profile.id, $event)"
+                    matTooltip="Add tags">
+              <mat-icon>local_offer</mat-icon>
+            </button>
+            <button mat-icon-button
+                    color="primary"
+                    (click)="addToLists(result.profile.id, $event)"
+                    matTooltip="Add to lists">
+              <mat-icon>playlist_add</mat-icon>
+            </button>
           </mat-card-actions>
         </mat-card>
       }

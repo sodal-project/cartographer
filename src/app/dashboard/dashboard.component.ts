@@ -8,8 +8,10 @@ import {
   OnInit,
   OnDestroy,
   HostListener,
-  TemplateRef
+  TemplateRef,
+  ElementRef
 } from '@angular/core'
+import { ViewStateService } from '../services/view-state.service'
 import {
   Firestore,
   disableNetwork,
@@ -36,20 +38,18 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'
 import { RegistryService } from '../services/registry.service'
 import { UpdateService } from '../services/update.service'
 import {
-  BrainyData,
   defaultEmbeddingFunction,
-  cosineDistance
+  cosineDistance,
+  BrainyData
 } from '@soulcraft/brainy'
-import {
-  Router,
-  RouterLink,
-  RouterLinkActive,
-  RouterOutlet
-} from '@angular/router'
+import { Router, RouterOutlet } from '@angular/router'
 import { version } from '../../../package.json'
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu'
 import { MatExpansionModule } from '@angular/material/expansion'
-import { MatBottomSheet, MatBottomSheetRef, MatBottomSheetModule } from '@angular/material/bottom-sheet'
+import {
+  MatBottomSheet,
+  MatBottomSheetModule
+} from '@angular/material/bottom-sheet'
 import { MatDividerModule } from '@angular/material/divider'
 import { MatButtonToggleModule } from '@angular/material/button-toggle'
 import { MatSlideToggleModule } from '@angular/material/slide-toggle'
@@ -98,8 +98,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   protected readonly storageInfoService = inject(StorageInfoService)
   private readonly bottomSheet = inject(MatBottomSheet)
   private readonly brainyService = new BrainyData()
+  protected readonly viewStateService = inject(ViewStateService)
   public showSideMenu: WritableSignal<boolean> = signal(false)
   public onlineStatus: WritableSignal<boolean> = signal(navigator.onLine)
+  public showToolbar: WritableSignal<boolean> = signal(true)
+  private lastScrollTop: number = 0
+  private scrollThreshold: number = 20
 
   // Responsive design properties
   public isMobile: WritableSignal<boolean> = signal(window.innerWidth < 600)
@@ -142,8 +146,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public filteredProfiles: WritableSignal<Profile[]> = signal([])
   public filteredServices: WritableSignal<Service[]> = signal([])
   public isSearching: WritableSignal<boolean> = signal(false)
-  public currentView: WritableSignal<'explore' | 'search'> = signal('explore')
-  public searchMode: WritableSignal<'network' | 'local'> = signal('network')
+
+  // Using viewStateService for currentView and searchMode
+  public get currentView(): WritableSignal<'explore' | 'search'> {
+    return this.viewStateService.currentView
+  }
+
+  public get searchMode(): WritableSignal<'network' | 'local'> {
+    return this.viewStateService.searchMode
+  }
 
   constructor() {
     // Create an effect to watch for changes to the RegistryService's services signal
@@ -207,6 +218,42 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Window scroll handler for auto-hiding toolbar
+  @HostListener('window:scroll', ['$event'])
+  onScroll(event: Event): void {
+    const scrollTop =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0
+
+    // Determine scroll direction
+    if (Math.abs(scrollTop - this.lastScrollTop) <= this.scrollThreshold) {
+      return // Don't do anything if the scroll amount is less than the threshold
+    }
+
+    // Store the current toolbar state to check if it changes
+    const currentToolbarState = this.showToolbar()
+
+    // Scrolling down and not at the top of the page
+    if (scrollTop > this.lastScrollTop && scrollTop > 50) {
+      this.showToolbar.set(false)
+    }
+    // Scrolling up or at the top of the page
+    else {
+      this.showToolbar.set(true)
+    }
+
+    // If the toolbar state changed, dispatch a resize event
+    if (currentToolbarState !== this.showToolbar()) {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'))
+      }, 100) // Small delay to ensure the DOM has updated
+    }
+
+    this.lastScrollTop = scrollTop
+  }
+
   /**
    * Updates storage information for filesystem, OPFS, and memory
    */
@@ -230,6 +277,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   toggleSideMenu(): void {
     this.showSideMenu.update((value) => !value)
+  }
+
+  /**
+   * Toggles the visibility of the toolbar
+   */
+  toggleToolbar(): void {
+    this.showToolbar.update((value) => !value)
+
+    // Dispatch a resize event to ensure components resize properly
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'))
+    }, 100) // Small delay to ensure the DOM has updated
+  }
+
+  /**
+   * Shows the toolbar
+   */
+  showToolbarAndResize(): void {
+    this.showToolbar.set(true)
+
+    // Dispatch a resize event to ensure components resize properly
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'))
+    }, 100) // Small delay to ensure the DOM has updated
   }
 
   /**
@@ -503,7 +574,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.localSearchQuery.set('')
 
       // Switch to explore view to show the results
-      this.currentView.set('explore')
+      this.viewStateService.setCurrentView('explore')
 
       console.log('Vector search completed and results stored in Brainy')
     } catch (error) {
@@ -570,7 +641,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   toggleView(): void {
     const newView = this.currentView() === 'explore' ? 'search' : 'explore'
-    this.currentView.set(newView)
+    this.viewStateService.setCurrentView(newView)
     this.router.navigate([`/dashboard/${newView}`])
   }
 
@@ -580,7 +651,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   toggleSearchMode(checked: boolean): void {
     const mode = checked ? 'network' : 'local'
-    this.searchMode.set(mode)
+    this.viewStateService.setSearchMode(mode)
     console.log('Search mode toggled to:', mode)
   }
 
@@ -593,13 +664,50 @@ export class DashboardComponent implements OnInit, OnDestroy {
       panelClass: 'storage-info-bottom-sheet',
       hasBackdrop: true,
       disableClose: false
-    });
+    })
   }
 
   /**
    * Closes the storage information bottom sheet
    */
   closeStorageInfoBottomSheet(): void {
-    this.bottomSheet.dismiss();
+    this.bottomSheet.dismiss()
+  }
+
+  /**
+   * Refreshes storage information
+   * This is a wrapper around updateStorageInfo for semantic clarity
+   */
+  async refreshStorageInfo(): Promise<void> {
+    await this.updateStorageInfo()
+  }
+
+  /**
+   * Clears all BrainyData stored locally
+   * This resets the local vector database
+   */
+  async clearBrainyData(): Promise<void> {
+    try {
+      console.log('Attempting to clear BrainyData...')
+
+      // Try to reinitialize the BrainyData instance
+      // This might clear existing data in some implementations
+      await this.brainyService.init()
+
+      // Use the clear method from BrainyService
+      await this.brainyService.clear()
+      console.log('BrainyData cleared using BrainyService')
+
+      // Reset related data in the component
+      this.vectorSearchResults.set([])
+      this.filteredProfiles.set(this.profiles())
+
+      // Refresh storage info
+      await this.refreshStorageInfo()
+
+      console.log('BrainyData successfully cleared')
+    } catch (error) {
+      console.error('Error clearing BrainyData:', error)
+    }
   }
 }

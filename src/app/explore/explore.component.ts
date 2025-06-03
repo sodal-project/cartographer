@@ -19,6 +19,8 @@ import { collection, collectionData, Firestore } from '@angular/fire/firestore'
 import { Observable } from 'rxjs'
 import { toSignal } from '@angular/core/rxjs-interop'
 import { MatIcon, MatIconModule } from '@angular/material/icon'
+import { MatButtonModule } from '@angular/material/button'
+import { MatTooltipModule } from '@angular/material/tooltip'
 import { BrainyData } from '@soulcraft/brainy'
 import { ProfileService } from '../services/profile.service'
 import { EdgeVerbs } from '../models/cartographer.model'
@@ -47,7 +49,8 @@ interface GraphEdge {
 }
 
 // D3 specific node and link types
-interface Node extends d3.SimulationNodeDatum, GraphNode {}
+interface Node extends d3.SimulationNodeDatum, GraphNode {
+}
 
 interface Edge extends d3.SimulationLinkDatum<Node> {
   source: string | Node // D3 expects source/target to be Node objects or IDs after processing
@@ -68,7 +71,7 @@ interface CustomNode extends Node {
 @Component({
   selector: 'd3-explore',
   standalone: true,
-  imports: [MatIcon],
+  imports: [MatIcon, MatIconModule, MatButtonModule, MatTooltipModule],
   template: `
     @if (isOffline()) {
       <div class="offline-indicator">
@@ -108,18 +111,28 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
   > | null = null
   private zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null
   private nodes: CustomNode[] = []
+  private nodeToSelectId: string | null = null
   private nodeSize: { width: number; height: number } = {
     width: 160,
     height: 48
   }
 
   // Reference to the active popup
+  private overlayContainer: d3.Selection<
+    SVGGElement,
+    unknown,
+    null,
+    undefined
+  > | null = null
   private activePopup: d3.Selection<
     SVGGElement,
     unknown,
     null,
     undefined
   > | null = null
+
+  // Track the currently selected node (if any)
+  private selectedNodeId: string | null = null
 
   // Computed signal for D3 data
   private d3Data = computed(() => this.toD3Data())
@@ -333,8 +346,10 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
             ...profile, // Spread other properties from profile
             data: {
               displayName:
-                profile.data?.displayName || profile.displayName || 'Unknown',
-              handle: profile.data?.handle || profile.handle || '',
+                profile.data?.['displayName'] ||
+                profile.displayName ||
+                'Unknown',
+              handle: profile.data?.['handle'] || profile.handle || '',
               avatar: profile.data?.avatar || profile.avatar || '',
               ...profile.data // Spread other data properties
             }
@@ -365,9 +380,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
             // Ensure existingNode.data is initialized
             if (!existingNode.data) {
               existingNode.data = {
-                displayName: node.data?.displayName || 'Unknown',
-                handle: node.data?.handle || '',
-                avatar: node.data?.avatar || ''
+                displayName: node.data?.['displayName'] || 'Unknown',
+                handle: node.data?.['handle'] || '',
+                avatar: node.data?.['avatar'] || ''
               }
             }
 
@@ -403,7 +418,174 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     // Add random edges for testing layout
     this.addRandomEdges(nodes, edges)
 
+    // Add random groups and lists
+    this.addRandomGroups(nodes, edges)
+
     return { nodes, edges }
+  }
+
+  /**
+   * Adds random groups and lists with memberOf relationships
+   * @param nodes The array of nodes to add random groups to
+   * @param edges The array of edges to add random group edges to
+   */
+  private addRandomGroups(nodes: CustomNode[], edges: Edge[]): void {
+    // Find person nodes to use for creating random groups and lists
+    const personNodes = nodes.filter((node) => node['noun'] === 'person')
+
+    // Create at least one person node if none exist
+    if (personNodes.length === 0) {
+      console.log('No person nodes found, creating one for random groups')
+      const personNode: CustomNode = {
+        id: `person-${Date.now()}`,
+        group: 1,
+        noun: 'person',
+        data: {
+          displayName: 'Random Person',
+          handle: '@random',
+          avatar: '',
+          description: 'A randomly generated person'
+        }
+      }
+      nodes.push(personNode)
+      personNodes.push(personNode)
+    }
+
+    console.log(
+      `Adding random groups and lists for ${personNodes.length} person nodes`
+    )
+
+    // Group names
+    const groupNames = [
+      'Engineering Team',
+      'Marketing Department',
+      'Executive Board',
+      'Research Group',
+      'Design Team',
+      'Sales Team',
+      'Customer Support',
+      'Product Management',
+      'Quality Assurance',
+      'Human Resources'
+    ]
+
+    // List names
+    const listNames = [
+      'Project Alpha Members',
+      'Conference Attendees',
+      'Workshop Participants',
+      'Task Force',
+      'Committee Members',
+      'Event Organizers',
+      'Beta Testers',
+      'Contributors',
+      'Volunteers',
+      'Award Recipients'
+    ]
+
+    // Create timestamp
+    const now = new Date()
+    const timestamp = {
+      seconds: Math.floor(now.getTime() / 1000),
+      nanoseconds: now.getMilliseconds() * 1000000
+    }
+
+    // Number of groups and lists to create
+    const numGroups = 2
+    const numLists = 2
+
+    // Create random groups
+    for (let i = 0; i < numGroups; i++) {
+      const groupName =
+        groupNames[Math.floor(Math.random() * groupNames.length)]
+      const groupId = `group-${Date.now()}-${i}`
+
+      const groupNode: CustomNode = {
+        id: groupId,
+        group: 2, // Use a different group number for styling
+        noun: 'group',
+        data: {
+          displayName: groupName,
+          name: groupName,
+          description: `A group of people working together as ${groupName}`,
+          handle: '',
+          avatar: ''
+        }
+      }
+
+      nodes.push(groupNode)
+
+      // Add random person nodes as members of this group
+      if (personNodes.length > 0) {
+        // Determine how many people to add to this group (between 3 and 5, or all if less than 3)
+        const numMembers = Math.min(
+          3 + Math.floor(Math.random() * 3),
+          personNodes.length
+        )
+
+        // Randomly select person nodes
+        const shuffled = [...personNodes].sort(() => 0.5 - Math.random())
+        const selectedPersons = shuffled.slice(0, numMembers)
+
+        // Create edges from persons to group
+        for (const person of selectedPersons) {
+          const edge: Edge = {
+            source: person.id,
+            target: groupId,
+            verb: 'MemberOf',
+            confidence: 0.9 + Math.random() * 0.1 // High confidence (0.9-1.0)
+          }
+
+          edges.push(edge)
+        }
+      }
+    }
+
+    // Create random lists
+    for (let i = 0; i < numLists; i++) {
+      const listName = listNames[Math.floor(Math.random() * listNames.length)]
+      const listId = `list-${Date.now()}-${i}`
+
+      const listNode: CustomNode = {
+        id: listId,
+        group: 3, // Use a different group number for styling
+        noun: 'list',
+        data: {
+          displayName: listName,
+          name: listName,
+          description: `A list of people in ${listName}`,
+          handle: '',
+          avatar: ''
+        }
+      }
+
+      nodes.push(listNode)
+
+      // Add random person nodes as members of this list
+      if (personNodes.length > 0) {
+        // Determine how many people to add to this list (between 3 and 5, or all if less than 3)
+        const numMembers = Math.min(
+          3 + Math.floor(Math.random() * 3),
+          personNodes.length
+        )
+
+        // Randomly select person nodes
+        const shuffled = [...personNodes].sort(() => 0.5 - Math.random())
+        const selectedPersons = shuffled.slice(0, numMembers)
+
+        // Create edges from persons to list
+        for (const person of selectedPersons) {
+          const edge: Edge = {
+            source: person.id,
+            target: listId,
+            verb: 'MemberOf',
+            confidence: 0.9 + Math.random() * 0.1 // High confidence (0.9-1.0)
+          }
+
+          edges.push(edge)
+        }
+      }
+    }
   }
 
   /**
@@ -412,7 +594,24 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
    * @param edges The array of edges to add random edges to
    */
   private addRandomEdges(nodes: CustomNode[], edges: Edge[]): void {
-    if (nodes.length < 2) return // Need at least 2 nodes to create edges
+    // Need at least 2 nodes to create edges
+    if (nodes.length < 2) {
+      console.log('Not enough nodes for random edges, creating some')
+      // Create at least 2 nodes if there aren't enough
+      for (let i = 0; i < 2 - nodes.length; i++) {
+        const node: CustomNode = {
+          id: `node-${Date.now()}-${i}`,
+          group: 1,
+          data: {
+            displayName: `Random Node ${i+1}`,
+            handle: `@random${i+1}`,
+            avatar: '',
+            description: 'A randomly generated node'
+          }
+        }
+        nodes.push(node)
+      }
+    }
 
     // Create a set of existing edges to avoid duplicates
     const existingEdges = new Set<string>()
@@ -432,7 +631,104 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     // Get array of verb keys for random selection
     const verbKeys = Object.keys(EdgeVerbs) as Array<keyof typeof EdgeVerbs>
 
-    // Add random edges
+    // Person-to-Person appropriate verbs from Brainy verbTypes
+    // These verbs better represent relationships between people
+    const personToPersonVerbs: Array<keyof typeof EdgeVerbs> = [
+      // Social relationship verbs
+      'Knows',
+      'Follows',
+      'IsFriendOf',
+      'IsRelatedTo',
+      // Professional relationship verbs
+      'Collaborates',
+      'Mentors',
+      'WorksWith',
+      // Original verbs (less appropriate for person-to-person relationships)
+      'AttributedTo',
+      'Controls',
+      'Owns'
+      // Not including 'Created' and 'Earned' as they're less appropriate for person-to-person relationships
+    ]
+
+    // Identify all Person nodes
+    const personNodes = nodes.filter((node) => node['noun'] === 'person')
+
+    // Create at least 2 person nodes if there aren't enough
+    if (personNodes.length < 2) {
+      console.log('Not enough person nodes for random edges, creating some')
+      for (let i = 0; i < 2 - personNodes.length; i++) {
+        const personNode: CustomNode = {
+          id: `person-${Date.now()}-${i}`,
+          group: 1,
+          noun: 'person',
+          data: {
+            displayName: `Random Person ${i+1}`,
+            handle: `@random${i+1}`,
+            avatar: '',
+            description: 'A randomly generated person'
+          }
+        }
+        nodes.push(personNode)
+        personNodes.push(personNode)
+      }
+    }
+
+    // Track which Person nodes already have connections to other Person nodes
+    const connectedPersonNodes = new Set<string>()
+
+    // First, ensure each Person node has at least one connection to another Person node
+    if (personNodes.length >= 2) {
+      for (const sourceNode of personNodes) {
+        // Skip if this Person node already has a connection to another Person
+        if (connectedPersonNodes.has(sourceNode.id)) continue
+
+        // Find a target Person node that is not the source node
+        const targetPersonNodes = personNodes.filter(
+          (node) => node.id !== sourceNode.id
+        )
+
+        if (targetPersonNodes.length > 0) {
+          // Pick a random target Person node
+          const targetNode =
+            targetPersonNodes[
+              Math.floor(Math.random() * targetPersonNodes.length)
+              ]
+
+          // Skip if edge already exists
+          if (existingEdges.has(`${sourceNode.id}-${targetNode.id}`)) {
+            // Mark both nodes as connected since an edge already exists between them
+            connectedPersonNodes.add(sourceNode.id)
+            connectedPersonNodes.add(targetNode.id)
+            continue
+          }
+
+          // Pick a random appropriate verb for Person-to-Person relationship
+          const randomVerb =
+            personToPersonVerbs[
+              Math.floor(Math.random() * personToPersonVerbs.length)
+              ]
+          const randomConfidence = 0.7 + Math.random() * 0.3 // Higher confidence (0.7-1.0) for Person-to-Person
+
+          // Add the new edge with verb and confidence
+          edges.push({
+            source: sourceNode.id,
+            target: targetNode.id,
+            verb: randomVerb,
+            confidence: randomConfidence
+          } as Edge)
+
+          // Mark as existing to avoid duplicates
+          existingEdges.add(`${sourceNode.id}-${targetNode.id}`)
+          existingEdges.add(`${targetNode.id}-${sourceNode.id}`) // Consider undirected graph
+
+          // Mark both nodes as connected
+          connectedPersonNodes.add(sourceNode.id)
+          connectedPersonNodes.add(targetNode.id)
+        }
+      }
+    }
+
+    // Add additional random edges
     let addedEdges = 0
     let attempts = 0
     const maxAttempts = nodes.length * 10 // Avoid infinite loop
@@ -447,16 +743,31 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       // Skip if same node (no self-loops)
       if (sourceIndex === targetIndex) continue
 
-      const sourceId = nodes[sourceIndex].id
-      const targetId = nodes[targetIndex].id
+      const sourceNode = nodes[sourceIndex]
+      const targetNode = nodes[targetIndex]
+      const sourceId = sourceNode.id
+      const targetId = targetNode.id
 
       // Skip if edge already exists
       if (existingEdges.has(`${sourceId}-${targetId}`)) continue
 
-      // Generate random verb and confidence score
-      const randomVerbIndex = Math.floor(Math.random() * verbKeys.length)
-      const randomVerb = verbKeys[randomVerbIndex]
-      const randomConfidence = Math.random() // Random value between 0 and 1
+      // Generate appropriate verb based on node types
+      let randomVerb: keyof typeof EdgeVerbs
+      let randomConfidence: number
+
+      // If both nodes are Person nodes, use a Person-to-Person appropriate verb
+      if (sourceNode['noun'] === 'person' && targetNode['noun'] === 'person') {
+        randomVerb =
+          personToPersonVerbs[
+            Math.floor(Math.random() * personToPersonVerbs.length)
+            ]
+        randomConfidence = 0.7 + Math.random() * 0.3 // Higher confidence (0.7-1.0) for Person-to-Person
+      } else {
+        // For other node types, use any verb
+        const randomVerbIndex = Math.floor(Math.random() * verbKeys.length)
+        randomVerb = verbKeys[randomVerbIndex]
+        randomConfidence = Math.random() // Random value between 0 and 1
+      }
 
       // Add the new edge with verb and confidence
       edges.push({
@@ -494,6 +805,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     // Store references for zoomToFit method
     this.svgElement = null
     this.zoomBehavior = null
+    this.overlayContainer = null
     this.nodes = nodes
     this.nodeSize = { width: 280, height: 80 } // Increased width to accommodate longer displayNames
 
@@ -543,10 +855,69 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .attr('height', '200%')
       .append('feDropShadow')
       .attr('dx', '0')
-      .attr('dy', '2')
-      .attr('stdDeviation', '3')
+      .attr('dy', '4')
+      .attr('stdDeviation', '6')
       .attr('flood-color', md3Colors.shadow)
-      .attr('flood-opacity', '0.15')
+      .attr('flood-opacity', '0.25')
+
+    // Add a glassy effect filter for the popup
+    const glassyFilter = defs
+      .append('filter')
+      .attr('id', 'glassy-effect')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%')
+
+    // Add a more pronounced blur for the glassy effect
+    glassyFilter
+      .append('feGaussianBlur')
+      .attr('in', 'SourceGraphic')
+      .attr('stdDeviation', '2')  // Increased from 1 to 2 for more pronounced blur
+      .attr('result', 'blur')
+
+    // Add a subtle highlight to simulate glass reflection
+    const feSpecularLighting = glassyFilter
+      .append('feSpecularLighting')
+      .attr('in', 'blur')
+      .attr('surfaceScale', '3')
+      .attr('specularConstant', '1')
+      .attr('specularExponent', '20')
+      .attr('lighting-color', '#FFFFFF')
+      .attr('result', 'specOut')
+
+    // Add a light source for the specular lighting
+    feSpecularLighting
+      .append('fePointLight')
+      .attr('x', '0')
+      .attr('y', '-50')
+      .attr('z', '200')
+
+    // Composite the specular lighting with the original
+    const feComposite = glassyFilter
+      .append('feComposite')
+      .attr('in', 'specOut')
+      .attr('in2', 'SourceGraphic')
+      .attr('operator', 'arithmetic')
+      .attr('k1', '0')
+      .attr('k2', '0.3')
+      .attr('k3', '0.7')
+      .attr('k4', '0')
+      .attr('result', 'litGraphic')
+
+    // Add a subtle shadow with increased offset for better depth
+    const feOffset = glassyFilter
+      .append('feOffset')
+      .attr('in', 'blur')
+      .attr('dx', '0')
+      .attr('dy', '3')  // Increased from 2 to 3 for more pronounced shadow
+      .attr('result', 'offsetBlur')
+
+    // Create a composite of the shadow, the lit graphic, and the original
+    const feMerge = glassyFilter.append('feMerge')
+    feMerge.append('feMergeNode').attr('in', 'offsetBlur')
+    feMerge.append('feMergeNode').attr('in', 'litGraphic')
+    feMerge.append('feMergeNode').attr('in', 'SourceGraphic')
 
     const zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
@@ -559,10 +930,40 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     this.zoomBehavior = zoomBehavior
 
     svg.call(zoomBehavior as any)
+      .on('click', (event) => {
+        // Only handle clicks directly on the SVG background (not on nodes or edges)
+        if (event.target === svg.node()) {
+          // If there's a selected node, deselect it and restore all nodes and edges
+          if (this.selectedNodeId) {
+            this.selectedNodeId = null
+
+            // Restore all nodes and edges to full opacity
+            d3.selectAll('.node-group').transition().duration(300).style('opacity', 1);
+            d3.selectAll('.edge-group').transition().duration(300).style('opacity', 1);
+
+            // Remove 'selected' class from all nodes
+            d3.selectAll('.node-group').classed('selected', false);
+
+            // Close any existing popup
+            if (this.activePopup) {
+              this.activePopup.remove()
+              this.activePopup = null
+            }
+
+            // Zoom to fit all nodes
+            this.zoomToFit()
+          }
+        }
+      });
 
     const graphContainer = svg
       .append('g')
       .attr('class', 'graph-content-container')
+
+    // Create an overlay container for popups that won't be affected by zoom
+    this.overlayContainer = svg
+      .append('g')
+      .attr('class', 'overlay-container')
 
     // Create edge groups to hold both the line and the label
     const linkGroup = graphContainer
@@ -616,7 +1017,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         .innerRadius(0) // Will be updated to create a hollow center
         .outerRadius(0) // Will be updated based on text width
         .startAngle(0)
-        .endAngle(function (d) {
+        .endAngle(function(d) {
           const edge = d as Edge
           if (edge.confidence !== undefined) {
             // Convert confidence to radians (full circle = 2π)
@@ -631,7 +1032,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         .attr('class', 'edge-label-pie')
         .attr('fill', '#4DB6AC') // Soft teal color
         .attr('fill-opacity', 0.7)
-        .attr('d', function (d) {
+        .attr('d', function(d) {
           return arcGenerator(d)
         })
 
@@ -652,7 +1053,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         .attr('class', 'edge-label')
         .attr('text-anchor', 'middle')
         .attr('fill', md3Colors.outline)
-        .style('font-family', "'Roboto', 'Inter', sans-serif")
+        .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
         .style('font-size', '12px') // Increased font size
         .style('font-weight', '900') // Extra bold text
         .style('pointer-events', 'none') // Allow clicks to pass through to the group
@@ -662,7 +1063,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         // Split camelCase into separate words
         const words = verb.replace(/([a-z])([A-Z])/g, '$1 $2').split(' ')
         // Capitalize each word
-        return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+        return words
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
       }
 
       // Add verb name (positioned slightly above center to avoid overlap with arrow)
@@ -670,7 +1073,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         .append('tspan')
         .attr('x', 0)
         .attr('dy', '-5') // Moved up slightly from center
-        .text(function (d) {
+        .text(function(d) {
           const edge = d as Edge
           return edge.verb ? formatVerbLabel(EdgeVerbs[edge.verb]) : ''
         })
@@ -679,7 +1082,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       // as we'll be using a pie chart visualization instead
 
       // Adjust background circle and pie chart size based on text width
-      labelText.each(function () {
+      labelText.each(function() {
         const textWidth = this.getComputedTextLength()
         const padding = 24 // Increased padding for better appearance
         // Use the maximum of textWidth and a minimum size to ensure the circle is not too small
@@ -695,14 +1098,21 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         arcGenerator.outerRadius(radius).innerRadius(radius * 0.8) // Set inner radius to 80% of outer radius to create a larger hollow center
 
         // Update the pie chart path with the correct data
-        parentGroup.select('.edge-label-pie').attr('d', function (d) {
+        parentGroup.select('.edge-label-pie').attr('d', function(d) {
           return arcGenerator(d)
         })
       })
 
       // Add click event to select connected nodes and zoom to fit
-      labelGroup.on('click', function (event, d) {
+      labelGroup.on('click', function(event, d) {
         event.stopPropagation() // Prevent event bubbling
+
+        // Close any existing popup
+        if (component.activePopup) {
+          component.activePopup.remove()
+          component.activePopup = null
+          component.zoomToFit()
+        }
 
         const edge = d as Edge
         const sourceId =
@@ -718,7 +1128,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         d3.selectAll('.node-group').classed('selected', false)
 
         // Select the connected nodes
-        d3.selectAll('.node-group').each(function (nodeData: any) {
+        d3.selectAll('.node-group').each(function(nodeData: any) {
           const node = nodeData as CustomNode
           if (node.id === sourceId || node.id === targetId) {
             d3.select(this)
@@ -738,7 +1148,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     }
 
     // Create a single centered label group for each edge
-    linkGroup.each(function () {
+    linkGroup.each(function() {
       const linkElement = d3.select(this)
       createCenteredLabelGroup(linkElement)
     })
@@ -757,7 +1167,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .attr('class', 'node-group')
       .style('cursor', 'pointer')
 
-    // Add card background with squared left corners and rounded right corners
+    // Add card background with different shapes based on node type
     node
       .append('path')
       .attr('d', (d) => {
@@ -767,28 +1177,57 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         const x = -w / 2
         const y = -h / 2
 
-        // Path with squared left corners and rounded right corners
-        return `
-          M ${x},${y}
-          h ${w - r}
-          a ${r},${r} 0 0 1 ${r},${r}
-          v ${h - 2 * r}
-          a ${r},${r} 0 0 1 ${-r},${r}
-          h ${-(w - r)}
-          v ${-h}
-          z
-        `
+        // Check if node is a Group or List
+        if (d['noun'] === 'group' || d['noun'] === 'list') {
+          // Circle for Groups and Lists
+          const radius = Math.max(w, h) / 1.5; // Larger circle
+          return `
+            M ${x + w/2},${y + h/2 - radius}
+            a ${radius},${radius} 0 0 1 0,${2*radius}
+            a ${radius},${radius} 0 0 1 0,${-2*radius}
+            z
+          `
+        } else {
+          // Path with squared left corners and rounded right corners for other nodes
+          return `
+            M ${x},${y}
+            h ${w - r}
+            a ${r},${r} 0 0 1 ${r},${r}
+            v ${h - 2 * r}
+            a ${r},${r} 0 0 1 ${-r},${r}
+            h ${-(w - r)}
+            v ${-h}
+            z
+          `
+        }
       })
-      .attr(
-        'fill',
-        (d) => nodeColorPalette[(d.group || 0) % nodeColorPalette.length]
-      )
-      .attr('stroke', md3Colors.outline)
-      .attr('stroke-width', 0.5)
+      .attr('fill', (d) => {
+        // Primary color fill for Groups and Lists to match view-toggle-button
+        if (d['noun'] === 'group' || d['noun'] === 'list') {
+          return md3Colors.primary // Match material theme primary color
+        }
+        // Default color palette for other nodes
+        return nodeColorPalette[(d.group || 0) % nodeColorPalette.length]
+      })
+      .attr('stroke', (d) => {
+        // Primary color outline for Groups and Lists
+        if (d['noun'] === 'group' || d['noun'] === 'list') {
+          return md3Colors.primary // Match material theme primary color
+        }
+        return md3Colors.outline
+      })
+      .attr('stroke-width', (d) => {
+        // Thicker outline for Groups and Lists
+        if (d['noun'] === 'group' || d['noun'] === 'list') {
+          return 5 // Increased border thickness
+        }
+        return 0.5
+      })
       .style('filter', 'url(#md-shadow)')
 
-    // Add avatar image (filling left side of node box)
+    // Add avatar image (filling left side of node box) - only for non-Group/List nodes
     node
+      .filter((d) => d['noun'] !== 'group' && d['noun'] !== 'list')
       .append('image')
       .attr('x', -nodeSize.width / 2) // Position at the left edge of the card
       .attr('y', -nodeSize.height / 2) // Position at the top edge of the card
@@ -800,7 +1239,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         return (d as CustomNode).data?.avatar
       })
       .attr('preserveAspectRatio', 'xMidYMid slice')
-      .on('error', function () {
+      .on('error', function() {
         // If the image fails to load, replace with a default avatar
         d3.select(this).attr(
           'xlink:href',
@@ -808,8 +1247,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         )
       })
 
-    // Add separator line between avatar and text
+    // Add separator line between avatar and text - only for non-Group/List nodes
     node
+      .filter((d) => d['noun'] !== 'group' && d['noun'] !== 'list')
       .append('line')
       .attr('x1', -nodeSize.width / 2 + nodeSize.height) // Right edge of avatar
       .attr('y1', -nodeSize.height / 2) // Top of node
@@ -839,20 +1279,40 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       return text
     }
 
-    // Add name text
+    // Add centered title text for Groups and Lists
     node
+      .filter((d) => d['noun'] === 'group' || d['noun'] === 'list')
+      .append('text')
+      .text((d) => {
+        const name = (d as CustomNode).data?.['name'] || ''
+        return truncateText(name, nodeSize.width - 20, 14) // Use almost full width for centered text
+      })
+      .attr('x', 0) // Center horizontally
+      .attr('y', 5) // Center vertically (slightly adjusted for visual balance)
+      .attr('text-anchor', 'middle') // Center text
+      .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+      .style('font-size', '16px')
+      .style('font-weight', 'bold')
+      .style('fill', md3Colors.onPrimary) // White text for contrast on primary color background
+      .style('pointer-events', 'none')
+      .style('text-overflow', 'ellipsis')
+      .style('white-space', 'nowrap')
+
+    // Add name text for non-Group/List nodes
+    node
+      .filter((d) => d['noun'] !== 'group' && d['noun'] !== 'list')
       .append('text')
       .text((d) => {
         const displayName =
-          (d as CustomNode).data?.displayName ||
-          (d as CustomNode).data?.handle ||
+          (d as CustomNode).data?.['displayName'] ||
+          (d as CustomNode).data?.['handle'] ||
           ''
         return truncateText(displayName, textAvailableWidth, 12)
       })
       .attr('x', -nodeSize.width / 2 + avatarWidth + textMargin) // Position to the right of the separator line with margin
       .attr('y', -10)
       .attr('text-anchor', 'start')
-      .style('font-family', "'Roboto', 'Inter', sans-serif")
+      .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
       .style('font-size', '14px')
       .style('font-weight', 'bold')
       .style('fill', md3Colors.onPrimary)
@@ -860,8 +1320,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .style('text-overflow', 'ellipsis') // Ensure text doesn't leak outside
       .style('white-space', 'nowrap')
 
-    // Add email text (handle) - ensuring it's fully visible without truncation
+    // Add email text (handle) - only for non-Group/List nodes
     node
+      .filter((d) => d['noun'] !== 'group' && d['noun'] !== 'list')
       .append('text')
       .text((d) => {
         return truncateText(
@@ -873,7 +1334,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .attr('x', -nodeSize.width / 2 + avatarWidth + textMargin) // Position to the right of the separator line with margin
       .attr('y', 10)
       .attr('text-anchor', 'start')
-      .style('font-family', "'Roboto', 'Inter', sans-serif")
+      .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
       .style('font-size', '12px')
       .style('fill', md3Colors.onPrimary)
       .style('pointer-events', 'none')
@@ -883,11 +1344,11 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     node
       .on('mouseover', (event) => {
         const element = d3.select(event.currentTarget)
-        element.select('rect').attr('fill-opacity', 0.85)
+        element.select('path').attr('fill-opacity', 0.85)
         element
           .transition()
           .duration(150)
-          .attr('transform', function (d) {
+          .attr('transform', function(d) {
             const node = d as CustomNode
             if (
               typeof node.x === 'undefined' ||
@@ -900,11 +1361,11 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       })
       .on('mouseout', (event) => {
         const element = d3.select(event.currentTarget)
-        element.select('rect').attr('fill-opacity', 1)
+        element.select('path').attr('fill-opacity', 1)
         element
           .transition()
           .duration(150)
-          .attr('transform', function (d) {
+          .attr('transform', function(d) {
             const node = d as CustomNode
             if (
               typeof node.x === 'undefined' ||
@@ -916,15 +1377,72 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
           })
       })
       .on('click', (event, d) => {
-        // Remove any existing popup
+        // Close any existing popup before creating a new one
         if (this.activePopup) {
           this.activePopup.remove()
           this.activePopup = null
         }
 
-        // Create popup for the clicked node
         const customNode = d as CustomNode
-        this.createNodeInfoPopup(graphContainer, customNode, event)
+        const clickedNodeId = customNode.id
+
+        // If clicking the same node that's already selected, deselect it and restore all nodes and edges
+        if (this.selectedNodeId === clickedNodeId) {
+          this.selectedNodeId = null
+
+          // Restore all nodes and edges to full opacity
+          node.transition().duration(300).style('opacity', 1);
+          linkGroup.transition().duration(300).style('opacity', 1);
+
+          // Remove 'selected' class from all nodes
+          node.classed('selected', false);
+
+          // Zoom to fit all nodes
+          this.zoomToFit()
+        } else {
+          // Set the clicked node as the selected node
+          this.selectedNodeId = clickedNodeId
+
+          // Find connected nodes (nodes that have an edge with the clicked node)
+          const connectedNodeIds = new Set<string>()
+          connectedNodeIds.add(clickedNodeId) // Add the clicked node itself
+
+          // Check all edges to find connected nodes
+          edges.forEach(edge => {
+            const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as Node).id
+            const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as Node).id
+
+            if (sourceId === clickedNodeId) {
+              connectedNodeIds.add(targetId)
+            } else if (targetId === clickedNodeId) {
+              connectedNodeIds.add(sourceId)
+            }
+          })
+
+          // Fade out unrelated nodes and edges
+          node.transition().duration(300).style('opacity', d => {
+            return connectedNodeIds.has(d.id) ? 1 : 0.2
+          });
+
+          linkGroup.transition().duration(300).style('opacity', d => {
+            const edge = d as Edge
+            const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as Node).id
+            const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as Node).id
+
+            return connectedNodeIds.has(sourceId) && connectedNodeIds.has(targetId) ? 1 : 0.1
+          });
+
+          // Add 'selected' class to the clicked node and its connected nodes
+          node.classed('selected', d => connectedNodeIds.has(d.id));
+
+          // Zoom to fit the selected nodes
+          this.zoomToFitSelected();
+
+          // Create popup for the clicked node using the overlay container
+          if (this.overlayContainer) {
+            this.createNodeInfoPopup(this.overlayContainer, customNode, event)
+          }
+        }
       })
 
     const simulation = d3
@@ -936,34 +1454,34 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
             edges as SimulationLinkDatum<CustomNode>[]
           )
           .id((d) => d.id)
-          .distance(280) // Increased distance to account for wider nodes (matching node width)
+          .distance(350) // Increased distance to spread nodes further apart
           .strength(0.2)
       )
-      .force('charge', d3.forceManyBody().strength(-1000)) // Increased strength to push nodes further apart
+      .force('charge', d3.forceManyBody().strength(-1500)) // Increased strength to push nodes further apart and spread the graph
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force(
         'collision',
         d3
           .forceCollide()
-          .radius(Math.max(nodeSize.width, nodeSize.height) / 2 + 30) // Increased radius to prevent overlap
+          .radius(Math.max(nodeSize.width, nodeSize.height) / 2 + 40) // Increased radius to prevent overlap and provide more spacing
       )
 
     simulation.on('tick', () => {
       // Update link positions
       link
-        .attr('x1', function (d) {
+        .attr('x1', function(d) {
           const edge = d as Edge
           return (edge.source as unknown as CustomNode).x!
         })
-        .attr('y1', function (d) {
+        .attr('y1', function(d) {
           const edge = d as Edge
           return (edge.source as unknown as CustomNode).y!
         })
-        .attr('x2', function (d) {
+        .attr('x2', function(d) {
           const edge = d as Edge
           return (edge.target as unknown as CustomNode).x!
         })
-        .attr('y2', function (d) {
+        .attr('y2', function(d) {
           const edge = d as Edge
           return (edge.target as unknown as CustomNode).y!
         })
@@ -971,7 +1489,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       // Update edge label group positions to the center of each edge
       linkGroup
         .selectAll('.edge-label-group')
-        .attr('transform', function (d) {
+        .attr('transform', function(d) {
           const edge = d as Edge
           const sourceX = (edge.source as unknown as CustomNode).x!
           const targetX = (edge.target as unknown as CustomNode).x!
@@ -999,7 +1517,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
 
           return `translate(${posX}, ${posY})`
         })
-        .each(function (d) {
+        .each(function(d) {
           // Rotate the arrow to align with the edge direction
           const edge = d as Edge
           const sourceX = (edge.source as unknown as CustomNode).x!
@@ -1018,7 +1536,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         })
 
       // Update node positions
-      node.attr('transform', function (d) {
+      node.attr('transform', function(d) {
         const customNode = d as CustomNode
         return `translate(${customNode.x!},${customNode.y!})`
       })
@@ -1044,14 +1562,14 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
   ) {
     // Material Design 3 Inspired Colors
     const md3Colors = {
-      surface: '#FFFFFF',
+      surface: 'rgba(200, 200, 220, 0.6)', // Lighter semi-transparent gray-blue for glassy effect
       onSurface: '#1C1B1F',
       outline: '#79747E',
       primary: '#6750A4',
-      primaryDark: '#4F378B', // Darker complementary color for title bar
+      primaryDark: 'rgba(103, 80, 164, 0.75)', // Lighter semi-transparent purple for title bar
       onPrimaryDark: '#FFFFFF', // Text color for dark background
       shadow: 'rgba(0, 0, 0, 0.3)',
-      labelBackground: '#F5F5F5' // Light gray for label background
+      labelBackground: 'rgba(245, 245, 255, 0.8)' // Slightly more opaque light blue-tinted background for better readability
     }
 
     // Create a group for the popup
@@ -1063,17 +1581,15 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       undefined
     >
 
-    // Position popup relative to the node instead of mouse position
-    // Align left edge of popup with left edge of node box
-    // Position popup just below the node box with a small space
-    const popupX = node.x! - this.nodeSize.width / 2
-    const popupY = node.y! + this.nodeSize.height / 2 + 10
+    // Position popup in the top left corner of the view area
+    const popupX = 20 // Fixed position with a small margin from left
+    const popupY = 20 // Fixed position with a small margin from top
 
-    // Popup dimensions
-    const popupWidth = 500 // Increased from 450 to 500 for even wider popup
-    const popupHeight = 400
+    // Popup dimensions (scaled down by 25%)
+    const popupWidth = 375 // 500 * 0.75 = 375
+    const popupHeight = 300 // 400 * 0.75 = 300
     const padding = 16
-    const labelWidth = 150 // Width for the label area increased from 120 to 150
+    const labelWidth = 112 // 150 * 0.75 = 112.5, rounded down to 112
 
     // Create popup background
     popup
@@ -1087,11 +1603,11 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .attr('fill', md3Colors.surface)
       .attr('stroke', md3Colors.outline)
       .attr('stroke-width', 1)
-      .style('filter', 'url(#md-shadow)')
+      .style('filter', 'url(#glassy-effect)')
 
     // Add title bar background with rounded top corners and straight bottom using a path
-    const titleBarHeight = 40
-    const cornerRadius = 8
+    const titleBarHeight = 30 // Scaled down from 40 (75%)
+    const cornerRadius = 6 // Scaled down from 8 (75%)
 
     // Create a path with rounded top corners and straight bottom
     popup
@@ -1110,17 +1626,22 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       `
       )
       .attr('fill', md3Colors.primaryDark) // Use the darker complementary color
+      .style('filter', 'url(#glassy-effect)') // Apply the same glassy effect
 
     // Add title (left-aligned but vertically centered in title bar) - using node's displayName
     popup
       .append('text')
       .attr('x', popupX + padding) // Left-aligned with padding
       .attr('y', popupY + titleBarHeight / 2) // Properly center vertically in the title bar
-      .text(node.data?.displayName || node.data?.handle || 'Node Information')
+      .text(
+        node.data?.['displayName'] ||
+        node.data?.['handle'] ||
+        'Node Information'
+      )
       .attr('text-anchor', 'start') // Left-align the text
       .attr('dominant-baseline', 'middle') // Vertical alignment
-      .style('font-family', "'Roboto', 'Inter', sans-serif")
-      .style('font-size', '18px')
+      .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+      .style('font-size', '14px') // Scaled down from 18px (approximately 75%)
       .style('font-weight', 'bold')
       .style('fill', md3Colors.onPrimaryDark) // Use contrasting text color
 
@@ -1143,7 +1664,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .append('circle')
       .attr('cx', popupX + popupWidth - padding - 4) // Adjusted position
       .attr('cy', popupY + titleBarHeight / 2) // Center vertically in the title bar
-      .attr('r', 18) // Larger radius for mat-icon-button style
+      .attr('r', 14) // Scaled down from 18 (approximately 75%)
       .attr('fill', 'transparent') // Initially transparent
       .attr('stroke', 'none')
 
@@ -1155,18 +1676,18 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .text('✕') // Using a more standard close icon
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle') // Ensure vertical alignment matches title text
-      .style('font-family', "'Roboto', 'Inter', sans-serif")
-      .style('font-size', '18px')
+      .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+      .style('font-size', '14px') // Scaled down from 18px (approximately 75%)
       .style('font-weight', 'bold')
       .style('fill', md3Colors.onPrimaryDark) // Match title text color
       .style('pointer-events', 'none')
 
     // Add hover effects
     closeButton
-      .on('mouseenter', function () {
+      .on('mouseenter', function() {
         buttonCircle.attr('fill', 'rgba(255, 255, 255, 0.12)') // Material ripple effect color
       })
-      .on('mouseleave', function () {
+      .on('mouseleave', function() {
         buttonCircle.attr('fill', 'transparent')
       })
 
@@ -1191,13 +1712,14 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       `
       )
       .attr('fill', md3Colors.labelBackground)
+      .style('filter', 'url(#glassy-effect)') // Apply the same glassy effect
 
     // Helper function to force wrap text to fit available width without ellipsis
     const forceWrapText = (text: string, maxWidth: number): string => {
       // Create a temporary text element to measure text width
       const tempText = popup
         .append('text')
-        .style('font-family', "'Roboto', 'Inter', sans-serif")
+        .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
         .style('font-size', '14px')
         .text(text)
         .style('visibility', 'hidden') // Hide the element
@@ -1247,8 +1769,8 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         .attr('x', popupX + padding)
         .attr('y', yOffset)
         .text(truncatedKey)
-        .style('font-family', "'Roboto', 'Inter', sans-serif")
-        .style('font-size', '14px')
+        .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+        .style('font-size', '11px') // Scaled down from 14px (approximately 75%)
         .style('font-weight', 'bold')
         .style('fill', md3Colors.onSurface)
         .style('text-anchor', 'start')
@@ -1259,7 +1781,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       // First split by whitespace
       const words = valueText.split(/\s+/)
       let line = ''
-      let lineHeight = 18
+      let lineHeight = 14 // Scaled down from 18 (approximately 75%)
       // Available width for the value text (accounting for label width and padding)
       const availableWidth = popupWidth - labelWidth - padding * 2 - 10 // labelWidth for label area, 10px safety margin
       // Use a more conservative character width estimate to ensure text fits
@@ -1286,8 +1808,8 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
               .attr('x', valueX) // Use the new value position
               .attr('y', isFirstLine ? initialYOffset : yOffset) // Use initialYOffset for first line
               .text(truncatedLine)
-              .style('font-family', "'Roboto', 'Inter', sans-serif")
-              .style('font-size', '14px')
+              .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+              .style('font-size', '11px') // Scaled down from 14px (approximately 75%)
               .style('fill', md3Colors.onSurface)
               .style('dominant-baseline', 'middle')
 
@@ -1313,8 +1835,8 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
               .attr('x', valueX) // Use the new value position
               .attr('y', isFirstLine ? initialYOffset : yOffset) // Use initialYOffset for first line
               .text(truncatedChunk)
-              .style('font-family', "'Roboto', 'Inter', sans-serif")
-              .style('font-size', '14px')
+              .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+              .style('font-size', '11px') // Scaled down from 14px (approximately 75%)
               .style('fill', md3Colors.onSurface)
               .style('dominant-baseline', 'middle')
 
@@ -1335,8 +1857,8 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
               .attr('x', valueX) // Use the new value position
               .attr('y', isFirstLine ? initialYOffset : yOffset) // Use initialYOffset for first line
               .text(truncatedLine)
-              .style('font-family', "'Roboto', 'Inter', sans-serif")
-              .style('font-size', '14px')
+              .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+              .style('font-size', '11px') // Scaled down from 14px (approximately 75%)
               .style('fill', md3Colors.onSurface)
               .style('dominant-baseline', 'middle')
 
@@ -1358,8 +1880,8 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
           .attr('x', valueX) // Use the new value position
           .attr('y', isFirstLine ? initialYOffset : yOffset) // Use initialYOffset for first line
           .text(truncatedLine)
-          .style('font-family', "'Roboto', 'Inter', sans-serif")
-          .style('font-size', '14px')
+          .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
+          .style('font-size', '11px') // Scaled down from 14px (approximately 75%)
           .style('fill', md3Colors.onSurface)
           .style('dominant-baseline', 'middle')
 
@@ -1401,23 +1923,219 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       `
     )
 
-    // Add click handler to SVG to close popup when clicking outside
-    this.svgElement?.on('click.popup', (event) => {
-      const target = event.target as Element
-      if (
-        !target.closest('.node-info-popup') &&
-        !target.closest('.node-group')
-      ) {
-        if (this.activePopup) {
-          this.activePopup.remove()
-          this.activePopup = null
-          // Remove this event listener
-          this.svgElement?.on('click.popup', null)
-          // Zoom back out when closing popup
-          this.zoomToFit()
-        }
-      }
-    })
+    // Removed click handler that closed popup when clicking outside
+    // We want popups to only close when the close button is clicked
+
+    // Add action buttons at the bottom of the popup
+    const buttonBarHeight = 36 // Scaled down from 48 (75%)
+    // Add spacing between content and button bar (15px buffer, scaled down from 20)
+    const contentBuffer = 15
+    // Adjust final popup height to include the buffer
+    const adjustedPopupHeight = finalPopupHeight + contentBuffer
+    // Update main popup background height
+    popup.select('rect').attr('height', adjustedPopupHeight)
+    // Update label area background height
+    popup.select('path[fill="' + md3Colors.labelBackground + '"]').attr(
+      'd',
+      `
+        M ${popupX} ${popupY + titleBarHeight}
+        H ${popupX + labelWidth}
+        V ${popupY + adjustedPopupHeight}
+        H ${popupX + cornerRadius}
+        Q ${popupX} ${popupY + adjustedPopupHeight} ${popupX} ${popupY + adjustedPopupHeight - cornerRadius}
+        V ${popupY + titleBarHeight}
+        Z
+      `
+    )
+
+    const buttonBarY = popupY + adjustedPopupHeight - buttonBarHeight
+
+    // Add button bar background
+    popup
+      .append('rect')
+      .attr('width', popupWidth)
+      .attr('height', buttonBarHeight)
+      .attr('x', popupX)
+      .attr('y', buttonBarY)
+      .attr('fill', 'rgba(0, 0, 0, 0.02)')
+      .attr('stroke', 'rgba(0, 0, 0, 0.08)')
+      .attr('stroke-width', 1)
+      .attr('stroke-top', 1)
+      .attr('stroke-bottom', 0)
+      .attr('stroke-left', 0)
+      .attr('stroke-right', 0)
+      .attr('rx', 0)
+      .attr('ry', 8)
+      .style('border-bottom-left-radius', '8px')
+      .style('border-bottom-right-radius', '8px')
+
+    // Calculate button positions
+    const buttonCount = 4
+    const buttonWidth = popupWidth / buttonCount
+    const buttonCenters = Array.from(
+      { length: buttonCount },
+      (_, i) => popupX + i * buttonWidth + buttonWidth / 2
+    )
+
+    // Message button
+    const messageButton = popup
+      .append('g')
+      .attr('class', 'action-button')
+      .style('cursor', 'pointer')
+      .on('click', (event) => {
+        event.stopPropagation()
+        this.messageProfile(node.id, event)
+      })
+
+    messageButton
+      .append('circle')
+      .attr('cx', buttonCenters[0])
+      .attr('cy', buttonBarY + buttonBarHeight / 2)
+      .attr('r', 14) // Scaled down from 18 (approximately 75%)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none')
+
+    messageButton
+      .append('text')
+      .attr('x', buttonCenters[0])
+      .attr('y', buttonBarY + buttonBarHeight / 2)
+      .text('message')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', '\'Material Icons\'')
+      .style('font-size', '14px') // Scaled down from 18px (approximately 75%)
+      .style('fill', md3Colors.primary)
+
+    // Add hover effects for message button
+    messageButton
+      .on('mouseenter', function() {
+        d3.select(this)
+          .select('circle')
+          .attr('fill', 'rgba(103, 80, 164, 0.08)')
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('circle').attr('fill', 'transparent')
+      })
+
+    // Posts button
+    const postsButton = popup
+      .append('g')
+      .attr('class', 'action-button')
+      .style('cursor', 'pointer')
+      .on('click', (event) => {
+        event.stopPropagation()
+        this.viewProfilePosts(node.id, event)
+      })
+
+    postsButton
+      .append('circle')
+      .attr('cx', buttonCenters[1])
+      .attr('cy', buttonBarY + buttonBarHeight / 2)
+      .attr('r', 14) // Scaled down from 18 (approximately 75%)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none')
+
+    postsButton
+      .append('text')
+      .attr('x', buttonCenters[1])
+      .attr('y', buttonBarY + buttonBarHeight / 2)
+      .text('article')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', '\'Material Icons\'')
+      .style('font-size', '14px') // Scaled down from 18px (approximately 75%)
+      .style('fill', md3Colors.primary) // changed to primary color
+
+    // Add hover effects for posts button
+    postsButton
+      .on('mouseenter', function() {
+        d3.select(this)
+          .select('circle')
+          .attr('fill', 'rgba(103, 80, 164, 0.08)') // changed to match primary color
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('circle').attr('fill', 'transparent')
+      })
+
+    // Tag button
+    const tagButton = popup
+      .append('g')
+      .attr('class', 'action-button')
+      .style('cursor', 'pointer')
+      .on('click', (event) => {
+        event.stopPropagation()
+        this.tagProfile(node.id, event)
+      })
+
+    tagButton
+      .append('circle')
+      .attr('cx', buttonCenters[2])
+      .attr('cy', buttonBarY + buttonBarHeight / 2)
+      .attr('r', 14) // Scaled down from 18 (approximately 75%)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none')
+
+    tagButton
+      .append('text')
+      .attr('x', buttonCenters[2])
+      .attr('y', buttonBarY + buttonBarHeight / 2)
+      .text('local_offer')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', '\'Material Icons\'')
+      .style('font-size', '14px') // Scaled down from 18px (approximately 75%)
+      .style('fill', md3Colors.primary) // changed to primary color
+
+    // Add hover effects for tag button
+    tagButton
+      .on('mouseenter', function() {
+        d3.select(this)
+          .select('circle')
+          .attr('fill', 'rgba(103, 80, 164, 0.08)') // changed to match primary color
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('circle').attr('fill', 'transparent')
+      })
+
+    // Add to lists button
+    const addToListsButton = popup
+      .append('g')
+      .attr('class', 'action-button')
+      .style('cursor', 'pointer')
+      .on('click', (event) => {
+        event.stopPropagation()
+        this.addToLists(node.id, event)
+      })
+
+    addToListsButton
+      .append('circle')
+      .attr('cx', buttonCenters[3])
+      .attr('cy', buttonBarY + buttonBarHeight / 2)
+      .attr('r', 14) // Scaled down from 18 (approximately 75%)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none')
+
+    addToListsButton
+      .append('text')
+      .attr('x', buttonCenters[3])
+      .attr('y', buttonBarY + buttonBarHeight / 2)
+      .text('playlist_add')
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'middle')
+      .style('font-family', '\'Material Icons\'')
+      .style('font-size', '14px') // Scaled down from 18px (approximately 75%)
+      .style('fill', md3Colors.primary)
+
+    // Add hover effects for add to lists button
+    addToListsButton
+      .on('mouseenter', function() {
+        d3.select(this)
+          .select('circle')
+          .attr('fill', 'rgba(103, 80, 164, 0.08)')
+      })
+      .on('mouseleave', function() {
+        d3.select(this).select('circle').attr('fill', 'transparent')
+      })
 
     // Zoom to show both the node and the popup
     setTimeout(() => {
@@ -1425,15 +2143,15 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         x: popupX,
         y: popupY,
         width: popupWidth,
-        height: finalPopupHeight
+        height: adjustedPopupHeight
       })
     }, 100) // Small delay to ensure popup is fully rendered
   }
 
   /**
-   * Zooms to show both a node and its popup
+   * Zooms to show the node and its connected nodes
    * @param node The node to show
-   * @param popup The popup dimensions and position
+   * @param popup The popup dimensions and position (not used since popup is now an overlay)
    */
   private zoomToNodeAndPopup(
     node: CustomNode,
@@ -1444,25 +2162,41 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     const width = this.containerRef.nativeElement.offsetWidth
     const height = this.containerRef.nativeElement.offsetHeight
 
-    // Calculate the bounding box that includes both the node and the popup
+    // Calculate the bounding box that includes the node and its connected nodes
     let minX = Infinity,
       maxX = -Infinity,
       minY = Infinity,
       maxY = -Infinity
 
-    // Add node to bounding box
-    if (node.x !== undefined && node.y !== undefined) {
-      minX = Math.min(minX, node.x - this.nodeSize.width / 2)
-      maxX = Math.max(maxX, node.x + this.nodeSize.width / 2)
-      minY = Math.min(minY, node.y - this.nodeSize.height / 2)
-      maxY = Math.max(maxY, node.y + this.nodeSize.height / 2)
-    }
+    // Find connected nodes (nodes that have an edge with the clicked node)
+    const connectedNodeIds = new Set<string>()
+    connectedNodeIds.add(node.id) // Add the clicked node itself
 
-    // Add popup to bounding box
-    minX = Math.min(minX, popup.x)
-    maxX = Math.max(maxX, popup.x + popup.width)
-    minY = Math.min(minY, popup.y)
-    maxY = Math.max(maxY, popup.y + popup.height)
+    // Check all edges to find connected nodes
+    const edges = this.d3Data().edges
+    edges.forEach(edge => {
+      const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as Node).id
+      const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as Node).id
+
+      if (sourceId === node.id) {
+        connectedNodeIds.add(targetId)
+      } else if (targetId === node.id) {
+        connectedNodeIds.add(sourceId)
+      }
+    })
+
+    // Add all connected nodes to the bounding box
+    this.nodes.forEach((n) => {
+      const customNode = n as CustomNode
+      if (customNode.x !== undefined && customNode.y !== undefined && connectedNodeIds.has(customNode.id)) {
+        minX = Math.min(minX, customNode.x - this.nodeSize.width / 2)
+        maxX = Math.max(maxX, customNode.x + this.nodeSize.width / 2)
+        minY = Math.min(minY, customNode.y - this.nodeSize.height / 2)
+        maxY = Math.max(maxY, customNode.y + this.nodeSize.height / 2)
+      }
+    })
+
+    // No longer include popup in bounding box since it's fixed in the top left corner
 
     if (isFinite(minX) && isFinite(maxX) && isFinite(minY) && isFinite(maxY)) {
       // Add padding to the bounding box
@@ -1582,7 +2316,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     let hasSelectedNodes = false
 
     // Calculate the bounding box of only the selected nodes
-    d3.selectAll('.node-group.selected').each(function (d: any) {
+    d3.selectAll('.node-group.selected').each(function(d: any) {
       hasSelectedNodes = true
       const customNode = d as CustomNode
       if (customNode.x !== undefined && customNode.y !== undefined) {
@@ -1646,5 +2380,49 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     }
 
     // Note: Effects are automatically cleaned up when the component is destroyed
+  }
+
+  /**
+   * Handles the message button click for a profile
+   * @param profileId The ID of the profile to message
+   * @param event The click event
+   */
+  messageProfile(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`Message profile: ${profileId}`)
+    // Implement messaging functionality here
+  }
+
+  /**
+   * Handles the posts button click for a profile
+   * @param profileId The ID of the profile to view posts
+   * @param event The click event
+   */
+  viewProfilePosts(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`View posts for profile: ${profileId}`)
+    // Implement posts viewing functionality here
+  }
+
+  /**
+   * Handles the tag button click for a profile
+   * @param profileId The ID of the profile to tag
+   * @param event The click event
+   */
+  tagProfile(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`Tag profile: ${profileId}`)
+    // Implement tagging functionality here
+  }
+
+  /**
+   * Handles the add to lists button click for a profile
+   * @param profileId The ID of the profile to add to lists
+   * @param event The click event
+   */
+  addToLists(profileId: string, event: Event): void {
+    event.stopPropagation()
+    console.log(`Add profile to lists: ${profileId}`)
+    // Implement add to lists functionality here
   }
 }

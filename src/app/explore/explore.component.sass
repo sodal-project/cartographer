@@ -1,8 +1,10 @@
 :host
-  display: block
+  display: flex
+  flex-direction: column
   width: 100%
   height: 100%
   overflow: hidden
+  flex: 1
 
 .offline-indicator
   display: flex
@@ -49,7 +51,7 @@
     right: 0.5rem
     gap: 0.25rem
 
-  .zoom-fit-button
+  .zoom-fit-button, .restart-simulation-button
     width: 2.5rem
     height: 2.5rem
     border-radius: 50%
@@ -87,6 +89,8 @@
   display: flex
   align-items: center
   justify-content: center
+  flex: 1
+  overflow: hidden
 
   svg
     display: block
@@ -107,6 +111,12 @@
 
       path
         transition: fill-opacity 0.15s ease-in-out
+
+    .overlay-container
+      pointer-events: none
+
+      .node-info-popup
+        pointer-events: auto
 
 
 @keyframes jiggle
