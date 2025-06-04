@@ -63,7 +63,34 @@ export class StorageInfoService {
    */
   async getOPFSInfo(): Promise<StorageInfo> {
     try {
-      const status = await this.brainyService.status()
+      let status;
+      try {
+        status = await this.brainyService.status()
+      } catch (statusError) {
+        // Check if this is the "Neighbor not found" error
+        if (statusError instanceof Error &&
+            statusError.message &&
+            statusError.message.includes('Neighbor with ID') &&
+            statusError.message.includes('not found in pruneConnections')) {
+          console.warn(`HNSW index error: ${statusError.message}`)
+          console.log('Attempting to reinitialize BrainyData to recover from HNSW index error')
+
+          // Try to reinitialize
+          await this.brainyService.init()
+
+          // Try status again after reinitialization
+          try {
+            status = await this.brainyService.status()
+          } catch (retryError) {
+            console.error('Failed to recover from HNSW index error:', retryError)
+            throw retryError
+          }
+        } else {
+          // For other errors, rethrow
+          throw statusError
+        }
+      }
+
       const used = status.used || 0
       const total = status.quota || null
       const available = total !== null ? total - used : null
