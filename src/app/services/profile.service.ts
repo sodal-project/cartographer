@@ -120,7 +120,32 @@ export class ProfileService implements OnDestroy {
       }))
 
       // Add the items to the Brainy database
-      await this.brainyService.addBatch(items)
+      try {
+        await this.brainyService.addBatch(items)
+      } catch (addBatchError) {
+        // Check if this is the "Neighbor not found" error
+        if (addBatchError instanceof Error &&
+            addBatchError.message &&
+            addBatchError.message.includes('Neighbor with ID') &&
+            addBatchError.message.includes('not found in pruneConnections')) {
+          console.warn(`HNSW index error: ${addBatchError.message}`)
+          console.log('Attempting to reinitialize BrainyData to recover from HNSW index error')
+
+          // Try to reinitialize
+          await this.brainyService.init()
+
+          // Try addBatch again after reinitialization
+          try {
+            await this.brainyService.addBatch(items)
+          } catch (retryError) {
+            console.error('Failed to recover from HNSW index error:', retryError)
+            throw retryError
+          }
+        } else {
+          // For other errors, rethrow
+          throw addBatchError
+        }
+      }
 
       console.log('ProfileService: Successfully stored profiles in BrainyData')
     } catch (error) {
