@@ -156,7 +156,45 @@ export class SearchComponent implements OnInit, OnDestroy {
       await this.brainyService.init()
 
       // Use an empty string query to get all results
-      const searchResults = await this.brainyService.search('', limit)
+      let searchResults;
+      try {
+        searchResults = await this.brainyService.search('', limit)
+      } catch (searchError) {
+        // Check if this is the "Neighbor not found" error
+        if (searchError instanceof Error &&
+            searchError.message &&
+            searchError.message.includes('Neighbor with ID') &&
+            searchError.message.includes('not found in pruneConnections')) {
+          console.warn(`HNSW index error: ${searchError.message}`)
+          console.log('Attempting to reinitialize BrainyData to recover from HNSW index error')
+
+          // Try to reinitialize
+          await this.brainyService.init()
+
+          // Try search again after reinitialization
+          try {
+            searchResults = await this.brainyService.search('', limit)
+          } catch (retryError) {
+            console.error('Failed to recover from HNSW index error:', retryError)
+            this.isLoading.set(false)
+            return
+          }
+        } else {
+          // For other search errors, log and return
+          console.error('Error searching in Brainy database:', searchError)
+
+          // If we're offline and the error is related to network connectivity,
+          // provide a more specific error message
+          if (this.isOffline()) {
+            console.warn(
+              'Data fetch attempted while offline. Some results may be from cache.'
+            )
+          }
+
+          this.isLoading.set(false)
+          return
+        }
+      }
 
       // Transform the search results to match the expected format
       const transformedResults = searchResults.map((result) => ({

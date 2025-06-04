@@ -24,6 +24,7 @@ import { MatTooltipModule } from '@angular/material/tooltip'
 import { BrainyData } from '@soulcraft/brainy'
 import { ProfileService } from '../services/profile.service'
 import { EdgeVerbs } from '../models/cartographer.model'
+import { NodeDataService } from '../services/node-data.service'
 
 // Define interfaces for graph data (adjust as per your actual data structure)
 interface GraphNode {
@@ -60,12 +61,15 @@ interface Edge extends d3.SimulationLinkDatum<Node> {
 }
 
 interface CustomNode extends Node {
+  // Essential data for rendering
   data: {
     displayName: string
     handle: string
     avatar: string
     [key: string]: any
   }
+  // Full node ID for fetching complete data when needed
+  fullDataId?: string
 }
 
 @Component({
@@ -117,6 +121,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     height: 48
   }
 
+  // Web Worker for force simulation
+  private simulationWorker: Worker | null = null
+
   // Reference to the active popup
   private overlayContainer: d3.Selection<
     SVGGElement,
@@ -142,6 +149,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
   private zone = inject(NgZone)
   private injector = inject(Injector)
   private profileService = inject(ProfileService)
+  private nodeDataService = inject(NodeDataService)
   private brainyService = new BrainyData()
 
   // Store references to event listener functions for cleanup
@@ -208,7 +216,34 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
 
       // Use an empty string query to get all results
       // Increased limit to show all profiles initially
-      const searchResults = await this.brainyService.search('', limit)
+      let searchResults;
+      try {
+        searchResults = await this.brainyService.search('', limit)
+      } catch (searchError) {
+        // Check if this is the "Neighbor not found" error
+        if (searchError instanceof Error &&
+            searchError.message &&
+            searchError.message.includes('Neighbor with ID') &&
+            searchError.message.includes('not found in pruneConnections')) {
+          console.warn(`HNSW index error: ${searchError.message}`)
+          console.log('Attempting to reinitialize BrainyData to recover from HNSW index error')
+
+          // Try to reinitialize
+          await this.brainyService.init()
+
+          // Try search again after reinitialization
+          try {
+            searchResults = await this.brainyService.search('', limit)
+          } catch (retryError) {
+            console.error('Failed to recover from HNSW index error:', retryError)
+            return
+          }
+        } else {
+          // For other search errors, log and return
+          console.error('Error searching in Brainy database:', searchError)
+          return
+        }
+      }
 
       // Transform the search results to match the expected format
       const transformedResults = searchResults.map((result) => ({
@@ -324,26 +359,41 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     const searchResultsData = this.searchResults()
 
     // Transform GraphNode objects to match the CustomNode interface expected by D3
+    // Only include essential data for rendering, store full ID for fetching complete data later
     const nodes: CustomNode[] = graphNodes.map((n) => {
-      // Create a copy of the node with the data property structured as expected by D3
-      return n as CustomNode
+      // Create a copy of the node with only essential data
+      const customNode: CustomNode = {
+        id: n.id,
+        group: n.group,
+        noun: n['noun'],
+        fullDataId: n.id, // Store the ID for fetching complete data later
+        data: {
+          displayName: n['data']?.displayName || 'Unknown',
+          handle: n['data']?.handle || '',
+          avatar: n['data']?.avatar || '',
+          // Include only essential additional properties
+          noun: n['noun']
+        }
+      }
+      return customNode
     })
 
     // Add search results from Brainy to the nodes array if available
     if (searchResultsData.length > 0) {
       console.log('Adding search results to D3 data:', searchResultsData)
 
-      // Convert search results to CustomNode format
+      // Convert search results to CustomNode format with only essential data
       const searchResultNodes: CustomNode[] = searchResultsData.map(
         (result) => {
           // Extract the profile from the search result
           const profile = result.profile
 
-          // Create a CustomNode from the profile, ensuring it has the required properties
+          // Create a CustomNode from the profile with only essential data
           const node: CustomNode = {
             id: profile.id,
             group: 1, // Use a different group to highlight search results
-            ...profile, // Spread other properties from profile
+            noun: profile['noun'],
+            fullDataId: profile.id, // Store the ID for fetching complete data later
             data: {
               displayName:
                 profile.data?.['displayName'] ||
@@ -351,11 +401,12 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
                 'Unknown',
               handle: profile.data?.['handle'] || profile.handle || '',
               avatar: profile.data?.avatar || profile.avatar || '',
-              ...profile.data // Spread other data properties
+              // Include only essential additional properties
+              noun: profile['noun']
             }
           }
 
-          // Add similarity score to the node data if available
+          // Add similarity score as it's useful for visualization
           if (result['similarity'] !== undefined) {
             node.data['similarity'] = result['similarity']
           }
@@ -376,8 +427,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
           const existingNode = nodes.find((n) => n.id === node.id)
           if (existingNode) {
             existingNode.group = 1
+            existingNode.fullDataId = node.id // Ensure fullDataId is set
 
-            // Ensure existingNode.data is initialized
+            // Ensure existingNode.data is initialized with essential data
             if (!existingNode.data) {
               existingNode.data = {
                 displayName: node.data?.['displayName'] || 'Unknown',
@@ -389,14 +441,6 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
             // Copy similarity score if available
             if (node.data?.['similarity'] !== undefined) {
               existingNode.data['similarity'] = node.data?.['similarity']
-            }
-
-            // Update other data properties if needed
-            if (node.data) {
-              existingNode.data = {
-                ...existingNode.data,
-                ...node.data
-              }
             }
           }
         }
@@ -642,12 +686,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       // Professional relationship verbs
       'Collaborates',
       'Mentors',
-      'WorksWith',
-      // Original verbs (less appropriate for person-to-person relationships)
-      'AttributedTo',
-      'Controls',
-      'Owns'
-      // Not including 'Created' and 'Earned' as they're less appropriate for person-to-person relationships
+      'WorksWith'
     ]
 
     // Identify all Person nodes
@@ -918,6 +957,13 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     feMerge.append('feMergeNode').attr('in', 'offsetBlur')
     feMerge.append('feMergeNode').attr('in', 'litGraphic')
     feMerge.append('feMergeNode').attr('in', 'SourceGraphic')
+
+    // Add opacity adjustment to make the filter 25% more transparent
+    glassyFilter
+      .append('feComponentTransfer')
+      .append('feFuncA')
+      .attr('type', 'linear')
+      .attr('slope', '0.75') // 75% of original opacity (25% more transparent)
 
     const zoomBehavior = d3
       .zoom<SVGSVGElement, unknown>()
@@ -1445,102 +1491,161 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         }
       })
 
-    const simulation = d3
-      .forceSimulation<CustomNode>(nodes as CustomNode[])
-      .force(
-        'link',
-        d3
-          .forceLink<CustomNode, SimulationLinkDatum<CustomNode>>(
-            edges as SimulationLinkDatum<CustomNode>[]
-          )
-          .id((d) => d.id)
-          .distance(350) // Increased distance to spread nodes further apart
-          .strength(0.2)
-      )
-      .force('charge', d3.forceManyBody().strength(-1500)) // Increased strength to push nodes further apart and spread the graph
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force(
-        'collision',
-        d3
-          .forceCollide()
-          .radius(Math.max(nodeSize.width, nodeSize.height) / 2 + 40) // Increased radius to prevent overlap and provide more spacing
-      )
+    // Clean up any existing worker
+    if (this.simulationWorker) {
+      this.simulationWorker.terminate();
+      this.simulationWorker = null;
+    }
 
-    simulation.on('tick', () => {
-      // Update link positions
-      link
-        .attr('x1', function(d) {
-          const edge = d as Edge
-          return (edge.source as unknown as CustomNode).x!
-        })
-        .attr('y1', function(d) {
-          const edge = d as Edge
-          return (edge.source as unknown as CustomNode).y!
-        })
-        .attr('x2', function(d) {
-          const edge = d as Edge
-          return (edge.target as unknown as CustomNode).x!
-        })
-        .attr('y2', function(d) {
-          const edge = d as Edge
-          return (edge.target as unknown as CustomNode).y!
-        })
+    // Create a new Web Worker for the force simulation
+    this.simulationWorker = new Worker(
+      new URL('../workers/force-simulation.worker.ts', import.meta.url),
+      { type: 'module' }
+    );
 
-      // Update edge label group positions to the center of each edge
-      linkGroup
-        .selectAll('.edge-label-group')
-        .attr('transform', function(d) {
-          const edge = d as Edge
-          const sourceX = (edge.source as unknown as CustomNode).x!
-          const targetX = (edge.target as unknown as CustomNode).x!
-          const sourceY = (edge.source as unknown as CustomNode).y!
-          const targetY = (edge.target as unknown as CustomNode).y!
+    // Create a node position map for quick lookups
+    const nodePositions = new Map<string, { x: number, y: number }>();
 
-          // Calculate vector from source to target
-          const dx = targetX - sourceX
-          const dy = targetY - sourceY
-          const length = Math.sqrt(dx * dx + dy * dy)
+    // Initialize node positions randomly to avoid all nodes starting at the same position
+    nodes.forEach(node => {
+      node.x = Math.random() * width;
+      node.y = Math.random() * height;
+      nodePositions.set(node.id, { x: node.x, y: node.y });
+    });
 
-          // Normalize the vector
-          const nx = dx / length
-          const ny = dy / length
+    // Handle messages from the worker
+    this.simulationWorker.onmessage = (event) => {
+      const { type, positions } = event.data;
 
-          // Calculate perpendicular vector for offset (rotate 90 degrees)
-          const px = -ny
-          const py = nx
+      if (type === 'tick' || type === 'end') {
+        // Update node positions in the map
+        positions.forEach((pos: { id: string, x: number, y: number }) => {
+          nodePositions.set(pos.id, { x: pos.x, y: pos.y });
+        });
 
-          // Position label at the center (50%) of the edge
-          // directly on the line for better alignment
-          const offset = 0 // No offset to center directly on the line
-          const posX = sourceX + dx * 0.5 + px * offset
-          const posY = sourceY + dy * 0.5 + py * offset
+        // Update link positions
+        link
+          .attr('x1', function(d) {
+            const edge = d as Edge;
+            const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as CustomNode).id;
+            const pos = nodePositions.get(sourceId);
+            return pos ? pos.x : 0;
+          })
+          .attr('y1', function(d) {
+            const edge = d as Edge;
+            const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as CustomNode).id;
+            const pos = nodePositions.get(sourceId);
+            return pos ? pos.y : 0;
+          })
+          .attr('x2', function(d) {
+            const edge = d as Edge;
+            const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as CustomNode).id;
+            const pos = nodePositions.get(targetId);
+            return pos ? pos.x : 0;
+          })
+          .attr('y2', function(d) {
+            const edge = d as Edge;
+            const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as CustomNode).id;
+            const pos = nodePositions.get(targetId);
+            return pos ? pos.y : 0;
+          });
 
-          return `translate(${posX}, ${posY})`
-        })
-        .each(function(d) {
-          // Rotate the arrow to align with the edge direction
-          const edge = d as Edge
-          const sourceX = (edge.source as unknown as CustomNode).x!
-          const targetX = (edge.target as unknown as CustomNode).x!
-          const sourceY = (edge.source as unknown as CustomNode).y!
-          const targetY = (edge.target as unknown as CustomNode).y!
+        // Update edge label group positions
+        linkGroup
+          .selectAll('.edge-label-group')
+          .attr('transform', function(d) {
+            const edge = d as Edge;
+            const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as CustomNode).id;
+            const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as CustomNode).id;
 
-          // Calculate angle in degrees from source to target
-          const angle =
-            (Math.atan2(targetY - sourceY, targetX - sourceX) * 180) / Math.PI
+            const sourcePos = nodePositions.get(sourceId);
+            const targetPos = nodePositions.get(targetId);
 
-          // Select the arrow and rotate it, positioning it inside the hollowed out portion of the circle
-          d3.select(this)
-            .select('.edge-label-arrow')
-            .attr('transform', `translate(0, 10) rotate(${angle})`)
-        })
+            if (!sourcePos || !targetPos) return 'translate(0,0)';
 
-      // Update node positions
-      node.attr('transform', function(d) {
-        const customNode = d as CustomNode
-        return `translate(${customNode.x!},${customNode.y!})`
-      })
-    })
+            const sourceX = sourcePos.x;
+            const sourceY = sourcePos.y;
+            const targetX = targetPos.x;
+            const targetY = targetPos.y;
+
+            // Calculate vector from source to target
+            const dx = targetX - sourceX;
+            const dy = targetY - sourceY;
+            const length = Math.sqrt(dx * dx + dy * dy);
+
+            if (length === 0) return 'translate(0,0)';
+
+            // Normalize the vector
+            const nx = dx / length;
+            const ny = dy / length;
+
+            // Calculate perpendicular vector for offset
+            const px = -ny;
+            const py = nx;
+
+            // Position label at the center of the edge
+            const offset = 0;
+            const posX = sourceX + dx * 0.5 + px * offset;
+            const posY = sourceY + dy * 0.5 + py * offset;
+
+            return `translate(${posX}, ${posY})`;
+          })
+          .each(function(d) {
+            const edge = d as Edge;
+            const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as CustomNode).id;
+            const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as CustomNode).id;
+
+            const sourcePos = nodePositions.get(sourceId);
+            const targetPos = nodePositions.get(targetId);
+
+            if (!sourcePos || !targetPos) return;
+
+            const sourceX = sourcePos.x;
+            const sourceY = sourcePos.y;
+            const targetX = targetPos.x;
+            const targetY = targetPos.y;
+
+            // Calculate angle in degrees from source to target
+            const angle = (Math.atan2(targetY - sourceY, targetX - sourceX) * 180) / Math.PI;
+
+            // Rotate the arrow
+            d3.select(this)
+              .select('.edge-label-arrow')
+              .attr('transform', `translate(0, 10) rotate(${angle})`);
+          });
+
+        // Update node positions
+        node.attr('transform', function(d) {
+          const customNode = d as CustomNode;
+          const pos = nodePositions.get(customNode.id);
+          if (pos) {
+            customNode.x = pos.x;
+            customNode.y = pos.y;
+          }
+          return `translate(${customNode.x!},${customNode.y!})`;
+        });
+      }
+    };
+
+    // Start the simulation by sending the data to the worker
+    this.simulationWorker.postMessage({
+      nodes: nodes.map(n => ({
+        id: n.id,
+        group: n.group,
+        noun: n['noun'],
+        x: n.x,
+        y: n.y
+      })),
+      edges: edges.map(e => ({
+        source: typeof e.source === 'string' ? e.source : e.source.id,
+        target: typeof e.target === 'string' ? e.target : e.target.id,
+        verb: e.verb,
+        confidence: e.confidence
+      })),
+      width,
+      height,
+      nodeSize: this.nodeSize
+    });
 
     // Center graph on startup
     // Wait for a few ticks of the simulation for a more stable layout before centering.
@@ -1551,11 +1656,12 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Creates an info popup for a node showing all its data
+   * Uses data directly from the node
    * @param container The SVG container to add the popup to
    * @param node The node to show data for
    * @param event The click event that triggered the popup
    */
-  private createNodeInfoPopup(
+  private async createNodeInfoPopup(
     container: d3.Selection<SVGGElement, unknown, null, undefined>,
     node: CustomNode,
     event: MouseEvent
@@ -1891,14 +1997,26 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       yOffset += lineHeight + 8 // Add space between rows
     }
 
-    // Add basic node properties
+    // Add basic node properties that we already have
     addDataRow('ID', node.id)
     addDataRow('Group', node.group)
 
     // Add all properties from the data object
     if (node.data) {
+      // Add essential properties first
+      addDataRow('Display Name', node.data['displayName'])
+      addDataRow('Handle', node.data['handle'])
+      if (node.data['noun']) {
+        addDataRow('Type', node.data['noun'])
+      }
+
+      // Add all other properties
       Object.entries(node.data).forEach(([key, value]) => {
-        addDataRow(key, value)
+        // Skip properties we've already added
+        if (key !== 'id' && key !== 'group' &&
+            key !== 'displayName' && key !== 'handle' && key !== 'noun') {
+          addDataRow(key, value)
+        }
       })
     }
 
@@ -1987,6 +2105,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         this.messageProfile(node.id, event)
       })
 
+    // Add tooltip for Direct Message button
+    messageButton.append('title').text('Direct Message')
+
     messageButton
       .append('circle')
       .attr('cx', buttonCenters[0])
@@ -2026,6 +2147,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         event.stopPropagation()
         this.viewProfilePosts(node.id, event)
       })
+
+    // Add tooltip for View Content button
+    postsButton.append('title').text('View Content')
 
     postsButton
       .append('circle')
@@ -2067,6 +2191,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         this.tagProfile(node.id, event)
       })
 
+    // Add tooltip for Add Tags button
+    tagButton.append('title').text('Add Tags')
+
     tagButton
       .append('circle')
       .attr('cx', buttonCenters[2])
@@ -2106,6 +2233,9 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         event.stopPropagation()
         this.addToLists(node.id, event)
       })
+
+    // Add tooltip for Add to List button
+    addToListsButton.append('title').text('Add to List')
 
     addToListsButton
       .append('circle')
@@ -2366,6 +2496,12 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     const simulation = d3.forceSimulation()
     if (simulation) {
       simulation.stop()
+    }
+
+    // Clean up Web Worker if it exists
+    if (this.simulationWorker) {
+      this.simulationWorker.terminate()
+      this.simulationWorker = null
     }
 
     // Remove event listeners to prevent memory leaks
