@@ -7,8 +7,10 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "update-badges": "node update-readme-badges.js",
+    "prebuild": "npm run update-badges",
     "build": "ng build",
-    "predeploy": "npm version patch --no-git-tag-version",
+    "predeploy": "npm version patch --no-git-tag-version && npm run update-badges",
     "deploy": "ng deploy --base-href=/cartographer/",
     "watch": "ng build --watch --configuration development",
     "lint": "ng lint"
@@ -64,7 +66,7 @@
     "@angular/router": "^19.2.0",
     "@angular/service-worker": "^19.2.0",
     "@ngrx/store": "^19.1.0",
-    "@soulcraft/brainy": "^0.6.0",
+    "@soulcraft/brainy": "^0.7.4",
     "d3": "^7.9.0",
     "firebase": "^11.6.1",
     "rxjs": "~7.8.0",
@@ -72,6 +74,7 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
+    "@angular-builders/custom-webpack": "^19.0.0",
     "@angular-devkit/build-angular": "^19.2.8",
     "@angular/cli": "^19.2.8",
     "@angular/compiler-cli": "^19.2.0",

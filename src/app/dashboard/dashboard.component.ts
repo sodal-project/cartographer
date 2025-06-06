@@ -8,8 +8,7 @@ import {
   OnInit,
   OnDestroy,
   HostListener,
-  TemplateRef,
-  ElementRef
+  TemplateRef
 } from '@angular/core'
 import { ViewStateService } from '../services/view-state.service'
 import {
@@ -561,7 +560,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }))
 
       // Add the items to the Brainy database
-      await this.brainyService.addBatch(items)
+      try {
+        await this.brainyService.addBatch(items)
+      } catch (addBatchError) {
+        // Check if this is the "Neighbor not found" error
+        if (addBatchError instanceof Error &&
+            addBatchError.message &&
+            addBatchError.message.includes('Neighbor with ID') &&
+            addBatchError.message.includes('not found in pruneConnections')) {
+          console.warn(`HNSW index error: ${addBatchError.message}`)
+          console.log('Attempting to reinitialize BrainyData to recover from HNSW index error')
+
+          // Try to reinitialize
+          await this.brainyService.init()
+
+          // Try addBatch again after reinitialization
+          try {
+            await this.brainyService.addBatch(items)
+          } catch (retryError) {
+            console.error('Failed to recover from HNSW index error:', retryError)
+            throw retryError
+          }
+        } else {
+          // For other errors, rethrow
+          throw addBatchError
+        }
+      }
 
       // Extract profiles from search results and update the vector search results signal
       const profiles = searchResults.map((result) => result.profile)
@@ -695,7 +719,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
       await this.brainyService.init()
 
       // Use the clear method from BrainyService
-      await this.brainyService.clear()
+      try {
+        await this.brainyService.clear()
+      } catch (clearError) {
+        // Check if this is the "Neighbor not found" error
+        if (clearError instanceof Error &&
+            clearError.message &&
+            clearError.message.includes('Neighbor with ID') &&
+            clearError.message.includes('not found in pruneConnections')) {
+          console.warn(`HNSW index error: ${clearError.message}`)
+          console.log('Attempting to reinitialize BrainyData to recover from HNSW index error')
+
+          // Try to reinitialize again
+          await this.brainyService.init()
+
+          // Try clear again after reinitialization
+          try {
+            await this.brainyService.clear()
+          } catch (retryError) {
+            console.error('Failed to recover from HNSW index error:', retryError)
+            throw retryError
+          }
+        } else {
+          // For other errors, rethrow
+          throw clearError
+        }
+      }
+
       console.log('BrainyData cleared using BrainyService')
 
       // Reset related data in the component

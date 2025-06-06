@@ -388,7 +388,7 @@ $dash-container-height: $dash-container-height-with-toolbar
     min-height: $toolbar-height
     justify-content: space-between
     white-space: nowrap
-    overflow-x: auto
+    overflow-x: hidden
   @media (max-width: $breakpoint-sm) and (min-width: $breakpoint-xs + 1)
     padding: 0 0.5rem
 
@@ -429,6 +429,8 @@ $dash-container-height: $dash-container-height-with-toolbar
     justify-content: flex-end
     margin: 0
     font-size: 0.7rem
+    max-width: 50%
+    overflow: hidden
   @media (max-width: $breakpoint-sm) and (min-width: $breakpoint-xs + 1)
     margin-left: 0.5rem
 

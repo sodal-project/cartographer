@@ -309,11 +309,15 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
   }
 
   private setupVisibilityDetection(): void {
+    console.log('Setting up visibility detection')
     // Create a ResizeObserver to detect when the container gets dimensions
     this.resizeObserver = new ResizeObserver((entries) => {
+      console.log('ResizeObserver callback triggered')
       for (const entry of entries) {
         const { width, height } = entry.contentRect
+        console.log(`ResizeObserver: container dimensions: width=${width}, height=${height}`)
         if (width > 0 && height > 0) {
+          console.log('ResizeObserver: component is now visible with dimensions')
           // Component is now visible with dimensions
           this.isVisible.set(true)
 
@@ -709,8 +713,8 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
         }
         nodes.push(personNode)
         personNodes.push(personNode)
+          }
       }
-    }
 
     // Track which Person nodes already have connections to other Person nodes
     const connectedPersonNodes = new Set<string>()
@@ -750,10 +754,10 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
 
           // Add the new edge with verb and confidence
           edges.push({
-            source: sourceNode.id,
-            target: targetNode.id,
-            verb: randomVerb,
-            confidence: randomConfidence
+              source: sourceNode.id,
+              target: targetNode.id,
+              verb: randomVerb,
+              confidence: randomConfidence
           } as Edge)
 
           // Mark as existing to avoid duplicates
@@ -810,10 +814,10 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
 
       // Add the new edge with verb and confidence
       edges.push({
-        source: sourceId,
-        target: targetId,
-        verb: randomVerb,
-        confidence: randomConfidence
+          source: sourceId,
+          target: targetId,
+          verb: randomVerb,
+          confidence: randomConfidence
       } as Edge)
 
       // Mark as existing to avoid duplicates
@@ -1361,7 +1365,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
       .style('font-size', '14px')
       .style('font-weight', 'bold')
-      .style('fill', md3Colors.onPrimary)
+      .style('fill', '#000000') // Changed to black for better contrast with light backgrounds
       .style('pointer-events', 'none')
       .style('text-overflow', 'ellipsis') // Ensure text doesn't leak outside
       .style('white-space', 'nowrap')
@@ -1382,7 +1386,7 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       .attr('text-anchor', 'start')
       .style('font-family', '\'Roboto\', \'Inter\', sans-serif')
       .style('font-size', '12px')
-      .style('fill', md3Colors.onPrimary)
+      .style('fill', '#333333') // Changed to dark gray for better contrast with light backgrounds
       .style('pointer-events', 'none')
       .style('text-overflow', 'ellipsis') // Ensure text doesn't leak outside
       .style('white-space', 'nowrap')
