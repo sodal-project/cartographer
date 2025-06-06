@@ -1,14 +1,18 @@
 {
   "name": "cartographer",
   "version": "0.2.13",
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "update-badges": "node update-readme-badges.js",
-    "prebuild": "npm run update-badges",
+    "prebuild": "npm run update-badges > /dev/null 2>&1",
     "build": "ng build",
     "predeploy": "npm version patch --no-git-tag-version && npm run update-badges",
     "deploy": "ng deploy --base-href=/cartographer/",

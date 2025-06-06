@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/badge/version-0.2.13-blue.svg" alt="Version">
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
 <a href="https://angular.io/"><img src="https://img.shields.io/badge/Angular-19.2.0-red.svg" alt="Angular"></a>
-<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-v22.0.0+-green.svg" alt="Node"></a>
+<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-v20.0.0+-green.svg" alt="Node"></a>
 <img src="https://img.shields.io/badge/Brainy-0.7.4-purple.svg" alt="Soulcraft Brainy">
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7.2-blue.svg" alt="TypeScript"></a>
 <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
@@ -80,7 +80,9 @@ Cartographer is a powerful tool for visualizing and exploring complex data relat
 
 ### Prerequisites
 
-- Node.js 22.0.0 or higher
+- Node.js 20.0.0 or higher (even-numbered versions recommended for production)
+  - Odd-numbered Node.js versions (like 21.x, 23.x) are not recommended for production as they don't enter LTS status
+  - For production environments, use even-numbered LTS versions like 20.x, 22.x, etc.
 - npm (comes with Node.js)
 
 ### Setup
@@ -213,6 +215,20 @@ The command center for your knowledge graph:
 - **Documentation**: Comprehensive guides will be available in the Wiki
 - **Issues**: Report bugs or request features on our Issue Tracker
 
+
+## Troubleshooting
+
+### Angular Schema Validation Errors
+
+If you encounter schema validation errors when building the project, it may be due to changes in the Angular schema between versions. Common issues include:
+
+- **appShell property error**: The `appShell` property format has changed in Angular 19.2.x. It should be removed or updated according to the current schema.
+- **serviceWorker property error**: In Angular 19.2.x, the `serviceWorker` property must be a boolean value, not a string path to a configuration file.
+
+### Node.js Version Issues
+
+- If you see warnings about using an odd-numbered Node.js version, consider switching to an even-numbered LTS version for production use.
+- The project requires Node.js 20.0.0 or higher, but using versions like 20.x or 22.x is recommended for stability.
 
 ## Contributing
 

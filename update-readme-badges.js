@@ -1,8 +1,8 @@
-const fs = require('fs');
-const path = require('path');
+const { readFileSync, writeFileSync } = require('fs');
+// __dirname is already available in CommonJS modules
 
 // Read package.json
-const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 
 // Get versions from package.json
 const versions = {
@@ -17,7 +17,7 @@ console.log('Versions from package.json:');
 console.log(versions);
 
 // Read README.md
-let readmeContent = fs.readFileSync('README.md', 'utf8');
+let readmeContent = readFileSync('README.md', 'utf8');
 
 // Update version badges
 readmeContent = readmeContent
@@ -54,6 +54,6 @@ readmeContent = readmeContent.replace(
 );
 
 // Write updated README.md
-fs.writeFileSync('README.md', readmeContent);
+writeFileSync('README.md', readmeContent);
 
 console.log('README.md badges updated successfully!');
