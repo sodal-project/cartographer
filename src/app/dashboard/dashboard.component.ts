@@ -42,7 +42,7 @@ import {
   BrainyData
 } from '@soulcraft/brainy'
 import { Router, RouterOutlet } from '@angular/router'
-import { version } from '../../../package.json'
+import packageJson from '../../../package.json'
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu'
 import { MatExpansionModule } from '@angular/material/expansion'
 import {
@@ -113,7 +113,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     window.innerWidth < 960 ? 'over' : 'side'
   )
   public readonly updateAvailable = this.updateService.updateAvailable
-  public readonly version = signal(version)
+  public readonly version = signal(packageJson.version)
   private servicesCache: Service[] | null = null
   public services: WritableSignal<Service[]> = signal([])
   public profiles: WritableSignal<Profile[]> = signal([])

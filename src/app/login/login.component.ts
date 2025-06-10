@@ -13,7 +13,7 @@ import {
 } from '@angular/material/card'
 import {MatIcon} from '@angular/material/icon'
 import {DomSanitizer} from '@angular/platform-browser'
-import {version} from '../../../package.json'
+import packageJson from '../../../package.json'
 
 @Component({
   selector: 'login',
@@ -37,7 +37,7 @@ export class LoginComponent implements OnInit {
   private domSanitizer = inject(DomSanitizer);
   public authService = inject(AuthService);
   private router = inject(Router);
-  public readonly version = signal(version)
+  public readonly version = signal(packageJson.version)
 
   constructor() {
     this.matIconRegistry.addSvgIcon(

@@ -18,6 +18,12 @@
     "target": "ES2022",
     "module": "ES2022"
   },
+  "include": [
+    "src/main.ts",
+    "src/polyfills.ts",
+    "src/app/**/*.ts",
+    "src/environments/environment.ts"
+  ],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,

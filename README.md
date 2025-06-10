@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/badge/version-0.2.13-blue.svg" alt="Version">
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"></a>
 <a href="https://angular.io/"><img src="https://img.shields.io/badge/Angular-19.2.0-red.svg" alt="Angular"></a>
-<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-v20.0.0+-green.svg" alt="Node"></a>
+<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-v23.11.0+-green.svg" alt="Node"></a>
 <img src="https://img.shields.io/badge/Brainy-0.7.4-purple.svg" alt="Soulcraft Brainy">
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7.2-blue.svg" alt="TypeScript"></a>
 <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
