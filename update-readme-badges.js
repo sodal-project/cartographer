@@ -8,7 +8,7 @@ const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 const versions = {
   version: packageJson.version,
   angular: packageJson.dependencies['@angular/core'].replace('^', ''),
-  node: packageJson.engines.node.replace('>=', 'v') + '+',
+  node: packageJson.engines.node.replace('>=', 'v'),
   soulcraft: packageJson.dependencies['@soulcraft/brainy'].replace('^', ''),
   typescript: packageJson.devDependencies.typescript.replace('~', '')
 };

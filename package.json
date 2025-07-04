@@ -6,7 +6,7 @@
     ".": "./src/main.ts"
   },
   "engines": {
-    "node": ">=23.11.0"
+    "node": "23.11.0"
   },
   "scripts": {
     "ng": "ng",
@@ -17,8 +17,7 @@
     "predeploy": "npm version patch --no-git-tag-version && npm run update-badges",
     "deploy": "ng deploy --base-href=/cartographer/",
     "watch": "ng build --watch --configuration development",
-    "lint": "ng lint",
-    "postinstall": "patch-package"
+    "lint": "ng lint"
   },
   "private": true,
   "prettier": {
@@ -71,7 +70,7 @@
     "@angular/router": "^19.2.0",
     "@angular/service-worker": "^19.2.0",
     "@ngrx/store": "^19.1.0",
-    "@soulcraft/brainy": "^0.7.4",
+    "@soulcraft/brainy": "^0.9.33",
     "d3": "^7.9.0",
     "firebase": "^11.6.1",
     "rxjs": "~7.8.0",
@@ -94,7 +93,6 @@
     "eslint-plugin-prettier": "^5.2.6",
     "loader-utils": "^3.3.1",
     "node-polyfill-webpack-plugin": "^4.1.0",
-    "patch-package": "^8.0.0",
     "prettier": "^3.5.3",
     "prettier-eslint": "^16.4.1",
     "typescript": "~5.7.2",
