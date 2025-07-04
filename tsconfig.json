@@ -20,7 +20,6 @@
   },
   "include": [
     "src/main.ts",
-    "src/polyfills.ts",
     "src/app/**/*.ts",
     "src/environments/environment.ts"
   ],

@@ -6,7 +6,7 @@
     ".": "./src/main.ts"
   },
   "engines": {
-    "node": "23.11.0"
+    "node": "24.3.0"
   },
   "scripts": {
     "ng": "ng",
@@ -46,7 +46,7 @@
       "@typescript-eslint"
     ],
     "rules": {
-      "no-unused-vars": "on",
+      "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": [
         1,
         {
